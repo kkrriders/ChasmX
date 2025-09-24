@@ -1,8 +1,4 @@
-"""Authentication routes for user registration and login.
 
-This module provides the authentication endpoints for user registration and login.
-It handles user creation, password verification, and JWT token generation.
-"""
 
 from typing import Dict
 from fastapi import APIRouter, Body, Depends, HTTPException, status
