@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     # CORS Settings
     CORS_ORIGINS: str = "*"  # Default to all origins
     
+    # SMTP Settings for OTP emails
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 465  # SSL port
+    SMTP_USER: str = "your-email@gmail.com"
+    SMTP_PASSWORD: str = "your-app-password"
+    SMTP_SSL: bool = True
+    
     class Config:
         env_file = ".env"
 

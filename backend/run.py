@@ -9,24 +9,22 @@ LOGGING_CONFIG["formatters"]["access"]["fmt"] = '%(asctime)s - %(levelname)s - %
 
 def run():
     """Run the server with configured settings."""
-    config = uvicorn.Config(
-        "app.main:app",
-        host="127.0.0.1",
-        port=8000,
-        log_level="info",
-        log_config=LOGGING_CONFIG,
-        workers=1,
-        loop="asyncio",
-        timeout_keep_alive=60,
-        timeout_notify=30,
-        limit_max_requests=None,  # No limit on requests
-        reload=False
-    )
-    
-    server = uvicorn.Server(config)
-    
     try:
-        # Using run() instead of serve() for better process management
+        config = uvicorn.Config(
+            "app.main:app",
+            host="127.0.0.1",
+            port=8080,
+            log_level="debug",
+            log_config=LOGGING_CONFIG,
+            workers=1,
+            loop="asyncio",
+            timeout_keep_alive=60,
+            timeout_notify=30,
+            limit_max_requests=None,
+            reload=True
+        )
+        
+        server = uvicorn.Server(config)
         server.run()
     except KeyboardInterrupt:
         print("\nShutting down gracefully...")

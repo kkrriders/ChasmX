@@ -19,6 +19,8 @@ class User(BaseModel):
     failed_attempts: int = Field(default=0, ge=0)
     last_login: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    otp_code: Optional[str] = None
+    otp_expiry: Optional[datetime] = None
     
     model_config = ConfigDict(
         json_schema_extra={

@@ -9,6 +9,10 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from loguru import logger
 
+from app.utils.otp import generate_otp, verify_otp, update_user_otp
+from app.utils.email import send_otp_email
+from app.schemas.otp import OTPVerify
+
 from app.core.database import get_database
 from app.schemas.user import UserOut
 from app.models.user import UserCreate, UserLogin
@@ -67,19 +71,19 @@ async def register(
             detail="Registration failed due to an internal error"
         )
 
-@router.post("/login", response_model=Dict)
+@router.post("/login")
 async def login(
     user_in: UserLogin = Body(),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict:
-    """Authenticate a user and return an access token.
+    """Authenticate a user and send OTP.
     
     Args:
         user_in: The login credentials
         db: Database instance from dependency injection
     
     Returns:
-        Dict: Access token, token type and user data
+        Dict: Success message after sending OTP
         
     Raises:
         HTTPException: 401 for invalid credentials
@@ -104,19 +108,86 @@ async def login(
             detail="Invalid credentials"
         )
     
-    # Update last login time
-    await update_last_login(user_in.email, db)
+    # Generate and send OTP
+    try:
+        code, hashed_otp = await generate_otp(user.email)
+        if not await update_user_otp(user.email, hashed_otp, db):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save OTP"
+            )
+        
+        if not await send_otp_email(user.email, code):
+            logger.error(f"Failed to send OTP email to {user.email}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send OTP"
+            )
+        
+        return {"message": "OTP sent for verification"}
+    except Exception as e:
+        logger.error(f"OTP generation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate OTP"
+        )
     
-    # Generate access token
-    token = create_access_token({
-        "sub": user.email,
-        "roles": user.roles
-    })
+@router.post("/verify-otp", response_model=Dict)
+async def verify_otp_endpoint(
+    user_in: OTPVerify = Body(),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Dict:
+    """Verify OTP and complete authentication.
     
-    logger.info(f"Login success: {user.email}")
+    Args:
+        user_in: The OTP verification data
+        db: Database instance from dependency injection
     
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": UserOut.model_validate(user)
-    }
+    Returns:
+        Dict: Access token and user data on success
+        
+    Raises:
+        HTTPException: 400 for invalid/expired OTP
+                      422 if validation fails
+    """
+    try:
+        # Verify OTP
+        if await verify_otp(user_in.email, user_in.otp, db):
+            # Get user details
+            user = await get_user_by_email(user_in.email, db)
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User not found"
+                )
+            
+            # Update last login time
+            await update_last_login(user_in.email, db)
+            
+            # Generate access token
+            token = create_access_token({
+                "sub": user.email,
+                "roles": user.roles
+            })
+            
+            logger.info(f"Login success: {user.email}")
+            
+            return {
+                "access_token": token,
+                "token_type": "bearer",
+                "user": UserOut.model_validate(user, from_attributes=True)
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired OTP"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"OTP verification error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Verification failed due to an internal error"
+        )
