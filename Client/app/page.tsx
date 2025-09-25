@@ -28,22 +28,24 @@ import {
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
-  const { isAuthenticated, checkUserExists } = useAuth()
+  const { isAuthenticated, user, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // If user is already authenticated, redirect to dashboard
+  // If user is already authenticated with valid user data, redirect to dashboard
   useEffect(() => {
-    if (mounted && isAuthenticated) {
+    console.log('HomePage Auth State:', { mounted, isLoading, isAuthenticated, user })
+    if (mounted && !isLoading && isAuthenticated && user) {
+      console.log('Redirecting to workbench')
       router.push('/workbench')
     }
-  }, [mounted, isAuthenticated, router])
+  }, [mounted, isLoading, isAuthenticated, user, router])
 
   const handleGetStarted = () => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       // User is already signed in, go to dashboard
       router.push('/workbench')
     } else {

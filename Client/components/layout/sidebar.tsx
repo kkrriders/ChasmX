@@ -2,7 +2,8 @@
 
 import { useState, memo, useMemo, useCallback } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 import { cn } from "@/lib/utils"
 import { ModernButton } from "@/components/ui/modern-button"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +22,7 @@ import {
   Users,
   Database,
   Star,
+  LogOut,
 } from "lucide-react"
 
 // Memoized navigation data to prevent recreation on every render
@@ -102,6 +104,8 @@ const supportNavigation = [
 export const Sidebar = memo(function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { logout } = useAuth()
 
   // Memoized NavSection component to prevent unnecessary re-renders
   const NavSection = memo(({
@@ -183,6 +187,11 @@ export const Sidebar = memo(function Sidebar() {
     setCollapsed(prev => !prev)
   }, [])
 
+  const handleLogout = useCallback(async () => {
+    await logout()
+    router.push('/')
+  }, [logout, router])
+
   return (
     <div
       className={cn(
@@ -194,7 +203,7 @@ export const Sidebar = memo(function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border/50">
         {!collapsed && (
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center shadow-glow">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
@@ -202,7 +211,7 @@ export const Sidebar = memo(function Sidebar() {
               <span className="font-bold text-sidebar-foreground">ChasmX</span>
               <p className="text-xs text-muted-foreground">Enterprise Platform</p>
             </div>
-          </div>
+          </Link>
         )}
         <ModernButton
           variant="ghost"
@@ -261,6 +270,29 @@ export const Sidebar = memo(function Sidebar() {
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <ModernButton variant="ghost" size="sm" className="h-8 w-8 p-0">
               <Star className="h-4 w-4" />
+            </ModernButton>
+            <ModernButton
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              onClick={handleLogout}
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </ModernButton>
+          </div>
+        )}
+
+        {/* Logout button for expanded state */}
+        {!collapsed && (
+          <div className="p-4 border-t border-sidebar-border/50">
+            <ModernButton
+              variant="ghost"
+              className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
             </ModernButton>
           </div>
         )}

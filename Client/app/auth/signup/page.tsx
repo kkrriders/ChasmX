@@ -82,7 +82,7 @@ const SignupPage = memo(function SignupPage() {
         {/* Left Side - Branding */}
         <div className="hidden lg:block space-y-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                 <Brain className="h-6 w-6 text-primary-foreground" />
               </div>
@@ -90,7 +90,7 @@ const SignupPage = memo(function SignupPage() {
                 <h1 className="text-3xl font-bold text-gradient">ChasmX</h1>
                 <p className="text-muted-foreground">No-Code AI Platform</p>
               </div>
-            </div>
+            </Link>
 
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-foreground">Join thousands of businesses automating with AI</h2>

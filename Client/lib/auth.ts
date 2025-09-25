@@ -38,21 +38,31 @@ export class AuthService {
     if (typeof window === 'undefined') return
 
     const token = localStorage.getItem('auth_token')
-    if (token) {
+    const userEmail = localStorage.getItem('user_email')
+
+    console.log('AuthService - checking tokens:', { token: !!token, userEmail })
+
+    // Only consider authenticated if we have both token and user data
+    if (token && userEmail) {
       // In a real app, you'd validate the token with the server
-      // For now, we'll assume it's valid if it exists
+      // For now, we'll assume it's valid if both exist
+      console.log('AuthService - Setting authenticated state')
       this.authState.isAuthenticated = true
-      // You could decode the JWT to get user info, but for simplicity:
-      const userEmail = localStorage.getItem('user_email')
-      if (userEmail) {
-        this.authState.user = {
-          id: userEmail,
-          email: userEmail,
-          firstName: 'User',
-          lastName: ''
-        }
+      this.authState.user = {
+        id: userEmail,
+        email: userEmail,
+        firstName: 'User',
+        lastName: ''
       }
       // Notify all listeners that auth state has changed
+      this.notify()
+    } else {
+      // Clear any incomplete auth data
+      console.log('AuthService - Clearing auth data')
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user_email')
+      this.authState.isAuthenticated = false
+      this.authState.user = null
       this.notify()
     }
   }
