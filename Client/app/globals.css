@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
 :root {
   /* Updated color palette to match design brief with cyan primary and amber accent */
@@ -204,7 +203,7 @@
     }
   }
 
-  @keyframes floatGentle {
+  @keyframes float {
     0%, 100% {
       transform: translateY(0px);
     }
@@ -259,7 +258,7 @@
   }
 
   /* Optimized float animation for particles */
-  @keyframes floatParticle {
+  @keyframes float {
     0%, 100% {
       transform: translateY(0px) scale(1);
       opacity: 0.3;
@@ -271,6 +270,6 @@
   }
 
   .animate-float {
-    animation: floatParticle 4s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
   }
 }

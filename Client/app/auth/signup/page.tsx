@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState, useCallback, memo } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,7 +29,6 @@ const SignupPage = memo(function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   const { signup } = useAuth()
-  const router = useRouter()
 
   const handleInputChange = useCallback((field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -39,20 +37,6 @@ const SignupPage = memo(function SignupPage() {
   const handleSignup = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Validate password confirmation
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match")
-      setIsLoading(false)
-      return
-    }
-
-    // Check terms agreement
-    if (!formData.agreeToTerms) {
-      alert("You must agree to the terms and conditions")
-      setIsLoading(false)
-      return
-    }
 
     // Use the auth service
     const result = await signup({
@@ -64,15 +48,14 @@ const SignupPage = memo(function SignupPage() {
 
     if (result.success) {
       // Redirect to onboarding
-      router.push("/auth/onboarding")
+      window.location.href = "/auth/onboarding"
     } else {
       // Handle error
-      console.error("Signup failed:", result.error)
       alert(result.error || "Signup failed")
     }
 
     setIsLoading(false)
-  }, [formData, signup, router])
+  }, [formData, signup])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center p-4" style={{ contain: 'layout style paint' }}>

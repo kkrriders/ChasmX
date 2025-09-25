@@ -27,34 +27,8 @@ export class AuthService {
   static getInstance(): AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService()
-      // Check for existing auth token on initialization
-      AuthService.instance.checkAuthToken()
     }
     return AuthService.instance
-  }
-
-  private checkAuthToken() {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-
-    const token = localStorage.getItem('auth_token')
-    if (token) {
-      // In a real app, you'd validate the token with the server
-      // For now, we'll assume it's valid if it exists
-      this.authState.isAuthenticated = true
-      // You could decode the JWT to get user info, but for simplicity:
-      const userEmail = localStorage.getItem('user_email')
-      if (userEmail) {
-        this.authState.user = {
-          id: userEmail,
-          email: userEmail,
-          firstName: 'User',
-          lastName: ''
-        }
-      }
-      // Notify all listeners that auth state has changed
-      this.notify()
-    }
   }
 
   subscribe(listener: (state: AuthState) => void) {
@@ -72,37 +46,33 @@ export class AuthService {
     return this.authState
   }
 
-  async login(email: string, password: string): Promise<{ success: boolean; otpRequired?: boolean; error?: string }> {
+  async login(email: string, password: string): Promise<{ success: boolean; error?: string }> {
     this.authState.isLoading = true
     this.notify()
 
-    try {
-      // First step - login and get OTP sent
-      const loginResponse = await fetch('http://localhost:8080/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    // Mock validation
+    if (email === "demo@example.com" && password === "password") {
+      this.authState = {
+        user: {
+          id: "1",
+          email: "demo@example.com",
+          firstName: "Demo",
+          lastName: "User",
+          avatar: "/diverse-user-avatars.png",
         },
-        body: JSON.stringify({ email, password })
-      })
-
-      if (!loginResponse.ok) {
-        const error = await loginResponse.text()
-        this.authState.isLoading = false
-        this.notify()
-        return { success: false, error: error || 'Login failed' }
+        isAuthenticated: true,
+        isLoading: false,
       }
-
-      // OTP has been sent, return success with otpRequired flag
-      this.authState.isLoading = false
       this.notify()
-      return { success: true, otpRequired: true }
-
-    } catch (error) {
-      this.authState.isLoading = false
-      this.notify()
-      return { success: false, error: 'Network error or server unavailable' }
+      return { success: true }
     }
+
+    this.authState.isLoading = false
+    this.notify()
+    return { success: false, error: "Invalid credentials" }
   }
 
   async signup(data: {
@@ -114,133 +84,31 @@ export class AuthService {
     this.authState.isLoading = true
     this.notify()
 
-    try {
-      const response = await fetch('http://localhost:8080/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          first_name: data.firstName,
-          last_name: data.lastName
-        })
-      })
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      if (!response.ok) {
-        const error = await response.text()
-        this.authState.isLoading = false
-        this.notify()
-        return { success: false, error: error || 'Signup failed' }
-      }
-
-      const responseData = await response.json()
-
-      this.authState = {
-        user: {
-          id: responseData.id || responseData.email,
-          email: responseData.email,
-          firstName: responseData.first_name || data.firstName,
-          lastName: responseData.last_name || data.lastName,
-        },
-        isAuthenticated: true,
-        isLoading: false,
-      }
-      this.notify()
-      return { success: true }
-
-    } catch (error) {
-      this.authState.isLoading = false
-      this.notify()
-      return { success: false, error: 'Network error or server unavailable' }
+    this.authState = {
+      user: {
+        id: "1",
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        avatar: "/diverse-user-avatars.png",
+      },
+      isAuthenticated: true,
+      isLoading: false,
     }
+    this.notify()
+    return { success: true }
   }
 
   async logout(): Promise<void> {
-    // Clear stored tokens (only on client side)
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('user_email')
-    }
-
     this.authState = {
       user: null,
       isAuthenticated: false,
       isLoading: false,
     }
     this.notify()
-  }
-
-  async checkUserExists(email: string): Promise<{ exists: boolean; error?: string }> {
-    try {
-      const response = await fetch('http://localhost:8080/auth/check-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      })
-
-      if (!response.ok) {
-        return { exists: false, error: 'Failed to check user' }
-      }
-
-      const data = await response.json()
-      return { exists: data.exists }
-
-    } catch (error) {
-      return { exists: false, error: 'Network error or server unavailable' }
-    }
-  }
-
-  async verifyOTP(email: string, otp: string): Promise<{ success: boolean; error?: string }> {
-    this.authState.isLoading = true
-    this.notify()
-
-    try {
-      const response = await fetch('http://localhost:8080/auth/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp })
-      })
-
-      if (!response.ok) {
-        const error = await response.text()
-        this.authState.isLoading = false
-        this.notify()
-        return { success: false, error: error || 'OTP verification failed' }
-      }
-
-      const data = await response.json()
-
-      // Store token and user info (only on client side)
-      if (data.access_token && typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', data.access_token)
-        localStorage.setItem('user_email', data.user.email)
-      }
-
-      // Update auth state
-      this.authState = {
-        user: {
-          id: data.user.id || data.user.email,
-          email: data.user.email,
-          firstName: data.user.first_name || 'User',
-          lastName: data.user.last_name || '',
-        },
-        isAuthenticated: true,
-        isLoading: false,
-      }
-      this.notify()
-      return { success: true }
-
-    } catch (error) {
-      this.authState.isLoading = false
-      this.notify()
-      return { success: false, error: 'Network error or server unavailable' }
-    }
   }
 
   async loginWithProvider(provider: "google" | "github"): Promise<{ success: boolean; error?: string }> {

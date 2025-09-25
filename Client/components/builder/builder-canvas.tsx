@@ -88,12 +88,12 @@ export function BuilderCanvas() {
 
   const applySuggestion = (suggestion: any) => {
     // In a real implementation, this would modify the workflow based on the suggestion
-    // Applying suggestion
+    console.log("Applying suggestion:", suggestion)
   }
 
   const loadTemplate = (template: any) => {
     // In a real implementation, this would load the template nodes and edges
-    // Loading template
+    console.log("Loading template:", template)
     setNodes(template.nodes || [])
     setEdges(template.edges || [])
   }
