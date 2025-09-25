@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff, Mail, Lock, User, Building, ArrowRight, Brain } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { AuthGuard } from "@/components/auth/auth-guard"
 
 const SignupPage = memo(function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -75,7 +76,8 @@ const SignupPage = memo(function SignupPage() {
   }, [formData, signup, router])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center p-4" style={{ contain: 'layout style paint' }}>
+    <AuthGuard requireAuth={false}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center p-4" style={{ contain: 'layout style paint' }}>
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         {/* Left Side - Branding */}
         <div className="hidden lg:block space-y-8">
@@ -336,7 +338,8 @@ const SignupPage = memo(function SignupPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 })
 

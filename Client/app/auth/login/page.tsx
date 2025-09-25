@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Brain, Shield, Zap } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { AuthGuard } from "@/components/auth/auth-guard"
 
 const LoginPage = memo(function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -50,7 +51,8 @@ const LoginPage = memo(function LoginPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center p-4" style={{ contain: 'layout style paint' }}>
+    <AuthGuard requireAuth={false}>
+      <div className="min-h-screen bg-gradient-to-br from-background via-card to-muted flex items-center justify-center p-4" style={{ contain: 'layout style paint' }}>
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         {/* Left Side - Branding & Features */}
         <div className="hidden lg:block space-y-8">
@@ -239,7 +241,8 @@ const LoginPage = memo(function LoginPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 })
 

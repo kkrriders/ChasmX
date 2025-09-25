@@ -1,5 +1,6 @@
 import { memo } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
+import { AuthGuard } from "@/components/auth/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +9,8 @@ import { Download, TrendingUp, Clock, DollarSign, Activity, CheckCircle, Star, B
 
 const AnalyticsPage = memo(function AnalyticsPage() {
   return (
-    <MainLayout title="Analytics Overview" searchPlaceholder="Search analytics...">
+    <AuthGuard>
+      <MainLayout title="Analytics Overview" searchPlaceholder="Search analytics...">
       <div className="p-6 space-y-6" style={{ contain: 'layout style paint' }}>
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -415,7 +417,8 @@ const AnalyticsPage = memo(function AnalyticsPage() {
           </div>
         </div>
       </div>
-    </MainLayout>
+      </MainLayout>
+    </AuthGuard>
   )
 })
 

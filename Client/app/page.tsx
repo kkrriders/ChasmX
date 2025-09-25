@@ -135,7 +135,7 @@ export default function HomePage() {
                 Get Started Free
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </ModernButton>
-              <Link href="/login">
+              <Link href="/auth/login">
                 <ModernButton
                   variant="outline"
                   className="group gap-3 text-lg px-8 py-4 h-auto border-white/20 hover:bg-white/10"
@@ -234,7 +234,7 @@ export default function HomePage() {
                 Get Started Free
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </ModernButton>
-              <Link href="/login">
+              <Link href="/auth/login">
                 <ModernButton
                   variant="outline"
                   className="group gap-3 text-lg px-8 py-4 h-auto border-white/20 hover:bg-white/10"
