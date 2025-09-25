@@ -34,11 +34,12 @@ async def connect_to_mongo():
         # Test connection
         await client.admin.command('ping')
     except Exception as e:
-        # Log error but don't raise - allow app to start and retry connection later
-        print(f"Warning: MongoDB connection failed: {str(e)}")
+        # Log error and raise - don't start app without database
+        print(f"Error: MongoDB connection failed: {str(e)}")
         if client:
             client.close()
         client = None
+        raise RuntimeError(f"Failed to connect to MongoDB: {str(e)}")
 
 async def close_mongo_connection():
     """Close database connection"""

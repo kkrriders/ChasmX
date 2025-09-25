@@ -59,12 +59,6 @@ async def get_current_user(
             detail="Invalid token: Missing 'sub' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token: Missing 'sub' claim",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
 
     user = await get_user_by_email(email, db)
     if not user:

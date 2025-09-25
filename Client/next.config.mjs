@@ -7,21 +7,20 @@ const withBundleAnalyzer = bundleAnalyzer({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     unoptimized: true,
   },
-  // Performance optimizations
-  experimental: {
-    scrollRestoration: true,
-  },
-  // Bundle analysis
+  // Fix memory issues and optimize bundles
   webpack: (config, { isServer }) => {
-    // Optimize bundle splitting
+    // Disable caching to fix memory allocation errors
+    config.cache = false;
+
+    // Optimize bundle splitting only for client-side
     if (!isServer) {
       config.optimization.splitChunks = {
         ...config.optimization.splitChunks,
@@ -33,22 +32,10 @@ const nextConfig = {
             chunks: 'all',
             priority: 10,
           },
-          radix: {
-            test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
-            name: 'radix-ui',
-            chunks: 'all',
-            priority: 20,
-          },
-          lucide: {
-            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
-            name: 'lucide-icons',
-            chunks: 'all',
-            priority: 20,
-          },
         },
       }
     }
-    return config
+    return config;
   },
 }
 

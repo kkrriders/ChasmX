@@ -10,9 +10,7 @@ from loguru import logger
 
 from app.crud.user import get_user_by_email
 from app.models.user import User
-
-# OTP secret key - in production, this should be per user and stored securely
-OTP_SECRET = "JBSWY3DPEHPK3PXP"
+from app.core.config import settings
 
 async def generate_otp(email: str) -> Tuple[str, str]:
     """Generate a new OTP for the given email.
@@ -25,7 +23,7 @@ async def generate_otp(email: str) -> Tuple[str, str]:
             - plain OTP code (for sending via email)
             - hashed OTP code (for storing in DB)
     """
-    totp = pyotp.TOTP(OTP_SECRET, interval=300)  # 5 minute expiry
+    totp = pyotp.TOTP(settings.OTP_SECRET_KEY, interval=300)  # 5 minute expiry
     code = totp.now()
     hashed_otp = sha256_crypt.hash(code)
     

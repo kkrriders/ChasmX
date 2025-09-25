@@ -33,11 +33,21 @@ export function useAuth() {
     return AuthService.getInstance().loginWithProvider(provider)
   }
 
+  const checkUserExists = async (email: string) => {
+    return AuthService.getInstance().checkUserExists(email)
+  }
+
+  const verifyOTP = async (email: string, otp: string) => {
+    return AuthService.getInstance().verifyOTP(email, otp)
+  }
+
   return {
     ...authState,
     login,
     signup,
     logout,
     loginWithProvider,
+    checkUserExists,
+    verifyOTP,
   }
 }

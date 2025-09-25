@@ -117,7 +117,7 @@ export function AISuggestions({ onApplySuggestion }: AISuggestionsProps) {
 
   const generateSuggestions = () => {
     // In a real implementation, this would call an AI service
-    console.log("Generating suggestions for:", customPrompt)
+    // Generating suggestions
   }
 
   return (

@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useCallback, memo } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,6 +20,7 @@ const LoginPage = memo(function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   const { login } = useAuth()
+  const router = useRouter()
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,16 +29,21 @@ const LoginPage = memo(function LoginPage() {
     // Use the auth service
     const result = await login(email, password)
 
-    if (result.success) {
-      // Redirect to workbench
-      window.location.href = "/acp-aap"
+    if (result.success && result.otpRequired) {
+      // Redirect to OTP verification page with email
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
+    } else if (result.success) {
+      // Direct login success (shouldn't happen with OTP flow)
+      router.push("/workbench")
     } else {
       // Handle error - you could show a toast or error message
+      console.error("Login failed:", result.error)
+      // TODO: Replace with proper toast notification
       alert(result.error || "Login failed")
     }
 
     setIsLoading(false)
-  }, [email, password, login])
+  }, [email, password, login, router])
 
   const togglePasswordVisibility = useCallback(() => {
     setShowPassword(prev => !prev)

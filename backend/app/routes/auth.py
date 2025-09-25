@@ -10,6 +10,7 @@ from app.utils.email import send_otp_email
 from app.schemas.otp import OTPVerify
 
 from app.core.database import get_database
+from app.core.config import settings
 from app.schemas.user import UserOut
 from app.models.user import UserCreate, UserLogin
 from app.crud.user import (
@@ -87,12 +88,20 @@ async def login(
     """
     # Get user by email
     user = await get_user_by_email(user_in.email, db)
-    
+
     if not user:
         logger.warning(f"Login attempt with non-existent email: {user_in.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
+        )
+
+    # Check if account is locked due to too many failed attempts
+    if user.failed_attempts >= settings.MAX_FAILED_ATTEMPTS:
+        logger.warning(f"Account locked for user: {user_in.email} (failed attempts: {user.failed_attempts})")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account locked due to too many failed attempts"
         )
     
     # Verify credentials
@@ -128,6 +137,23 @@ async def login(
             detail="Failed to generate OTP"
         )
     
+@router.post("/check-user", response_model=Dict)
+async def check_user_exists(
+    email: str = Body(..., embed=True),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Dict:
+    """Check if a user exists by email.
+
+    Args:
+        email: Email address to check
+        db: Database instance from dependency injection
+
+    Returns:
+        Dict: Contains 'exists' boolean indicating if user exists
+    """
+    user = await get_user_by_email(email, db)
+    return {"exists": user is not None}
+
 @router.post("/verify-otp", response_model=Dict)
 async def verify_otp_endpoint(
     user_in: OTPVerify = Body(),

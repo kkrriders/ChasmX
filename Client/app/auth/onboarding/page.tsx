@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -93,6 +94,7 @@ export default function OnboardingPage() {
   const [selectedTeamSize, setSelectedTeamSize] = useState<string>("")
   const [selectedGoals, setSelectedGoals] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const progress = (currentStep / ONBOARDING_STEPS.length) * 100
 
@@ -119,7 +121,7 @@ export default function OnboardingPage() {
     await new Promise((resolve) => setTimeout(resolve, 3000))
 
     // Redirect to dashboard
-    window.location.href = "/"
+    router.push("/")
 
     setIsLoading(false)
   }

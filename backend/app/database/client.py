@@ -9,6 +9,8 @@ from pymongo.errors import ConnectionFailure, ConfigurationError
 from dotenv import load_dotenv
 from loguru import logger
 
+from app.core.config import settings
+
 # Load environment variables
 load_dotenv()
 
@@ -16,7 +18,6 @@ load_dotenv()
 client: Optional[AsyncIOMotorClient] = None
 
 # Constants
-DATABASE_NAME = "no_code_ai_db"
 USERS_COLLECTION = "users"
 
 async def connect_to_mongo() -> None:
@@ -28,7 +29,7 @@ async def connect_to_mongo() -> None:
     global client
 
     # Get MongoDB URI from environment with fallback
-    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    mongo_uri = settings.MONGODB_URL
 
     try:
         # Create Motor client with connection pooling
@@ -67,15 +68,15 @@ async def close_mongo_connection() -> None:
 
 def get_database() -> AsyncIOMotorDatabase:
     """
-    Get database instance for no_code_ai_db.
+    Get database instance for chasm_db.
     Returns AsyncIOMotorDatabase instance for async operations.
-    
+
     Raises:
         RuntimeError: If called before connection is established
     """
     if not client:
         raise RuntimeError("MongoDB client not initialized. Call connect_to_mongo() first.")
-    return client[DATABASE_NAME]
+    return client[settings.DATABASE_NAME]
 
 def get_users_collection() -> AsyncIOMotorCollection:
     """

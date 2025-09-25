@@ -38,14 +38,26 @@ async def send_otp_email(to_email: str, otp_code: str) -> bool:
     message.attach(MIMEText(body, "plain"))
     
     try:
-        await aiosmtplib.send(
-            message,
-            hostname=settings.SMTP_HOST,
-            port=settings.SMTP_PORT,
-            username=settings.SMTP_USER,
-            password=settings.SMTP_PASSWORD,
-            use_tls=True
-        )
+        if settings.SMTP_SSL:
+            # Use SSL (port 465)
+            await aiosmtplib.send(
+                message,
+                hostname=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                username=settings.SMTP_USER,
+                password=settings.SMTP_PASSWORD,
+                use_tls=True
+            )
+        else:
+            # Use STARTTLS (port 587)
+            await aiosmtplib.send(
+                message,
+                hostname=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                username=settings.SMTP_USER,
+                password=settings.SMTP_PASSWORD,
+                start_tls=True
+            )
         logger.info(f"OTP email sent to {to_email}")
         return True
         
