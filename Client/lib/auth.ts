@@ -120,7 +120,7 @@ export class AuthService {
     lastName: string
     email: string
     password: string
-  }): Promise<{ success: boolean; error?: string }> {
+  }): Promise<{ success: boolean; requiresLogin?: boolean; error?: string }> {
     this.authState.isLoading = true
     this.notify()
 
@@ -145,20 +145,11 @@ export class AuthService {
         return { success: false, error: error || 'Signup failed' }
       }
 
-      const responseData = await response.json()
-
-      this.authState = {
-        user: {
-          id: responseData.id || responseData.email,
-          email: responseData.email,
-          firstName: responseData.first_name || data.firstName,
-          lastName: responseData.last_name || data.lastName,
-        },
-        isAuthenticated: true,
-        isLoading: false,
-      }
+      // User registered successfully, but NOT authenticated yet
+      // They need to login with OTP verification
+      this.authState.isLoading = false
       this.notify()
-      return { success: true }
+      return { success: true, requiresLogin: true }
 
     } catch (error) {
       this.authState.isLoading = false

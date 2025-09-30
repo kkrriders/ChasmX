@@ -64,8 +64,9 @@ const SignupPage = memo(function SignupPage() {
     })
 
     if (result.success) {
-      // Redirect to onboarding
-      router.push("/auth/onboarding")
+      // Registration successful - redirect to login for OTP verification
+      alert("Account created successfully! Please login to verify your email with OTP.")
+      router.push(`/auth/login?email=${encodeURIComponent(formData.email)}`)
     } else {
       // Handle error
       console.error("Signup failed:", result.error)

@@ -160,14 +160,14 @@ async def verify_otp_endpoint(
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict:
     """Verify OTP and complete authentication.
-    
+
     Args:
         user_in: The OTP verification data
         db: Database instance from dependency injection
-    
+
     Returns:
         Dict: Access token and user data on success
-        
+
     Raises:
         HTTPException: 400 for invalid/expired OTP
                       422 if validation fails
@@ -182,18 +182,18 @@ async def verify_otp_endpoint(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="User not found"
                 )
-            
+
             # Update last login time
             await update_last_login(user_in.email, db)
-            
+
             # Generate access token
             token = create_access_token({
                 "sub": user.email,
                 "roles": user.roles
             })
-            
+
             logger.info(f"Login success: {user.email}")
-            
+
             return {
                 "access_token": token,
                 "token_type": "bearer",
@@ -204,7 +204,7 @@ async def verify_otp_endpoint(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired OTP"
             )
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -212,4 +212,58 @@ async def verify_otp_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Verification failed due to an internal error"
+        )
+
+@router.post("/resend-otp", response_model=Dict)
+async def resend_otp(
+    email: str = Body(..., embed=True),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Dict:
+    """Resend OTP code to user's email.
+
+    Args:
+        email: User's email address
+        db: Database instance from dependency injection
+
+    Returns:
+        Dict: Success message after sending OTP
+
+    Raises:
+        HTTPException: 400 if user not found
+                      500 if OTP generation/sending fails
+    """
+    # Check if user exists
+    user = await get_user_by_email(email, db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User not found"
+        )
+
+    # Generate and send new OTP
+    try:
+        code, hashed_otp = await generate_otp(email)
+        if not await update_user_otp(email, hashed_otp, db):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save OTP"
+            )
+
+        if not await send_otp_email(email, code):
+            logger.error(f"Failed to send OTP email to {email}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send OTP"
+            )
+
+        logger.info(f"OTP resent to {email}")
+        return {"message": "OTP sent successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Resend OTP error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to resend OTP"
         )
