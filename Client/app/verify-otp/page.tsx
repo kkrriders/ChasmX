@@ -38,8 +38,8 @@ export default function VerifyOtpPage() {
     const result = await verifyOTP(email, otp)
 
     if (result.success) {
-      // Redirect to workbench on success
-      router.push('/workbench')
+      // Redirect to acp-aap on success
+      router.push('/acp-aap')
     } else {
       // Handle error
       console.error('OTP verification failed:', result.error)
