@@ -22,9 +22,9 @@ class APIClient {
   ): Promise<T> {
     const { requiresAuth = false, headers = {}, ...restOptions } = options
 
-    const requestHeaders: HeadersInit = {
+    const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...headers,
+      ...(headers as Record<string, string>),
     }
 
     // Add auth token if required
