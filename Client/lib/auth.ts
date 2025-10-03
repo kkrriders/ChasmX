@@ -87,21 +87,10 @@ export class AuthService {
     this.notify()
 
     try {
-      // First step - login and get OTP sent
-      const loginResponse = await fetch('http://localhost:8080/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password })
-      })
+      const { api } = await import('./api')
+      const { API_ENDPOINTS } = await import('./config')
 
-      if (!loginResponse.ok) {
-        const error = await loginResponse.text()
-        this.authState.isLoading = false
-        this.notify()
-        return { success: false, error: error || 'Login failed' }
-      }
+      await api.post(API_ENDPOINTS.AUTH.LOGIN, { email, password })
 
       // OTP has been sent, return success with otpRequired flag
       this.authState.isLoading = false
@@ -111,7 +100,10 @@ export class AuthService {
     } catch (error) {
       this.authState.isLoading = false
       this.notify()
-      return { success: false, error: 'Network error or server unavailable' }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error or server unavailable'
+      }
     }
   }
 
@@ -125,25 +117,15 @@ export class AuthService {
     this.notify()
 
     try {
-      const response = await fetch('http://localhost:8080/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-          first_name: data.firstName,
-          last_name: data.lastName
-        })
-      })
+      const { api } = await import('./api')
+      const { API_ENDPOINTS } = await import('./config')
 
-      if (!response.ok) {
-        const error = await response.text()
-        this.authState.isLoading = false
-        this.notify()
-        return { success: false, error: error || 'Signup failed' }
-      }
+      await api.post(API_ENDPOINTS.AUTH.REGISTER, {
+        email: data.email,
+        password: data.password,
+        first_name: data.firstName,
+        last_name: data.lastName
+      })
 
       // User registered successfully, but NOT authenticated yet
       // They need to login with OTP verification
@@ -154,7 +136,10 @@ export class AuthService {
     } catch (error) {
       this.authState.isLoading = false
       this.notify()
-      return { success: false, error: 'Network error or server unavailable' }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error or server unavailable'
+      }
     }
   }
 
@@ -175,23 +160,17 @@ export class AuthService {
 
   async checkUserExists(email: string): Promise<{ exists: boolean; error?: string }> {
     try {
-      const response = await fetch('http://localhost:8080/auth/check-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      })
+      const { api } = await import('./api')
+      const { API_ENDPOINTS } = await import('./config')
 
-      if (!response.ok) {
-        return { exists: false, error: 'Failed to check user' }
-      }
-
-      const data = await response.json()
+      const data = await api.post<{ exists: boolean }>(API_ENDPOINTS.AUTH.CHECK_USER, { email })
       return { exists: data.exists }
 
     } catch (error) {
-      return { exists: false, error: 'Network error or server unavailable' }
+      return {
+        exists: false,
+        error: error instanceof Error ? error.message : 'Network error or server unavailable'
+      }
     }
   }
 
@@ -200,22 +179,13 @@ export class AuthService {
     this.notify()
 
     try {
-      const response = await fetch('http://localhost:8080/auth/verify-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp })
-      })
+      const { api } = await import('./api')
+      const { API_ENDPOINTS } = await import('./config')
 
-      if (!response.ok) {
-        const error = await response.text()
-        this.authState.isLoading = false
-        this.notify()
-        return { success: false, error: error || 'OTP verification failed' }
-      }
-
-      const data = await response.json()
+      const data = await api.post<{ access_token: string; user: any }>(
+        API_ENDPOINTS.AUTH.VERIFY_OTP,
+        { email, otp }
+      )
 
       // Store token and user info (only on client side)
       if (data.access_token && typeof window !== 'undefined') {
@@ -240,7 +210,10 @@ export class AuthService {
     } catch (error) {
       this.authState.isLoading = false
       this.notify()
-      return { success: false, error: 'Network error or server unavailable' }
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error or server unavailable'
+      }
     }
   }
 

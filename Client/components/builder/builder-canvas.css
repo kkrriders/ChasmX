@@ -1,0 +1,176 @@
+/* Custom React Flow Styling for ChasmX - ULTRA VISIBLE ARROWS */
+
+/* CRITICAL: Make edges THICK and VISIBLE */
+.react-flow__edge-path {
+  stroke: #3b82f6 !important;
+  stroke-width: 4px !important;
+}
+
+/* Arrow marker styling - Make arrows LARGE and clearly visible */
+.react-flow__arrowhead,
+.react-flow__arrowhead polyline,
+.react-flow__arrowhead polygon {
+  fill: #3b82f6 !important;
+  stroke: #3b82f6 !important;
+  stroke-width: 2px !important;
+}
+
+/* Force ALL marker types to be visible */
+marker,
+marker path,
+marker polyline,
+marker polygon {
+  fill: #3b82f6 !important;
+  stroke: #3b82f6 !important;
+  stroke-width: 1px !important;
+}
+
+/* SVG marker definitions */
+defs marker path {
+  fill: #3b82f6 !important;
+  stroke: none !important;
+}
+
+.react-flow__edge.animated path {
+  stroke-dasharray: 8 4 !important;
+  animation: dashdraw 0.8s linear infinite;
+}
+
+@keyframes dashdraw {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.react-flow__edge .react-flow__edge-path {
+  stroke: #3b82f6 !important;
+  stroke-width: 4px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Selected edge styling - EVEN THICKER */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #2563eb !important;
+  stroke-width: 6px !important;
+}
+
+.react-flow__edge.selected .react-flow__arrowhead {
+  fill: #2563eb !important;
+  stroke: #2563eb !important;
+  stroke-width: 3px !important;
+}
+
+/* Connection line (while dragging) */
+.react-flow__connection-path {
+  stroke: #3b82f6 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: 5, 5;
+  animation: dash 20s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+/* Handle styling for MAXIMUM visibility */
+.react-flow__handle {
+  width: 14px !important;
+  height: 14px !important;
+  background: #3b82f6 !important;
+  border: 3px solid white !important;
+  box-shadow: 0 0 0 2px #3b82f6, 0 2px 8px rgba(59, 130, 246, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.react-flow__handle:hover {
+  width: 18px !important;
+  height: 18px !important;
+  background: #2563eb !important;
+  box-shadow: 0 0 0 3px #2563eb, 0 4px 12px rgba(37, 99, 235, 0.6) !important;
+  transform: scale(1.2) !important;
+}
+
+.react-flow__handle-connecting {
+  background: #16a34a !important;
+  box-shadow: 0 0 0 3px #16a34a, 0 4px 12px rgba(22, 163, 74, 0.6) !important;
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+.react-flow__handle-valid {
+  background: #16a34a !important;
+  box-shadow: 0 0 0 3px #16a34a, 0 4px 12px rgba(22, 163, 74, 0.8) !important;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+}
+
+/* Dark mode support */
+.dark .react-flow__edge-path {
+  stroke: #60a5fa !important;
+}
+
+.dark .react-flow__arrowhead {
+  fill: #60a5fa !important;
+}
+
+.dark .react-flow__connection-path {
+  stroke: #60a5fa !important;
+}
+
+/* Enhanced node styling */
+.react-flow__node {
+  cursor: grab;
+}
+
+.react-flow__node:active {
+  cursor: grabbing;
+}
+
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+}
+
+/* Minimap styling */
+.react-flow__minimap {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .react-flow__minimap {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+}
+
+/* Control buttons styling */
+.react-flow__controls-button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.react-flow__controls-button:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+.dark .react-flow__controls-button {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark .react-flow__controls-button:hover {
+  background: #334155;
+  border-color: #60a5fa;
+}

@@ -1,26 +1,21 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
-import { motion, useScroll, useTransform, useInView, useAnimation } from "framer-motion"
-import { ModernButton } from "@/components/ui/modern-button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Brain,
   Zap,
   Shield,
   ArrowRight,
-  Sparkles,
   Workflow,
   Users,
   CheckCircle,
   Star,
-  Globe,
-  Rocket,
-  Target,
-  Layers,
   BarChart3,
   Lock,
   Cpu,
@@ -31,63 +26,17 @@ import {
   GitBranch,
 } from "lucide-react"
 
-// Animated Counter Component
-function AnimatedCounter({ end, suffix = "" }: { end: number; suffix?: string }) {
-  const [count, setCount] = useState(0)
-  const ref = useRef(null)
-  const isInView = useInView(ref, { once: true })
-
-  useEffect(() => {
-    if (!isInView) return
-    
-    let startTime: number
-    const duration = 2000
-    
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime
-      const progress = Math.min((currentTime - startTime) / duration, 1)
-      
-      setCount(Math.floor(progress * end))
-      
-      if (progress < 1) {
-        requestAnimationFrame(animate)
-      }
-    }
-    
-    requestAnimationFrame(animate)
-  }, [end, isInView])
-
-  return <span ref={ref}>{count}{suffix}</span>
-}
-
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const { isAuthenticated, user, isLoading } = useAuth()
   const router = useRouter()
-  const { scrollYProgress } = useScroll()
-  
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0])
-  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95])
-  const gridX = useTransform(scrollYProgress, [0, 1], [0, -50])
-  const gridY = useTransform(scrollYProgress, [0, 1], [0, -50])
 
   useEffect(() => {
     setMounted(true)
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-    
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
-  // If user is already authenticated with valid user data, redirect to dashboard
   useEffect(() => {
-    console.log('HomePage Auth State:', { mounted, isLoading, isAuthenticated, user })
     if (mounted && !isLoading && isAuthenticated && user) {
-      console.log('Redirecting to acp-aap')
       router.push('/acp-aap')
     }
   }, [mounted, isLoading, isAuthenticated, user, router])
@@ -100,857 +49,379 @@ export default function HomePage() {
     }
   }
 
-  if (!mounted) {
-    return null
+  const handleLogin = () => {
+    router.push('/auth/login')
   }
 
-  const features = [
-    {
-      icon: Brain,
-      title: "AI-Powered Intelligence",
-      description: "Advanced machine learning algorithms that adapt and improve your workflows automatically.",
-      gradient: "from-purple-500 to-pink-500"
-    },
-    {
-      icon: Zap,
-      title: "Lightning Fast Execution",
-      description: "Process thousands of tasks per second with our optimized automation engine.",
-      gradient: "from-yellow-500 to-orange-500"
-    },
-    {
-      icon: Shield,
-      title: "Enterprise Security",
-      description: "Bank-grade security with end-to-end encryption and compliance certifications.",
-      gradient: "from-green-500 to-emerald-500"
-    },
-    {
-      icon: Workflow,
-      title: "Visual Workflow Builder",
-      description: "Drag-and-drop interface to create complex workflows without coding.",
-      gradient: "from-blue-500 to-cyan-500"
-    },
-    {
-      icon: Users,
-      title: "Team Collaboration",
-      description: "Real-time collaboration tools for seamless team productivity.",
-      gradient: "from-indigo-500 to-purple-500"
-    },
-    {
-      icon: BarChart3,
-      title: "Advanced Analytics",
-      description: "Deep insights into your automation performance with detailed metrics.",
-      gradient: "from-rose-500 to-pink-500"
-    }
-  ]
-
-  const stats = [
-    { icon: Users, number: 50000, suffix: "+", label: "Active Users" },
-    { icon: Rocket, number: 99.9, suffix: "%", label: "Uptime" },
-    { icon: Globe, number: 150, suffix: "+", label: "Countries" },
-    { icon: Star, number: 4.9, suffix: "/5", label: "User Rating" }
-  ]
-
-  const useCases = [
-    {
-      icon: Code,
-      title: "Developer Automation",
-      description: "Automate CI/CD pipelines, testing, and deployment workflows"
-    },
-    {
-      icon: Database,
-      title: "Data Processing",
-      description: "Transform and sync data across multiple sources seamlessly"
-    },
-    {
-      icon: GitBranch,
-      title: "Integration Hub",
-      description: "Connect 500+ apps and services without writing code"
-    },
-    {
-      icon: TrendingUp,
-      title: "Business Intelligence",
-      description: "Generate reports and insights automatically from your data"
-    }
-  ]
-
   return (
-    <div className="min-h-screen bg-black overflow-hidden" id="main-content">
-      {/* Animated Background Grid */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black" />
-        <motion.div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(139, 92, 246, 0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px',
-            x: gridX,
-            y: gridY,
-          }}
-        />
-        
-        {/* Animated Gradient Orbs */}
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 50, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, -100, 0],
-            y: [0, -50, 0],
-            scale: [1, 1.3, 1],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"
-          animate={{
-            x: [-50, 50, -50],
-            y: [50, -50, 50],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
+                <Workflow className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">ChasmX</span>
+            </div>
+            <nav className="hidden md:flex items-center gap-8">
+              <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+              <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How it Works</Link>
+              <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+              <Link href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</Link>
+            </nav>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" onClick={handleLogin} className="font-medium">
+                Log in
+              </Button>
+              <Button onClick={handleGetStarted} className="shadow-md hover:shadow-lg transition-all font-medium">
+                Get Started
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
-      <motion.section 
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{ opacity: heroOpacity, scale: heroScale }}
-      >
-        {/* Floating Particles */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-purple-400/50 rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [null, Math.random() * window.innerHeight],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        ))}
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 z-10">
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-sm border border-purple-500/20 mb-8 group hover:border-purple-500/40 transition-all"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="h-4 w-4 text-yellow-400" />
-              </motion.div>
-              <span className="text-sm font-medium bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">
-                Next-Generation AI Platform
-              </span>
-            </motion.div>
-
-            <motion.h1 
-              className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-            >
-              <span className="block text-white mb-2">Build the Future with</span>
-              <motion.span 
-                className="block bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent"
-                animate={{
-                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                }}
-                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                style={{ backgroundSize: "200% auto" }}
-              >
-                ChasmX
-              </motion.span>
-            </motion.h1>
-
-            <motion.p 
-              className="text-xl md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-            >
-              Transform your business with intelligent automation, advanced AI workflows, and enterprise-grade security.
-              <span className="block mt-2 text-purple-300">Scale effortlessly while maintaining complete control.</span>
-            </motion.p>
-
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.8 }}
-            >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ModernButton
-                  gradient
-                  glow
-                  className="group gap-3 text-lg px-8 py-4 h-auto"
-                  onClick={handleGetStarted}
-                >
-                  <Rocket className="h-5 w-5" />
-                  Get Started Free
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </ModernButton>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link href="/auth/login">
-                  <ModernButton
-                    variant="outline"
-                    className="group gap-3 text-lg px-8 py-4 h-auto border-purple-500/30 hover:bg-purple-500/10 hover:border-purple-500/50"
-                  >
-                    <Lock className="h-5 w-5" />
-                    Sign In
-                  </ModernButton>
-                </Link>
-              </motion.div>
-            </motion.div>
-
-            {/* Scroll Indicator */}
-            <motion.div
-              className="mt-20"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, y: [0, 10, 0] }}
-              transition={{ delay: 1, duration: 2, repeat: Infinity }}
-            >
-              <div className="flex flex-col items-center gap-2">
-                <span className="text-sm text-gray-500">Scroll to explore</span>
-                <ArrowRight className="h-4 w-4 text-gray-500 rotate-90" />
-              </div>
-            </motion.div>
-          </motion.div>
+      <section className="hero-gradient relative overflow-hidden">
+        <div className="container mx-auto px-4 py-24 lg:py-32">
+        <div className="max-w-5xl mx-auto text-center">
+          <Badge className="mb-6 bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 transition-colors">
+            <Zap className="h-3.5 w-3.5 mr-1.5" />
+            AI-Powered Workflow Automation Platform
+          </Badge>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-foreground">
+            Build Intelligent
+            <span className="block mt-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              Workflows in Minutes
+            </span>
+          </h1>
+          <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
+            Create powerful AI-driven automation workflows with our visual no-code platform.
+            Connect your tools, process data, and automate complex tasks effortlessly.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button size="lg" onClick={handleGetStarted} className="shadow-lg hover:shadow-xl transition-all text-base px-8 py-6 h-auto">
+              Start Building Free
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button size="lg" variant="outline" className="border-2 text-base px-8 py-6 h-auto hover:bg-muted/50">
+              <Play className="mr-2 h-5 w-5" />
+              Watch Demo
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground mt-6 flex items-center justify-center gap-2">
+            <CheckCircle className="h-4 w-4 text-success" />
+            No credit card required • Free forever plan available
+          </p>
         </div>
-      </motion.section>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto mt-24">
+          <div className="text-center">
+            <div className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent mb-2">10K+</div>
+            <div className="text-sm lg:text-base text-muted-foreground font-medium">Active Users</div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent mb-2">50M+</div>
+            <div className="text-sm lg:text-base text-muted-foreground font-medium">Workflows Executed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-success to-accent bg-clip-text text-transparent mb-2">99.9%</div>
+            <div className="text-sm lg:text-base text-muted-foreground font-medium">Uptime SLA</div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent mb-2">24/7</div>
+            <div className="text-sm lg:text-base text-muted-foreground font-medium">Support</div>
+          </div>
+        </div>
+        </div>
+      </section>
 
       {/* Features Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            className="text-center mb-20"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.h2 
-              className="text-4xl md:text-5xl font-bold text-white mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-            >
-              Powerful Features for{" "}
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Modern Teams
-              </span>
-            </motion.h2>
-            <motion.p 
-              className="text-xl text-gray-400 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-            >
-              Everything you need to build, deploy, and scale intelligent workflows at enterprise speed.
-            </motion.p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-              >
-                <motion.div
-                  whileHover={{ y: -8, scale: 1.02 }}
-                  className="h-full"
-                >
-                  <Card className="h-full bg-gradient-to-br from-gray-900/50 to-gray-900/30 backdrop-blur-sm border-gray-800 hover:border-purple-500/50 transition-all duration-500 group relative overflow-hidden">
-                    {/* Animated gradient background on hover */}
-                    <motion.div
-                      className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-                    />
-                    
-                    <CardHeader className="relative z-10">
-                      <motion.div 
-                        className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:shadow-xl transition-all`}
-                        whileHover={{ rotate: 360, scale: 1.1 }}
-                        transition={{ duration: 0.6 }}
-                      >
-                        <feature.icon className="h-7 w-7 text-white" />
-                      </motion.div>
-                      <CardTitle className="text-white text-xl font-bold group-hover:text-purple-300 transition-colors">
-                        {feature.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative z-10">
-                      <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
-                        {feature.description}
-                      </p>
-                    </CardContent>
-                    
-                    {/* Hover shine effect */}
-                    <motion.div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                      style={{
-                        background: "radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%)",
-                      }}
-                    />
-                  </Card>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent" />
-        
-        <div className="max-w-7xl mx-auto relative z-10">
-          <motion.div 
-            className="text-center mb-20"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Trusted by{" "}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                Industry Leaders
-              </span>
-            </h2>
-            <p className="text-xl text-gray-400">
-              Join thousands of companies already transforming their operations with ChasmX.
+      <section id="features" className="bg-muted/30 py-24 lg:py-32">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center mb-16 lg:mb-20">
+            <Badge className="mb-4 bg-accent/10 text-accent border-accent/20">Platform Features</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">Everything you need to automate</h2>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Powerful features that make workflow automation simple, scalable, and secure for businesses of all sizes
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="text-center group"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 mb-6 shadow-lg group-hover:shadow-purple-500/50 transition-all"
-                >
-                  <stat.icon className="h-10 w-10 text-white" />
-                </motion.div>
-                <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-                  <AnimatedCounter end={stat.number} suffix={stat.suffix} />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+            <Card className="border-2 hover:border-primary/20 hover:shadow-lg transition-all duration-300 hover-lift bg-card">
+              <CardHeader>
+                <div className="h-14 w-14 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <Brain className="h-7 w-7 text-primary" />
                 </div>
-                <div className="text-gray-400 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
+                <CardTitle className="text-xl mb-3">AI-Powered Processing</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  Leverage advanced AI models to process, analyze, and transform your data intelligently with cutting-edge machine learning
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/20 hover:shadow-lg transition-all duration-300 hover-lift bg-card">
+              <CardHeader>
+                <div className="h-14 w-14 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <Workflow className="h-7 w-7 text-primary" />
+                </div>
+                <CardTitle className="text-xl mb-3">Visual Workflow Builder</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  Intuitive drag-and-drop interface to create complex workflows without writing a single line of code
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-2 hover:border-accent/20 hover:shadow-lg transition-all duration-300 hover-lift bg-card">
+              <CardHeader>
+                <div className="h-14 w-14 bg-gradient-to-br from-accent/10 to-accent/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <Zap className="h-7 w-7 text-accent" />
+                </div>
+                <CardTitle className="text-xl mb-3">Real-time Execution</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  Execute workflows instantly with real-time monitoring, detailed logging, and instant notifications
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-2 hover:border-info/20 hover:shadow-lg transition-all duration-300 hover-lift bg-card">
+              <CardHeader>
+                <div className="h-14 w-14 bg-gradient-to-br from-info/10 to-info/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <Database className="h-7 w-7 text-info" />
+                </div>
+                <CardTitle className="text-xl mb-3">Universal Integration</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  Connect seamlessly to databases, APIs, and 1000+ third-party services with pre-built integrations
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-2 hover:border-success/20 hover:shadow-lg transition-all duration-300 hover-lift bg-card">
+              <CardHeader>
+                <div className="h-14 w-14 bg-gradient-to-br from-success/10 to-success/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <Shield className="h-7 w-7 text-success" />
+                </div>
+                <CardTitle className="text-xl mb-3">Enterprise Security</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  Bank-level encryption, SOC 2 Type II, GDPR, HIPAA compliance, and advanced security controls
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-2 hover:border-primary/20 hover:shadow-lg transition-all duration-300 hover-lift bg-card">
+              <CardHeader>
+                <div className="h-14 w-14 bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                  <BarChart3 className="h-7 w-7 text-primary" />
+                </div>
+                <CardTitle className="text-xl mb-3">Advanced Analytics</CardTitle>
+                <CardDescription className="text-base leading-relaxed">
+                  Comprehensive dashboards to track performance, costs, usage patterns, and ROI metrics
+                </CardDescription>
+              </CardHeader>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* Use Cases Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            className="text-center mb-20"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Built for{" "}
-              <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                Every Use Case
-              </span>
-            </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              From simple automations to complex enterprise workflows, ChasmX scales with your needs.
+      {/* How it Works */}
+      <section id="how-it-works" className="py-24 lg:py-32 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center mb-16 lg:mb-20">
+            <Badge className="mb-4 bg-success/10 text-success border-success/20">Simple Process</Badge>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-6">How it works</h2>
+            <p className="text-xl text-muted-foreground leading-relaxed">
+              Build and deploy production-ready workflows in three simple steps
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {useCases.map((useCase, index) => (
-              <motion.div
-                key={useCase.title}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.6 }}
-              >
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -5 }}
-                  className="p-8 rounded-2xl bg-gradient-to-br from-gray-900/80 to-gray-900/40 border border-gray-800 hover:border-green-500/50 backdrop-blur-sm group transition-all duration-300"
-                >
-                  <div className="flex items-start gap-4">
-                    <motion.div
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.6 }}
-                      className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0"
-                    >
-                      <useCase.icon className="h-6 w-6 text-white" />
-                    </motion.div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white mb-2 group-hover:text-green-300 transition-colors">
-                        {useCase.title}
-                      </h3>
-                      <p className="text-gray-400 group-hover:text-gray-300 transition-colors">
-                        {useCase.description}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
+          <div className="grid md:grid-cols-3 gap-12 lg:gap-16 max-w-6xl mx-auto">
+            <div className="text-center group">
+              <div className="relative inline-block mb-8">
+                <div className="h-20 w-20 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="text-3xl font-bold text-white">1</span>
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
+              </div>
+              <h3 className="text-2xl font-semibold mb-4">Design Your Workflow</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Use our intuitive visual builder to drag and drop components, connect integrations, and create your automation logic
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="relative inline-block mb-8">
+                <div className="h-20 w-20 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="text-3xl font-bold text-white">2</span>
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-br from-accent to-primary rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
+              </div>
+              <h3 className="text-2xl font-semibold mb-4">Configure & Test</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Set up your connections, configure advanced settings, and thoroughly test your workflow with sample data
+              </p>
+            </div>
+
+            <div className="text-center group">
+              <div className="relative inline-block mb-8">
+                <div className="h-20 w-20 bg-gradient-to-br from-success to-accent rounded-2xl flex items-center justify-center mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300">
+                  <span className="text-3xl font-bold text-white">3</span>
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-br from-success to-accent rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>
+              </div>
+              <h3 className="text-2xl font-semibold mb-4">Deploy & Monitor</h3>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Launch your workflow to production and monitor performance, costs, and results with real-time analytics
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Interactive Showcase Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            className="text-center mb-20"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              See It{" "}
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                In Action
-              </span>
-            </h2>
-            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Experience the power of visual workflow building with our intuitive drag-and-drop interface.
-            </p>
-          </motion.div>
+      {/* Social Proof */}
+      <section className="bg-gray-50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Trusted by teams worldwide</h2>
+              <div className="flex items-center justify-center gap-1 mb-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <p className="text-gray-600">4.9/5 from 500+ reviews</p>
+            </div>
 
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Interactive Card */}
-            <div className="relative rounded-3xl bg-gradient-to-br from-gray-900/90 to-gray-900/50 border border-gray-800 p-8 md:p-12 backdrop-blur-sm overflow-hidden group">
-              {/* Animated glow effect */}
-              <motion.div
-                className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-600 rounded-3xl opacity-20 blur-xl group-hover:opacity-40 transition-opacity"
-                animate={{
-                  rotate: [0, 360],
-                }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              />
-
-              <div className="relative z-10">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                  {/* Left side - Feature list */}
-                  <div className="space-y-6">
-                    {[
-                      {
-                        icon: Workflow,
-                        title: "Drag & Drop Interface",
-                        description: "Build complex workflows visually without writing a single line of code."
-                      },
-                      {
-                        icon: Cpu,
-                        title: "AI-Powered Suggestions",
-                        description: "Get intelligent recommendations to optimize your workflows in real-time."
-                      },
-                      {
-                        icon: Zap,
-                        title: "Instant Deployment",
-                        description: "Deploy your workflows with one click and see results immediately."
-                      },
-                      {
-                        icon: BarChart3,
-                        title: "Real-Time Analytics",
-                        description: "Monitor performance and get insights as your workflows execute."
-                      }
-                    ].map((item, index) => (
-                      <motion.div
-                        key={item.title}
-                        initial={{ opacity: 0, x: -30 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.1, duration: 0.5 }}
-                        className="flex gap-4 group/item"
-                      >
-                        <motion.div
-                          whileHover={{ scale: 1.1, rotate: 5 }}
-                          className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg group-hover/item:shadow-purple-500/50 transition-shadow"
-                        >
-                          <item.icon className="h-6 w-6 text-white" />
-                        </motion.div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white mb-1 group-hover/item:text-purple-300 transition-colors">
-                            {item.title}
-                          </h3>
-                          <p className="text-gray-400 text-sm">
-                            {item.description}
-                          </p>
-                        </div>
-                      </motion.div>
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
-
-                  {/* Right side - Visual representation */}
-                  <div className="relative">
-                    <motion.div
-                      className="relative aspect-square rounded-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700 p-8 overflow-hidden"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {/* Animated workflow nodes */}
-                      <div className="relative h-full flex items-center justify-center">
-                        {/* Center node */}
-                        <motion.div
-                          className="absolute w-20 h-20 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-xl z-10"
-                          animate={{
-                            scale: [1, 1.1, 1],
-                            rotate: [0, 5, -5, 0],
-                          }}
-                          transition={{ duration: 4, repeat: Infinity }}
-                        >
-                          <Brain className="h-10 w-10 text-white" />
-                        </motion.div>
-
-                        {/* Orbiting nodes */}
-                        {[
-                          { icon: Database, angle: 0, color: "from-cyan-500 to-blue-500" },
-                          { icon: Code, angle: 90, color: "from-green-500 to-emerald-500" },
-                          { icon: Zap, angle: 180, color: "from-yellow-500 to-orange-500" },
-                          { icon: Shield, angle: 270, color: "from-red-500 to-pink-500" },
-                        ].map((node, index) => {
-                          const radius = 100
-                          const angleRad = (node.angle * Math.PI) / 180
-                          const x = Math.cos(angleRad) * radius
-                          const y = Math.sin(angleRad) * radius
-
-                          return (
-                            <motion.div
-                              key={index}
-                              className={`absolute w-14 h-14 rounded-lg bg-gradient-to-br ${node.color} flex items-center justify-center shadow-lg`}
-                              style={{
-                                left: `calc(50% + ${x}px)`,
-                                top: `calc(50% + ${y}px)`,
-                                transform: "translate(-50%, -50%)",
-                              }}
-                              animate={{
-                                rotate: [0, 360],
-                                scale: [1, 1.15, 1],
-                              }}
-                              transition={{
-                                rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                                scale: { duration: 3, repeat: Infinity, delay: index * 0.2 },
-                              }}
-                            >
-                              <node.icon className="h-6 w-6 text-white" />
-                            </motion.div>
-                          )
-                        })}
-
-                        {/* Connecting lines */}
-                        <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 0 }}>
-                          {[0, 90, 180, 270].map((angle, index) => {
-                            const radius = 100
-                            const angleRad = (angle * Math.PI) / 180
-                            const x = Math.cos(angleRad) * radius
-                            const y = Math.sin(angleRad) * radius
-
-                            return (
-                              <motion.line
-                                key={index}
-                                x1="50%"
-                                y1="50%"
-                                x2={`calc(50% + ${x}px)`}
-                                y2={`calc(50% + ${y}px)`}
-                                stroke="url(#gradient)"
-                                strokeWidth="2"
-                                strokeDasharray="5,5"
-                                initial={{ pathLength: 0, opacity: 0 }}
-                                animate={{ pathLength: 1, opacity: 0.5 }}
-                                transition={{ duration: 2, delay: index * 0.2 }}
-                              />
-                            )
-                          })}
-                          <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stopColor="#a855f7" />
-                              <stop offset="100%" stopColor="#ec4899" />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                      </div>
-
-                      {/* Floating particles */}
-                      {[...Array(8)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          className="absolute w-2 h-2 bg-purple-400/30 rounded-full"
-                          style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                          }}
-                          animate={{
-                            y: [0, -20, 0],
-                            opacity: [0.3, 0.8, 0.3],
-                          }}
-                          transition={{
-                            duration: 3 + Math.random() * 2,
-                            repeat: Infinity,
-                            delay: Math.random() * 2,
-                          }}
-                        />
-                      ))}
-                    </motion.div>
-
-                    {/* Decorative elements */}
-                    <motion.div
-                      className="absolute -top-4 -right-4 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl"
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    />
-                    <motion.div
-                      className="absolute -bottom-4 -left-4 w-24 h-24 bg-cyan-500/20 rounded-full blur-2xl"
-                      animate={{
-                        scale: [1, 1.3, 1],
-                        opacity: [0.3, 0.6, 0.3],
-                      }}
-                      transition={{ duration: 4, repeat: Infinity }}
-                    />
+                  <CardDescription>
+                    "ChasmX has transformed how we handle data processing. What used to take hours now happens in minutes."
+                  </CardDescription>
+                  <div className="mt-4">
+                    <div className="font-semibold">Sarah Johnson</div>
+                    <div className="text-sm text-gray-500">CTO, TechCorp</div>
                   </div>
-                </div>
+                </CardHeader>
+              </Card>
 
-                {/* CTA Button */}
-                <motion.div
-                  className="mt-12 text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link href="/workflows/new">
-                      <ModernButton
-                        gradient
-                        glow
-                        className="group gap-3 text-lg px-8 py-4 h-auto"
-                      >
-                        <Play className="h-5 w-5" />
-                        Try the Builder
-                        <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                      </ModernButton>
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <CardDescription>
+                    "The visual workflow builder is incredibly intuitive. Our non-technical team members can now create automations."
+                  </CardDescription>
+                  <div className="mt-4">
+                    <div className="font-semibold">Michael Chen</div>
+                    <div className="text-sm text-gray-500">VP Operations, DataFlow</div>
+                  </div>
+                </CardHeader>
+              </Card>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative">
-        {/* Animated background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20"
-            animate={{
-              backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            style={{ backgroundSize: "200% 200%" }}
-          />
-        </div>
-
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative"
-          >
-            {/* Decorative elements */}
-            <motion.div
-              className="absolute -top-20 -left-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl"
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.5, 0.3],
-              }}
-              transition={{ duration: 4, repeat: Infinity }}
-            />
-            <motion.div
-              className="absolute -bottom-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl"
-              animate={{
-                scale: [1, 1.3, 1],
-                opacity: [0.3, 0.5, 0.3],
-              }}
-              transition={{ duration: 5, repeat: Infinity }}
-            />
-
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-purple-500/30 mb-8"
-              initial={{ scale: 0.9, opacity: 0 }}
-              whileInView={{ scale: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <Sparkles className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-medium text-purple-300">Limited Time Offer</span>
-            </motion.div>
-
-            <motion.h2 
-              className="text-4xl md:text-6xl font-bold text-white mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-            >
-              Ready to Transform
-              <span className="block bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
-                Your Workflow?
-              </span>
-            </motion.h2>
-
-            <motion.p 
-              className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-            >
-              Start building intelligent automation today.{" "}
-              <span className="text-purple-300 font-semibold">No credit card required</span> for the first 30 days.
-            </motion.p>
-
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.7, duration: 0.8 }}
-            >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ModernButton
-                  gradient
-                  glow
-                  className="group gap-3 text-lg px-10 py-5 h-auto shadow-2xl shadow-purple-500/30"
-                  onClick={handleGetStarted}
-                >
-                  <Rocket className="h-5 w-5" />
-                  Get Started Free
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
+      <section className="py-24 lg:py-32 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="relative overflow-hidden bg-gradient-to-br from-primary via-accent to-primary rounded-3xl p-12 lg:p-16 text-white shadow-2xl">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="neural-bg h-full w-full"></div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 text-center">
+                <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+                  Ready to automate your workflows?
+                </h2>
+                <p className="text-xl lg:text-2xl mb-10 opacity-95 max-w-3xl mx-auto leading-relaxed">
+                  Join thousands of teams already building intelligent automation with ChasmX. Start free, scale as you grow.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Button 
+                    size="lg" 
+                    variant="secondary" 
+                    onClick={handleGetStarted}
+                    className="shadow-lg hover:shadow-xl transition-all bg-white text-primary hover:bg-white/90 px-8 py-6 h-auto text-base font-semibold"
                   >
-                    <ArrowRight className="h-5 w-5" />
-                  </motion.div>
-                </ModernButton>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link href="/auth/login">
-                  <ModernButton
-                    variant="outline"
-                    className="group gap-3 text-lg px-10 py-5 h-auto border-purple-500/30 hover:bg-purple-500/10 hover:border-purple-500/50"
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="bg-transparent text-white border-2 border-white/30 hover:bg-white/10 hover:border-white/50 px-8 py-6 h-auto text-base font-semibold backdrop-blur-sm"
                   >
-                    <Lock className="h-5 w-5" />
-                    Sign In
-                  </ModernButton>
-                </Link>
-              </motion.div>
-            </motion.div>
-
-            {/* Trust indicators */}
-            <motion.div
-              className="mt-16 flex flex-wrap items-center justify-center gap-8 text-sm text-gray-500"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.9, duration: 0.8 }}
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Free 30-day trial</span>
+                    Contact Sales
+                  </Button>
+                </div>
+                <p className="mt-6 text-sm opacity-90 flex items-center justify-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Free plan includes 1,000 workflow executions per month
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>No credit card needed</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Cancel anytime</span>
-              </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center text-gray-500">
-            <p className="mb-2">
-              © 2025 ChasmX. All rights reserved.
-            </p>
-            <p className="text-sm">
-              Building the future of intelligent automation.
-            </p>
+      <footer className="border-t bg-gray-50">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+                  <Workflow className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-lg font-bold">ChasmX</span>
+              </div>
+              <p className="text-sm text-gray-600">
+                AI-powered workflow automation platform
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <div className="space-y-2">
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Features</Link>
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Pricing</Link>
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Security</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <div className="space-y-2">
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">About</Link>
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Blog</Link>
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Careers</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <div className="space-y-2">
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Privacy</Link>
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Terms</Link>
+                <Link href="#" className="block text-sm text-gray-600 hover:text-gray-900">Security</Link>
+              </div>
+            </div>
+          </div>
+          <div className="border-t mt-12 pt-8 text-center text-sm text-gray-600">
+            © 2024 ChasmX. All rights reserved.
           </div>
         </div>
       </footer>
