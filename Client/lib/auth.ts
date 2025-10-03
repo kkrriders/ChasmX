@@ -1,5 +1,8 @@
 "use client"
 
+import { api } from './api'
+import { API_ENDPOINTS } from './config'
+
 export interface User {
   id: string
   email: string
@@ -87,9 +90,6 @@ export class AuthService {
     this.notify()
 
     try {
-      const { api } = await import('./api')
-      const { API_ENDPOINTS } = await import('./config')
-
       await api.post(API_ENDPOINTS.AUTH.LOGIN, { email, password })
 
       // OTP has been sent, return success with otpRequired flag
@@ -117,9 +117,6 @@ export class AuthService {
     this.notify()
 
     try {
-      const { api } = await import('./api')
-      const { API_ENDPOINTS } = await import('./config')
-
       await api.post(API_ENDPOINTS.AUTH.REGISTER, {
         email: data.email,
         password: data.password,
@@ -160,9 +157,6 @@ export class AuthService {
 
   async checkUserExists(email: string): Promise<{ exists: boolean; error?: string }> {
     try {
-      const { api } = await import('./api')
-      const { API_ENDPOINTS } = await import('./config')
-
       const data = await api.post<{ exists: boolean }>(API_ENDPOINTS.AUTH.CHECK_USER, { email })
       return { exists: data.exists }
 
@@ -179,9 +173,6 @@ export class AuthService {
     this.notify()
 
     try {
-      const { api } = await import('./api')
-      const { API_ENDPOINTS } = await import('./config')
-
       const data = await api.post<{ access_token: string; user: any }>(
         API_ENDPOINTS.AUTH.VERIFY_OTP,
         { email, otp }

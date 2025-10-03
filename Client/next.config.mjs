@@ -6,6 +6,8 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Fix for multiple lockfiles warning
+  outputFileTracingRoot: process.cwd(),
   eslint: {
     ignoreDuringBuilds: false,
   },
