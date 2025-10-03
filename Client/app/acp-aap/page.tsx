@@ -12,7 +12,7 @@ import { Shield, Plus, Settings, AlertTriangle, CheckCircle, Building2, FileText
 export default function ACPAAPPage() {
   return (
     <MainLayout
-      title="AI Control Policies (ACP) & Access/Approval Policies (AAP)"
+      title="Agent Context Protocol (ACP) & Agent To Agent Protocol (AAP)"
       searchPlaceholder="Search ACP / AAP..."
     >
       <div className="p-6 space-y-6">

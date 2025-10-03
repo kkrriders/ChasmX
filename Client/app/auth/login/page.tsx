@@ -44,7 +44,7 @@ const LoginPage = memo(function LoginPage() {
       router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
     } else if (result.success) {
       // Direct login success (shouldn't happen with OTP flow)
-      router.push("/workbench")
+      router.push("/acp-aap")
     } else {
       // Handle error - you could show a toast or error message
       console.error("Login failed:", result.error)
@@ -162,7 +162,8 @@ const LoginPage = memo(function LoginPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={togglePasswordVisibility}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                       className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

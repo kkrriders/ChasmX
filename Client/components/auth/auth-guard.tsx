@@ -24,7 +24,7 @@ export function AuthGuard({
         router.push(redirectTo)
       } else if (!requireAuth && isAuthenticated) {
         // Redirect authenticated users away from public routes like login
-        router.push("/workbench")
+        router.push("/acp-aap")
       }
     }
   }, [isAuthenticated, isLoading, requireAuth, redirectTo, router])

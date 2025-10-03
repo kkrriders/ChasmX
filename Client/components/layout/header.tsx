@@ -1,7 +1,8 @@
-"use client"
-
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Bell, Search, Command, Sun, Moon, Maximize, Settings, User, LogOut, HelpCircle, Sparkles, Zap, Menu, X } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
+import { z } from "zod"
 import { ModernButton } from "@/components/ui/modern-button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -12,12 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   DropdownMenuShortcut,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTheme } from "next-themes"
 
 interface HeaderProps {
   title?: string
@@ -58,12 +60,34 @@ const quickActions = [
   { name: "Help Center", shortcut: "⌘?", icon: HelpCircle },
 ]
 
+const searchSchema = z.string().min(1, "Search query cannot be empty").max(100, "Search query too long")
+
 export function Header({ title, searchPlaceholder = "Search workflows, templates, help..." }: HeaderProps) {
   const [searchFocused, setSearchFocused] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchError, setSearchError] = useState("")
   const unreadCount = notifications.filter((n) => n.unread).length
+  const { setTheme, theme } = useTheme()
+  const router = useRouter()
+  const { logout } = useAuth()
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      searchSchema.parse(searchQuery)
+      setSearchError("")
+      // Implement search logic here, e.g., filter ACP/AAP items or navigate to search results
+      console.log("Searching for:", searchQuery)
+      // For now, just log; integrate with actual search API
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setSearchError(error.errors[0].message)
+      }
+    }
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -118,15 +142,23 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
           >
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Command className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              className={cn(
-                "pl-10 pr-10 transition-all duration-300 bg-background/50 border-border/50 hover:border-border focus:border-primary/50",
-                searchFocused && "bg-background border-primary/50 shadow-lg shadow-primary/10",
-              )}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
+            <form onSubmit={handleSearch}>
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={cn(
+                  "pl-10 pr-10 transition-all duration-300 bg-background/50 border-border/50 hover:border-border focus:border-primary/50",
+                  searchFocused && "bg-background border-primary/50 shadow-lg shadow-primary/10",
+                  searchError && "border-destructive focus:border-destructive"
+                )}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+              />
+            </form>
+            {searchError && (
+              <p className="text-xs text-destructive mt-1">{searchError}</p>
+            )}
           </motion.div>
 
           <AnimatePresence>
@@ -174,6 +206,7 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
           <ModernButton
             variant="ghost"
             size="sm"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
           >
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -299,23 +332,35 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="hover:bg-primary/10 focus:bg-primary/10">
+              <DropdownMenuItem 
+                className="hover:bg-primary/10 focus:bg-primary/10"
+                onClick={() => router.push('/profile')}
+              >
                 <User className="mr-2 h-4 w-4" />
                 Profile
                 <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-primary/10 focus:bg-primary/10">
+              <DropdownMenuItem 
+                className="hover:bg-primary/10 focus:bg-primary/10"
+                onClick={() => router.push('/settings')}
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
                 <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-primary/10 focus:bg-primary/10">
+              <DropdownMenuItem 
+                className="hover:bg-primary/10 focus:bg-primary/10"
+                onClick={() => router.push('/help')}
+              >
                 <HelpCircle className="mr-2 h-4 w-4" />
                 Help & Support
                 <DropdownMenuShortcut>⌘?</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10">
+              <DropdownMenuItem 
+                className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
+                onClick={() => logout()}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Log out
                 <DropdownMenuShortcut>⌘Q</DropdownMenuShortcut>
@@ -382,7 +427,12 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
               {/* Mobile Actions */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ModernButton variant="ghost" size="sm" className="h-9 w-9 p-0">
+                  <ModernButton 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    className="h-9 w-9 p-0"
+                  >
                     <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                   </ModernButton>
