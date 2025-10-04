@@ -4,7 +4,8 @@
       "Bash(find:*)",
       "WebFetch(domain:www.jasper.ai)",
       "WebFetch(domain:www.midjourney.com)",
-      "WebFetch(domain:www.copy.ai)"
+      "WebFetch(domain:www.copy.ai)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

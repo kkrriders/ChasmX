@@ -46,10 +46,12 @@ const SettingsPage = memo(function SettingsPage() {
               </div>
             </div>
           </div>
-          <ModernButton gradient glow className="gap-2" onClick={handleSave}>
-            <Save className="h-4 w-4" />
-            Save Changes
-          </ModernButton>
+          <div onClick={handleSave}>
+            <ModernButton gradient glow>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </ModernButton>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -226,7 +228,7 @@ const SettingsPage = memo(function SettingsPage() {
                       <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
                         Enabled
                       </Badge>
-                      <ModernButton variant="outline" size="sm">
+                      <ModernButton>
                         Manage
                       </ModernButton>
                     </div>
@@ -242,7 +244,7 @@ const SettingsPage = memo(function SettingsPage() {
                         <p className="text-sm text-muted-foreground">Manage your API access tokens</p>
                       </div>
                     </div>
-                    <ModernButton variant="outline" size="sm">
+                    <ModernButton>
                       <Key className="h-4 w-4 mr-2" />
                       View Keys
                     </ModernButton>

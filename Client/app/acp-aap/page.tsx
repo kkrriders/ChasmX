@@ -44,8 +44,6 @@ export default function ACPAAPPage() {
                 </p>
               </div>
               <EnhancedButton 
-                variant="premium" 
-                size="lg"
                 icon={<Plus className="h-5 w-5" />}
               >
                 New Policy
@@ -159,7 +157,7 @@ export default function ACPAAPPage() {
                         2 workflows require human review
                       </p>
                     </div>
-                    <ModernButton variant="ghost" size="sm">
+                    <ModernButton>
                       View All
                     </ModernButton>
                   </div>
@@ -194,7 +192,7 @@ export default function ACPAAPPage() {
                               {item.risk} risk
                             </Badge>
                           </div>
-                          <ModernButton size="sm">
+                          <ModernButton>
                             Review
                           </ModernButton>
                         </div>
