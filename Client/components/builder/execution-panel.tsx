@@ -512,49 +512,34 @@ export function ExecutionPanel({
 
         {/* Footer Stats */}
         <div className="mt-3 pt-4 mx-6 mb-4 border-t border-slate-200 dark:border-slate-800">
-          <div className="grid grid-cols-3 gap-0 rounded-xl overflow-hidden shadow-sm">
-            <div className="text-center py-5 px-3 bg-emerald-50 dark:bg-emerald-950/30 border-2 border-r border-emerald-200 dark:border-emerald-800">
-              <div className="flex items-center justify-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
-                  <CheckCircle2 className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-3xl font-black text-emerald-900 dark:text-emerald-300 tabular-nums">
-                  {successNodes}
-                </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="text-center py-3 px-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums mb-1">
+                {successNodes}
               </div>
-              <div className="text-sm text-emerald-700 dark:text-emerald-400 font-bold">
+              <div className="text-xs text-slate-600 dark:text-slate-400">
                 Success
               </div>
             </div>
             
-            <div className="text-center py-5 px-3 bg-red-50 dark:bg-red-950/30 border-y-2 border-red-200 dark:border-red-800">
-              <div className="flex items-center justify-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center shadow-sm">
-                  <XCircle className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-3xl font-black text-red-900 dark:text-red-300 tabular-nums">
-                  {errorNodes}
-                </div>
+            <div className="text-center py-3 px-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums mb-1">
+                {errorNodes}
               </div>
-              <div className="text-sm text-red-700 dark:text-red-400 font-bold">
+              <div className="text-xs text-slate-600 dark:text-slate-400">
                 Errors
               </div>
             </div>
             
-            <div className="text-center py-5 px-3 bg-[#514eec]/10 dark:bg-[#514eec]/20 border-2 border-l border-[#514eec]/30">
-              <div className="flex items-center justify-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-full bg-[#514eec] flex items-center justify-center shadow-sm">
-                  <Clock className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-3xl font-black text-[#514eec] tabular-nums">
-                  {formatDuration(
-                    executionContext.endTime
-                      ? executionContext.endTime.getTime() - executionContext.startTime.getTime()
-                      : Date.now() - executionContext.startTime.getTime()
-                  )}
-                </div>
+            <div className="text-center py-3 px-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100 tabular-nums mb-1">
+                {formatDuration(
+                  executionContext.endTime
+                    ? executionContext.endTime.getTime() - executionContext.startTime.getTime()
+                    : Date.now() - executionContext.startTime.getTime()
+                )}
               </div>
-              <div className="text-sm text-[#514eec] font-bold">
+              <div className="text-xs text-slate-600 dark:text-slate-400">
                 Duration
               </div>
             </div>
