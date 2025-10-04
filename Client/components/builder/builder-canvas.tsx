@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState, useRef } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import {
   ReactFlow,
   MiniMap,
@@ -56,6 +56,8 @@ import {
   Settings,
   Trash2,
   X,
+  Search,
+  Copy,
 } from 'lucide-react'
 
 // Component Library Items
@@ -82,59 +84,137 @@ const componentLibrary: ComponentItem[] = [
 // Custom Node Component
 function CustomNode({ data, selected, id }: { data: any; selected?: boolean; id: string }) {
   const IconComponent = data.icon || Database
-  const { setNodes, setEdges } = useReactFlow()
+  const { setNodes, setEdges, getNode } = useReactFlow()
+  const [showContextMenu, setShowContextMenu] = useState(false)
+  const contextMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as HTMLElement)) {
+        setShowContextMenu(false)
+      }
+    }
+
+    if (showContextMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showContextMenu])
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     setNodes((nds) => nds.filter((n) => n.id !== id))
     setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id))
     toast({ title: "Success", description: "Node deleted" })
+    setShowContextMenu(false)
+  }
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowContextMenu(!showContextMenu)
+  }
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const currentNode = getNode(id)
+    if (!currentNode) return
+
+    const newNode: Node = {
+      id: `${id}-copy-${Date.now()}`,
+      type: 'custom',
+      position: { 
+        x: currentNode.position.x + 50, 
+        y: currentNode.position.y + 50 
+      },
+      data: { ...data }
+    }
+    setNodes((nds) => [...nds, newNode])
+    toast({ title: "Success", description: "Node duplicated" })
+    setShowContextMenu(false)
   }
 
   return (
-    <div className={`px-4 py-3 shadow-md rounded-lg border-2 bg-white min-w-[200px] max-w-[280px] group relative ${
-      selected
-        ? 'border-primary shadow-lg ring-2 ring-primary/20'
-        : 'border-gray-200 hover:border-primary/50'
-    }`}>
+    <div 
+      className={`px-4 py-3 shadow-md rounded-lg border-2 bg-white min-w-[200px] max-w-[280px] group relative ${
+        selected
+          ? 'border-primary shadow-lg ring-2 ring-primary/20'
+          : 'border-gray-200 hover:border-primary/50'
+      }`}
+      onContextMenu={handleContextMenu}
+    >
       {/* Connection Handles - CRITICAL FOR DRAGGING CONNECTIONS */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-white"
-        style={{ left: -6 }}
+        id="left"
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all !cursor-crosshair"
+        style={{ left: -8 }}
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-white"
-        style={{ right: -6 }}
+        id="right"
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all !cursor-crosshair"
+        style={{ right: -8 }}
+        isConnectable={true}
       />
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-white"
-        style={{ top: -6 }}
+        id="top"
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all !cursor-crosshair"
+        style={{ top: -8 }}
+        isConnectable={true}
       />
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-white"
-        style={{ bottom: -6 }}
+        id="bottom"
+        className="!w-4 !h-4 !bg-blue-500 !border-2 !border-white hover:!w-5 hover:!h-5 transition-all !cursor-crosshair"
+        style={{ bottom: -8 }}
+        isConnectable={true}
       />
       
-      {/* Delete Button - Visible on hover */}
+      {/* Delete Button - Always visible when selected, hover for others */}
       <button
         onClick={handleDelete}
-        className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive/90 transition-all shadow-md z-10"
-        title="Delete node"
+        className={`absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/90 transition-all shadow-md z-10 ${
+          selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
+        title="Delete node (Del)"
       >
         <X className="h-3 w-3" />
       </button>
 
+      {/* Context Menu */}
+      {showContextMenu && (
+        <div 
+          ref={contextMenuRef}
+          className="absolute top-full right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 py-1 min-w-[150px] node-context-menu"
+        >
+          <button
+            onClick={handleDuplicate}
+            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+          >
+            <Copy className="h-3 w-3" />
+            Duplicate
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 text-destructive flex items-center gap-2"
+          >
+            <Trash2 className="h-3 w-3" />
+            Delete
+          </button>
+        </div>
+      )}
+
       {/* Connection Indicator */}
       {selected && (
-        <div className="absolute -top-1 -left-1 w-3 h-3 bg-success rounded-full animate-pulse shadow-sm" />
+        <div className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-sm" />
       )}
 
       <div className="flex items-start gap-3">
@@ -219,8 +299,9 @@ function BuilderCanvasInner() {
   const [showSettings, setShowSettings] = useState(false)
   const [workflowName, setWorkflowName] = useState("Untitled Workflow")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [searchQuery, setSearchQuery] = useState("")
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow()
+  const { screenToFlowPosition, fitView, zoomIn, zoomOut, getNodes } = useReactFlow()
 
   // Handle node connection
   const onConnect = useCallback(
@@ -304,6 +385,17 @@ function BuilderCanvasInner() {
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType)
     event.dataTransfer.effectAllowed = 'move'
+    
+    // Add visual feedback
+    const target = event.currentTarget as HTMLElement
+    target.style.opacity = '0.5'
+    
+    // Show a helpful message
+    toast({ 
+      title: "Drag to Canvas", 
+      description: "Drop the component on the canvas to add it",
+      duration: 2000,
+    })
   }
 
   // Handle node click
@@ -322,6 +414,36 @@ function BuilderCanvasInner() {
     setShowSettings(false)
     toast({ title: "Success", description: "Node deleted" })
   }, [selectedNode, setNodes, setEdges])
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Delete selected nodes with Delete or Backspace
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      const selectedNodes = getNodes().filter(node => node.selected)
+      if (selectedNodes.length > 0) {
+        event.preventDefault()
+        selectedNodes.forEach(node => {
+          setNodes((nds) => nds.filter((n) => n.id !== node.id))
+          setEdges((eds) => eds.filter((e) => e.source !== node.id && e.target !== node.id))
+        })
+        toast({ 
+          title: "Success", 
+          description: `${selectedNodes.length} node${selectedNodes.length > 1 ? 's' : ''} deleted` 
+        })
+      }
+    }
+    // Select all nodes with Ctrl/Cmd + A
+    if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+      event.preventDefault()
+      setNodes((nds) => nds.map(node => ({ ...node, selected: true })))
+    }
+  }, [getNodes, setNodes, setEdges])
+
+  // Add keyboard event listener
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown as any)
+    return () => window.removeEventListener('keydown', handleKeyDown as any)
+  }, [handleKeyDown])
 
   // Handle save
   const handleSave = useCallback(() => {
@@ -352,10 +474,14 @@ function BuilderCanvasInner() {
     }, 2000)
   }, [nodes])
 
-  // Filter components by category
-  const filteredComponents = selectedCategory === "All"
-    ? componentLibrary
-    : componentLibrary.filter(c => c.category === selectedCategory)
+  // Filter components by category and search
+  const filteredComponents = componentLibrary.filter(c => {
+    const matchesCategory = selectedCategory === "All" || c.category === selectedCategory
+    const matchesSearch = searchQuery === "" || 
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
 
   const categories = ["All", ...Array.from(new Set(componentLibrary.map(c => c.category)))]
 
@@ -363,8 +489,8 @@ function BuilderCanvasInner() {
     <div className="h-full w-full flex">
       {/* Component Library Sidebar */}
       {showLibrary && (
-        <div className="w-80 border-r bg-white flex flex-col">
-          <div className="p-4 border-b">
+        <div className="w-80 border-r bg-white flex flex-col max-h-screen">
+          <div className="p-4 border-b flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Components</h2>
               <Button
@@ -374,6 +500,17 @@ function BuilderCanvasInner() {
               >
                 <X className="h-4 w-4" />
               </Button>
+            </div>
+
+            {/* Search Input */}
+            <div className="mb-4">
+              <Input
+                type="text"
+                placeholder="Search components..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+              />
             </div>
 
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
@@ -387,31 +524,50 @@ function BuilderCanvasInner() {
             </Tabs>
           </div>
 
-          <ScrollArea className="flex-1">
-            <div className="p-4 space-y-2">
-              {filteredComponents.map((component) => (
-                <div
-                  key={component.id}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, component.id)}
-                  className="p-3 border rounded-lg cursor-move hover:border-primary hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${component.color} bg-opacity-10`}>
-                      <component.icon className={`h-4 w-4 ${component.color.replace('bg-', 'text-')}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm">{component.name}</div>
-                      <div className="text-xs text-gray-500 line-clamp-2">{component.description}</div>
-                      <Badge variant="secondary" className="text-[10px] mt-1">
-                        {component.category}
-                      </Badge>
+          <ScrollArea className="flex-1 h-0 component-library-scroll">
+            <div className="p-4 space-y-2 pb-20">
+              {filteredComponents.length > 0 ? (
+                filteredComponents.map((component) => (
+                  <div
+                    key={component.id}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, component.id)}
+                    onDragEnd={(e) => {
+                      e.currentTarget.style.opacity = '1'
+                    }}
+                    className="p-3 border-2 border-gray-200 rounded-lg cursor-grab active:cursor-grabbing hover:border-primary hover:bg-blue-50 transition-all active:border-primary active:shadow-lg select-none"
+                    style={{ touchAction: 'none' }}
+                  >
+                    <div className="flex items-start gap-3 pointer-events-none">
+                      <div className={`p-2 rounded-lg ${component.color} bg-opacity-10 flex-shrink-0`}>
+                        <component.icon className={`h-4 w-4 ${component.color.replace('bg-', 'text-')}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm">{component.name}</div>
+                        <div className="text-xs text-gray-500 line-clamp-2">{component.description}</div>
+                        <Badge variant="secondary" className="text-[10px] mt-1">
+                          {component.category}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-medium">No components found</p>
+                  <p className="text-xs mt-1">Try a different search or category</p>
                 </div>
-              ))}
+              )}
             </div>
           </ScrollArea>
+
+          {/* Component Count */}
+          <div className="p-3 border-t bg-gray-50 flex-shrink-0">
+            <p className="text-xs text-gray-600 text-center">
+              {filteredComponents.length} component{filteredComponents.length !== 1 ? 's' : ''} available
+            </p>
+          </div>
         </div>
       )}
 
@@ -430,6 +586,12 @@ function BuilderCanvasInner() {
           edgeTypes={edgeTypes}
           fitView
           className="bg-gray-50"
+          selectNodesOnDrag={false}
+          panOnDrag={[1, 2]}
+          zoomOnScroll={true}
+          zoomOnPinch={true}
+          minZoom={0.1}
+          maxZoom={4}
           defaultEdgeOptions={{
             animated: true,
             style: { 
@@ -440,6 +602,8 @@ function BuilderCanvasInner() {
             markerEnd: {
               type: 'arrowclosed',
               color: '#3b82f6',
+              width: 20,
+              height: 20,
             },
           }}
           connectionLineStyle={{ 
@@ -449,7 +613,9 @@ function BuilderCanvasInner() {
           connectionLineType={ConnectionLineType.SmoothStep}
           snapToGrid={true}
           snapGrid={[15, 15]}
-          deleteKeyCode="Delete"
+          deleteKeyCode={['Delete', 'Backspace']}
+          multiSelectionKeyCode="Control"
+          selectionKeyCode="Shift"
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#d1d5db" />
@@ -489,6 +655,24 @@ function BuilderCanvasInner() {
 
           {/* Action Panel */}
           <Panel position="top-right" className="flex items-center gap-2 bg-white rounded-lg shadow-md p-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                if (nodes.length === 0) return
+                const confirmed = window.confirm('Are you sure you want to clear all nodes?')
+                if (confirmed) {
+                  setNodes([])
+                  setEdges([])
+                  toast({ title: "Success", description: "All nodes cleared" })
+                }
+              }}
+              disabled={nodes.length === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear All
+            </Button>
+            <div className="h-4 w-px bg-gray-200" />
             <Button variant="outline" size="sm" onClick={handleSave}>
               <Save className="h-4 w-4 mr-1" />
               Save
@@ -540,9 +724,22 @@ function BuilderCanvasInner() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md border mt-3">
-                <kbd className="px-2 py-1 bg-white border rounded text-[10px] font-mono">Delete</kbd>
-                <span className="text-gray-600">Press to remove selected connection</span>
+              <div className="mt-3 p-2 bg-gray-50 rounded-md border">
+                <p className="text-xs font-semibold text-gray-800 mb-2">⌨️ Keyboard Shortcuts</p>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Delete node</span>
+                    <kbd className="px-2 py-1 bg-white border rounded text-[10px] font-mono">Del</kbd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Select all</span>
+                    <kbd className="px-2 py-1 bg-white border rounded text-[10px] font-mono">Ctrl+A</kbd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Duplicate</span>
+                    <span className="text-[10px] text-gray-500">Right-click node</span>
+                  </div>
+                </div>
               </div>
             </div>
           </Panel>

@@ -34,7 +34,7 @@ const USE_CASES = [
     title: "Lead Scoring & Qualification",
     description: "Automatically score and qualify leads using AI",
     icon: <Target className="h-6 w-6" />,
-    color: "bg-blue-500/10 text-blue-600",
+    color: "bg-primary/10 text-primary",
     popular: true,
   },
   {
@@ -49,7 +49,7 @@ const USE_CASES = [
     title: "Content & Copy Generation",
     description: "Generate marketing copy, emails, and documentation",
     icon: <FileText className="h-6 w-6" />,
-    color: "bg-purple-500/10 text-purple-600",
+    color: "bg-primary/10 text-primary",
   },
   {
     id: "data-analysis",
@@ -188,8 +188,8 @@ export default function OnboardingPage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
                   <div className="text-center p-4">
-                    <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <Zap className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <Zap className="h-6 w-6 text-primary" />
                     </div>
                     <h4 className="font-medium">No-Code Builder</h4>
                     <p className="text-sm text-muted-foreground">Drag & drop interface</p>
@@ -202,8 +202,8 @@ export default function OnboardingPage() {
                     <p className="text-sm text-muted-foreground">Security & compliance</p>
                   </div>
                   <div className="text-center p-4">
-                    <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                      <Brain className="h-6 w-6 text-purple-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                      <Brain className="h-6 w-6 text-primary" />
                     </div>
                     <h4 className="font-medium">AI-Powered</h4>
                     <p className="text-sm text-muted-foreground">Intelligent automation</p>

@@ -53,23 +53,23 @@ export default function TeamsPage() {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "Admin":
-        return <Crown className="h-4 w-4 text-yellow-600" />
+        return <Crown className="h-4 w-4 text-warning" />
       case "Editor":
-        return <Shield className="h-4 w-4 text-blue-600" />
+        return <Shield className="h-4 w-4 text-primary" />
       case "Viewer":
-        return <UserCheck className="h-4 w-4 text-green-600" />
+        return <UserCheck className="h-4 w-4 text-success" />
       default:
-        return <Users className="h-4 w-4 text-gray-600" />
+        return <Users className="h-4 w-4 text-muted-foreground" />
     }
   }
 
   const getStatusBadge = (status: string) => {
     return status === "Active" ? (
-      <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+      <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
         Active
       </Badge>
     ) : (
-      <Badge variant="outline" className="border-gray-300 text-gray-600">
+      <Badge variant="outline" className="border-muted text-muted-foreground">
         Inactive
       </Badge>
     )
@@ -104,7 +104,7 @@ export default function TeamsPage() {
               <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center">
                 <Users className="h-5 w-5 text-white" />
               </div>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-success" />
             </div>
             <div className="text-3xl font-bold">12</div>
             <div className="text-sm text-muted-foreground mt-1">Total Members</div>
@@ -112,10 +112,10 @@ export default function TeamsPage() {
 
           <div className="gradient-card border border-gradient rounded-2xl p-6 shadow-soft hover:shadow-lg-modern transition-all">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <UserCheck className="h-5 w-5 text-green-600" />
+              <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                <UserCheck className="h-5 w-5 text-success" />
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">83%</Badge>
+              <Badge variant="secondary" className="bg-success/10 text-success text-xs">83%</Badge>
             </div>
             <div className="text-3xl font-bold">10</div>
             <div className="text-sm text-muted-foreground mt-1">Active Members</div>
@@ -123,8 +123,8 @@ export default function TeamsPage() {
 
           <div className="gradient-card border border-gradient rounded-2xl p-6 shadow-soft hover:shadow-lg-modern transition-all">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-yellow-500/10 rounded-xl flex items-center justify-center">
-                <Crown className="h-5 w-5 text-yellow-600" />
+              <div className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center">
+                <Crown className="h-5 w-5 text-warning" />
               </div>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </div>
@@ -134,8 +134,8 @@ export default function TeamsPage() {
 
           <div className="gradient-card border border-gradient rounded-2xl p-6 shadow-soft hover:shadow-lg-modern transition-all">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                <Shield className="h-5 w-5 text-blue-600" />
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Shield className="h-5 w-5 text-primary" />
               </div>
               <span className="text-xs text-muted-foreground">Roles</span>
             </div>
@@ -230,7 +230,7 @@ export default function TeamsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="border-blue-200 text-blue-700">Editor</Badge>
+                  <Badge variant="outline" className="border-primary/30 text-primary">Editor</Badge>
                   <ModernButton variant="outline" size="sm">
                     Resend
                   </ModernButton>
@@ -247,8 +247,8 @@ export default function TeamsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ModernCard className="border-gradient gradient-card shadow-soft">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center">
-                <Crown className="h-6 w-6 text-yellow-600" />
+              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
+                <Crown className="h-6 w-6 text-warning" />
               </div>
               <div>
                 <div className="text-2xl font-bold">2</div>
@@ -259,8 +259,8 @@ export default function TeamsPage() {
 
           <ModernCard className="border-gradient gradient-card shadow-soft">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                <Shield className="h-6 w-6 text-blue-600" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Shield className="h-6 w-6 text-primary" />
               </div>
               <div>
                 <div className="text-2xl font-bold">5</div>
@@ -271,8 +271,8 @@ export default function TeamsPage() {
 
           <ModernCard className="border-gradient gradient-card shadow-soft">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <UserCheck className="h-6 w-6 text-green-600" />
+              <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
+                <UserCheck className="h-6 w-6 text-success" />
               </div>
               <div>
                 <div className="text-2xl font-bold">5</div>

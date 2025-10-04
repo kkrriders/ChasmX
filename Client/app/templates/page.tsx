@@ -45,9 +45,9 @@ export default function TemplatesPage() {
 
           {/* Filters */}
           <div className="flex items-center gap-4">
-            <Input placeholder="Search templates..." className="max-w-sm" />
+            <Input placeholder="Search templates..." className="max-w-sm bg-white dark:bg-gray-900" />
             <Select defaultValue="most-used">
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 bg-white dark:bg-gray-900">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -57,7 +57,7 @@ export default function TemplatesPage() {
               </SelectContent>
             </Select>
             <Select defaultValue="ready-only">
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-40 bg-white dark:bg-gray-900">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -71,11 +71,11 @@ export default function TemplatesPage() {
             {/* Template Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Email Triage Template */}
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:shadow-md transition-smooth cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Mail className="h-5 w-5 text-blue-600" />
+                      <Mail className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg">Email Triage</CardTitle>
                     </div>
                     <Badge variant="secondary">Popular</Badge>
@@ -91,12 +91,12 @@ export default function TemplatesPage() {
                       1.2k installs
                     </div>
                     <div className="flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <CheckCircle className="h-4 w-4 text-success" />
                       ACP
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                    <Button variant="outline" size="sm" className="flex-1">
                       <Eye className="mr-2 h-4 w-4" />
                       Preview
                     </Button>
@@ -109,11 +109,11 @@ export default function TemplatesPage() {
               </Card>
 
               {/* Chat Assistant Template */}
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:shadow-md transition-smooth cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5 text-green-600" />
+                      <MessageSquare className="h-5 w-5 text-success" />
                       <CardTitle className="text-lg">Chat Assistant</CardTitle>
                     </div>
                     <Badge variant="outline">ACP Ready</Badge>
@@ -133,7 +133,7 @@ export default function TemplatesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                    <Button variant="outline" size="sm" className="flex-1">
                       <Eye className="mr-2 h-4 w-4" />
                       Preview
                     </Button>
@@ -146,11 +146,11 @@ export default function TemplatesPage() {
               </Card>
 
               {/* Document Processing Template */}
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:shadow-md transition-smooth cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-purple-600" />
+                      <FileText className="h-5 w-5 text-accent" />
                       <CardTitle className="text-lg">Document Processing</CardTitle>
                     </div>
                     <Badge variant="secondary">New</Badge>
@@ -169,7 +169,7 @@ export default function TemplatesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                    <Button variant="outline" size="sm" className="flex-1">
                       <Eye className="mr-2 h-4 w-4" />
                       Preview
                     </Button>
@@ -218,11 +218,11 @@ export default function TemplatesPage() {
               </Card>
 
               {/* Lead Scoring Template */}
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="hover:shadow-md transition-smooth cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
+                      <TrendingUp className="h-5 w-5 text-primary" />
                       <CardTitle className="text-lg">Lead Scoring</CardTitle>
                     </div>
                     <Badge variant="secondary">Popular</Badge>
@@ -241,7 +241,7 @@ export default function TemplatesPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                    <Button variant="outline" size="sm" className="flex-1">
                       <Eye className="mr-2 h-4 w-4" />
                       Preview
                     </Button>
@@ -298,7 +298,7 @@ export default function TemplatesPage() {
                 Steps: Intake → Classify → AI Summarize → Route → Notify
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                <Button variant="outline" size="sm" className="flex-1">
                   <Eye className="mr-2 h-4 w-4" />
                   Preview
                 </Button>
@@ -318,9 +318,9 @@ export default function TemplatesPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-smooth">
                 <div className="flex items-center gap-3">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
+                  <BookOpen className="h-5 w-5 text-primary" />
                   <div>
                     <div className="font-medium">Choosing the right template for your use case</div>
                   </div>
@@ -331,9 +331,9 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer">
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-smooth">
                 <div className="flex items-center gap-3">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
+                  <BookOpen className="h-5 w-5 text-primary" />
                   <div>
                     <div className="font-medium">Customize a template in the builder</div>
                   </div>

@@ -89,7 +89,7 @@ const SignupPage = memo(function SignupPage() {
             {/* Benefits */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mt-1">
+                <div className="flex-shrink-0 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center mt-1">
                   <CheckCircle className="h-4 w-4 text-primary" />
                 </div>
                 <div>
@@ -99,7 +99,7 @@ const SignupPage = memo(function SignupPage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-1">
+                <div className="flex-shrink-0 w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center mt-1">
                   <CheckCircle className="h-4 w-4 text-accent" />
                 </div>
                 <div>

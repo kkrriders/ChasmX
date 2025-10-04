@@ -3,12 +3,13 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Toaster } from "sonner"
 import { ThemeProvider } from "@/components/theme-provider"
-import ErrorBoundary from "@/components/error-boundary"
+import { CommandPalette } from "@/components/ui/command-palette"
+import { HydrationErrorSuppressor } from "@/components/hydration-error-suppressor"
 
 export const metadata: Metadata = {
-  title: "ChasmX - AI-Powered Workflow Automation",
-  description: "Build, deploy, and scale intelligent workflows with our revolutionary no-code platform.",
-  keywords: ["AI", "workflow automation", "no-code", "business automation"],
+  title: "ChasmX - Transform Ideas into Intelligent Workflows",
+  description: "Build, deploy, and scale AI-powered automation workflows in minutes. No coding required. Enterprise-grade security. Unlimited possibilities.",
+  keywords: ["AI", "workflow automation", "no-code", "business automation", "intelligent workflows", "ChasmX"],
 }
 
 export default function RootLayout({
@@ -32,9 +33,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+          <HydrationErrorSuppressor />
+          <CommandPalette />
+          {children}
           <Toaster position="top-right" />
         </ThemeProvider>
       </body>

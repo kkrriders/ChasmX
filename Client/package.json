@@ -39,7 +39,7 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@vercel/analytics": "latest",
-    "@xyflow/react": "^12.8.5",
+    "@xyflow/react": "^12.8.6",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -62,7 +62,8 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "vaul": "^0.9.9",
-    "zod": "3.25.67"
+    "zod": "3.25.67",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.4",
