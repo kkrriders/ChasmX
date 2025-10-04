@@ -27,7 +27,7 @@ export default function IntegrationsPage() {
       id: 1,
       name: "Slack",
       description: "Send notifications and receive commands",
-      icon: <MessageSquare className="h-8 w-8 text-purple-600" />,
+      icon: <MessageSquare className="h-8 w-8 text-accent" />,
       status: "Connected",
       usage: 85,
       category: "Communication",
@@ -37,7 +37,7 @@ export default function IntegrationsPage() {
       id: 2,
       name: "Google Drive",
       description: "Store and access files",
-      icon: <Cloud className="h-8 w-8 text-blue-600" />,
+      icon: <Cloud className="h-8 w-8 text-primary" />,
       status: "Connected",
       usage: 92,
       category: "Storage",
@@ -57,7 +57,7 @@ export default function IntegrationsPage() {
       id: 4,
       name: "Stripe",
       description: "Process payments",
-      icon: <Zap className="h-8 w-8 text-indigo-600" />,
+      icon: <Zap className="h-8 w-8 text-primary" />,
       status: "Disconnected",
       usage: 0,
       category: "Payment",
@@ -69,13 +69,13 @@ export default function IntegrationsPage() {
     {
       name: "Discord",
       description: "Community management",
-      icon: <MessageSquare className="h-6 w-6 text-indigo-600" />,
+      icon: <MessageSquare className="h-6 w-6 text-primary" />,
       category: "Communication",
     },
     {
       name: "Dropbox",
       description: "File storage and sharing",
-      icon: <Cloud className="h-6 w-6 text-blue-600" />,
+      icon: <Cloud className="h-6 w-6 text-primary" />,
       category: "Storage",
     },
     {
@@ -96,7 +96,7 @@ export default function IntegrationsPage() {
     switch (status) {
       case "Connected":
         return (
-          <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+          <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
             <CheckCircle className="h-3 w-3 mr-1" />
             Connected
           </Badge>
@@ -148,7 +148,7 @@ export default function IntegrationsPage() {
               <div className="w-10 h-10 gradient-success rounded-xl flex items-center justify-center">
                 <Link className="h-5 w-5 text-white" />
               </div>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-success" />
             </div>
             <div className="text-3xl font-bold">3</div>
             <div className="text-sm text-muted-foreground mt-1">Active Integrations</div>
@@ -156,8 +156,8 @@ export default function IntegrationsPage() {
 
           <div className="gradient-card border border-gradient rounded-2xl p-6 shadow-soft hover:shadow-lg-modern transition-all">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                <Activity className="h-5 w-5 text-blue-600" />
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Activity className="h-5 w-5 text-primary" />
               </div>
               <span className="text-xs text-muted-foreground">Today</span>
             </div>
@@ -167,10 +167,10 @@ export default function IntegrationsPage() {
 
           <div className="gradient-card border border-gradient rounded-2xl p-6 shadow-soft hover:shadow-lg-modern transition-all">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-success" />
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">Excellent</Badge>
+              <Badge variant="secondary" className="bg-success/10 text-success text-xs">Excellent</Badge>
             </div>
             <div className="text-3xl font-bold">99.8%</div>
             <div className="text-sm text-muted-foreground mt-1">Success Rate</div>
@@ -282,8 +282,8 @@ export default function IntegrationsPage() {
           <ModernCard className="border-gradient gradient-card shadow-soft hover:shadow-lg-modern transition-all cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                  <Cloud className="h-5 w-5 text-blue-600" />
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Cloud className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <div className="font-bold">Storage</div>
@@ -297,8 +297,8 @@ export default function IntegrationsPage() {
           <ModernCard className="border-gradient gradient-card shadow-soft hover:shadow-lg-modern transition-all cursor-pointer">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-green-600" />
+                <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-success" />
                 </div>
                 <div>
                   <div className="font-bold">Productivity</div>

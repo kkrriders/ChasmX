@@ -149,8 +149,8 @@ const SettingsPage = memo(function SettingsPage() {
             <ModernCard className="border-gradient shadow-lg-modern">
               <div className="space-y-6">
                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                    <Bell className="h-5 w-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <Bell className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">Notification Preferences</h2>
@@ -181,8 +181,8 @@ const SettingsPage = memo(function SettingsPage() {
             <ModernCard className="border-gradient shadow-lg-modern">
               <div className="space-y-6">
                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-green-600" />
+                  <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
+                    <Shield className="h-5 w-5 text-success" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">Security Settings</h2>
@@ -223,7 +223,7 @@ const SettingsPage = memo(function SettingsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
+                      <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
                         Enabled
                       </Badge>
                       <ModernButton variant="outline" size="sm">
@@ -234,8 +234,8 @@ const SettingsPage = memo(function SettingsPage() {
 
                   <div className="flex items-center justify-between p-5 bg-gradient-card rounded-xl border border-border/50 hover:border-primary/30 transition-all">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                        <Key className="h-5 w-5 text-blue-600" />
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Key className="h-5 w-5 text-primary" />
                       </div>
                       <div>
                         <h4 className="font-semibold">API Keys</h4>
@@ -255,8 +255,8 @@ const SettingsPage = memo(function SettingsPage() {
             <ModernCard className="border-gradient shadow-lg-modern">
               <div className="space-y-6">
                 <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
-                    <Palette className="h-5 w-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <Palette className="h-5 w-5 text-accent" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">Appearance</h2>

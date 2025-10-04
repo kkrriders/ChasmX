@@ -3,6 +3,8 @@
 import { MainLayout } from "@/components/layout/main-layout"
 import { ModernCard } from "@/components/ui/modern-card"
 import { ModernButton } from "@/components/ui/modern-button"
+import { EnhancedButton } from "@/components/ui/enhanced-button"
+import { AnimatedStatCard } from "@/components/ui/animated-stat-card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -31,84 +33,67 @@ export default function ACPAAPPage() {
         <div className="max-w-[1800px] mx-auto space-y-8">
 
           {/* Header */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div>
-              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-3 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                Governance Dashboard
-              </h1>
-              <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl">
-                Monitor and control your AI infrastructure in real-time with intelligent governance
-              </p>
+          <div className="glass-navbar -mx-6 -mt-6 mb-8 px-6 py-6 lg:-mx-8 lg:-mt-8 lg:px-8">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div>
+                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-3 gradient-text">
+                  Governance Dashboard
+                </h1>
+                <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl">
+                  Monitor and control your AI infrastructure in real-time with intelligent governance
+                </p>
+              </div>
+              <EnhancedButton 
+                variant="premium" 
+                size="lg"
+                icon={<Plus className="h-5 w-5" />}
+              >
+                New Policy
+              </EnhancedButton>
             </div>
-            <ModernButton className="gap-2 shadow-md hover:shadow-lg transition-all" size="lg">
-              <Plus className="h-5 w-5" />
-              New Policy
-            </ModernButton>
           </div>
 
           {/* Key Metrics - Hero */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="gradient-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover-lift">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-sm">
-                  <Shield className="h-7 w-7 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Compliance Score</div>
-                  <div className="text-4xl font-bold bg-gradient-to-br from-primary to-accent bg-clip-text text-transparent">98.7</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm font-medium text-success">
-                <TrendingUp className="h-4 w-4" />
-                <span>+2.3% this week</span>
-              </div>
-            </div>
+            <AnimatedStatCard
+              title="Compliance Score"
+              value="98.7"
+              icon={Shield}
+              trend={{ value: "+2.3% this week", positive: true }}
+              iconGradient="from-primary/10 to-primary/5"
+              animated={true}
+              delay={0}
+            />
 
-            <div className="gradient-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover-lift">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-success/10 to-success/5 flex items-center justify-center shadow-sm">
-                  <CheckCircle2 className="h-7 w-7 text-success" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Active Policies</div>
-                  <div className="text-4xl font-bold">24</div>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground font-medium">
-                Across 12 workflows
-              </div>
-            </div>
+            <AnimatedStatCard
+              title="Active Policies"
+              value="24"
+              icon={CheckCircle2}
+              description="Across 12 workflows"
+              iconGradient="from-success/10 to-success/5"
+              animated={true}
+              delay={100}
+            />
 
-            <div className="gradient-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover-lift">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-warning/10 to-warning/5 flex items-center justify-center shadow-sm">
-                  <Activity className="h-7 w-7 text-warning" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Checks Today</div>
-                  <div className="text-4xl font-bold">1.2K</div>
-                </div>
-              </div>
-              <div className="text-sm text-muted-foreground font-medium">
-                99.9% success rate
-              </div>
-            </div>
+            <AnimatedStatCard
+              title="Checks Today"
+              value="1.2K"
+              icon={Activity}
+              description="99.9% success rate"
+              iconGradient="from-warning/10 to-warning/5"
+              animated={true}
+              delay={200}
+            />
 
-            <div className="gradient-card border border-border/60 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover-lift">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-destructive/10 to-destructive/5 flex items-center justify-center shadow-sm">
-                  <AlertTriangle className="h-7 w-7 text-destructive" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Blocked</div>
-                  <div className="text-4xl font-bold">3</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-sm font-medium text-success">
-                <TrendingUp className="h-4 w-4 rotate-180" />
-                <span>92% less than yesterday</span>
-              </div>
-            </div>
+            <AnimatedStatCard
+              title="Blocked"
+              value="3"
+              icon={AlertTriangle}
+              trend={{ value: "92% less than yesterday", positive: true }}
+              iconGradient="from-destructive/10 to-destructive/5"
+              animated={true}
+              delay={300}
+            />
           </div>
 
           {/* Main Content Grid */}

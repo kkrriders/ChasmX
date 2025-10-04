@@ -71,7 +71,7 @@ export default function VerifyOtpPage() {
       <div className="w-full max-w-md">
         <Card className="border-2">
           <CardHeader className="space-y-1 text-center">
-            <div className="mx-auto w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-4">
+            <div className="mx-auto w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
               <Shield className="h-8 w-8 text-primary" />
             </div>
             <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>

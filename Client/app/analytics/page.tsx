@@ -16,7 +16,7 @@ const AnalyticsPage = memo(function AnalyticsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
+              <BarChart3 className="h-5 w-5 text-primary" />
               <span className="text-sm text-muted-foreground">Last 30 days</span>
             </div>
             <div className="flex gap-2">
@@ -106,7 +106,7 @@ const AnalyticsPage = memo(function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                    <TrendingUp className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium">Lead Scoring</span>
                   </div>
                   <div className="text-right">
@@ -119,7 +119,7 @@ const AnalyticsPage = memo(function AnalyticsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-success" />
                     <span className="text-sm font-medium">Support Triage</span>
                   </div>
                   <div className="text-right">
@@ -132,7 +132,7 @@ const AnalyticsPage = memo(function AnalyticsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-purple-600" />
+                    <TrendingUp className="h-4 w-4 text-accent" />
                     <span className="text-sm font-medium">Content Gen</span>
                   </div>
                   <div className="text-right">
@@ -165,8 +165,8 @@ const AnalyticsPage = memo(function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                      <Zap className="h-4 w-4 text-green-600" />
+                    <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
+                      <Zap className="h-4 w-4 text-success" />
                     </div>
                     <div>
                       <div className="font-medium text-sm">GPT-4o</div>
@@ -180,8 +180,8 @@ const AnalyticsPage = memo(function AnalyticsPage() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Zap className="h-4 w-4 text-blue-600" />
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Zap className="h-4 w-4 text-primary" />
                     </div>
                     <div>
                       <div className="font-medium text-sm">Claude 3 Haiku</div>
@@ -195,8 +195,8 @@ const AnalyticsPage = memo(function AnalyticsPage() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Zap className="h-4 w-4 text-purple-600" />
+                    <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                      <Zap className="h-4 w-4 text-accent" />
                     </div>
                     <div>
                       <div className="font-medium text-sm">Llama 3.1 70B</div>
@@ -249,7 +249,7 @@ const AnalyticsPage = memo(function AnalyticsPage() {
                     <CardContent>
                       <div className="text-2xl font-bold">3</div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 text-blue-500" />
+                        <Clock className="h-3 w-3 text-primary" />
                         last 24h
                       </div>
                     </CardContent>
@@ -316,7 +316,7 @@ const AnalyticsPage = memo(function AnalyticsPage() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <div className="flex-1">
                       <div className="text-sm font-medium">New model deployment: Claude 3.5</div>
                       <div className="text-xs text-muted-foreground">1 hour ago • Ready for testing</div>
@@ -369,8 +369,8 @@ const AnalyticsPage = memo(function AnalyticsPage() {
                 <CardTitle>Insights</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                  <TrendingUp className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
+                  <TrendingUp className="h-4 w-4 text-primary mt-0.5" />
                   <div>
                     <div className="text-sm font-medium">Cost spike in Support Triage</div>
                     <div className="text-xs text-muted-foreground">
@@ -382,8 +382,8 @@ const AnalyticsPage = memo(function AnalyticsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                  <Star className="h-4 w-4 text-green-600 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 bg-success/5 rounded-lg">
+                  <Star className="h-4 w-4 text-success mt-0.5" />
                   <div>
                     <div className="text-sm font-medium">GPT-4o best QoS</div>
                     <div className="text-xs text-muted-foreground">

@@ -98,365 +98,106 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
   }, [])
 
   return (
-    <motion.header
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <header
       className={cn(
-        "flex items-center justify-between px-4 sm:px-6 py-4 border-b sticky top-0 z-50 transition-all duration-300",
-        isScrolled
-          ? "bg-background/95 backdrop-blur-xl border-border/80 shadow-lg shadow-black/5"
-          : "bg-background/80 backdrop-blur-sm border-border/50"
+        "sticky top-0 z-40 w-full border-b border-border/40 bg-primary text-primary-foreground shadow-sm transition-all duration-300"
       )}
     >
-      <div className="flex items-center gap-4 sm:gap-6">
-        {/* Title Section */}
-        <AnimatePresence>
-          {title && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="hidden md:block"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-px h-8 bg-border" />
-                <div>
-                  <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-                  <p className="text-sm text-muted-foreground">Manage your AI workflows and automation</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Desktop Navigation */}
-      <div className="hidden lg:flex items-center gap-3">
-        {/* Enhanced Search */}
-        <div className="relative">
-          <motion.div
-            className={cn("relative transition-all duration-300", searchFocused ? "w-96" : "w-80")}
-            layout
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
+        <div className="flex items-center gap-4">
+          <button
+            className="block md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Command className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <form onSubmit={handleSearch}>
-              <Input
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn(
-                  "pl-10 pr-10 transition-all duration-300 bg-background/50 border-border/50 hover:border-border focus:border-primary/50",
-                  searchFocused && "bg-background border-primary/50 shadow-lg shadow-primary/10",
-                  searchError && "border-destructive focus:border-destructive"
-                )}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-              />
-            </form>
-            {searchError && (
-              <p className="text-xs text-destructive mt-1">{searchError}</p>
-            )}
-          </motion.div>
-
-          <AnimatePresence>
-            {searchFocused && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-2xl z-50"
-              >
-                <div className="p-4">
-                  <h4 className="text-sm font-medium mb-3 text-muted-foreground flex items-center gap-2">
-                    <Zap className="h-4 w-4" />
-                    Quick Actions
-                  </h4>
-                  <div className="space-y-1">
-                    {quickActions.map((action, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <action.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                          <span className="text-sm font-medium">{action.name}</span>
-                        </div>
-                        <Badge variant="outline" className="text-xs opacity-60 group-hover:opacity-100 transition-opacity">
-                          {action.shortcut}
-                        </Badge>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+          <h1 className="text-xl font-semibold tracking-tight">AI Governance</h1>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1">
-          {/* Theme Toggle */}
+        <div className="flex-1 max-w-md mx-8 hidden md:block">
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary-foreground/60" />
+              <Input
+                placeholder="Search policies, workflows..."
+                className="w-full rounded-full bg-black/20 pl-12 pr-4 py-2 text-base text-primary-foreground placeholder:text-primary-foreground/60 border-transparent focus:bg-black/30 focus:ring-2 focus:ring-ring"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {searchError && <p className="text-xs text-red-400 mt-1">{searchError}</p>}
+          </form>
+        </div>
+
+        <div className="flex items-center gap-4">
           <ModernButton
+            onClick={() => (theme === "dark" ? setTheme("light") : setTheme("dark"))}
             variant="ghost"
-            size="sm"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
+            size="icon"
+            className="hover:bg-primary-foreground/10"
           >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
           </ModernButton>
 
-          {/* Fullscreen Toggle */}
-          <ModernButton
-            variant="ghost"
-            size="sm"
-            className="h-9 w-9 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
-          >
-            <Maximize className="h-4 w-4" />
-          </ModernButton>
-
-          {/* Enhanced Notifications */}
           <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <PopoverTrigger asChild>
-              <ModernButton
-                variant="ghost"
-                size="sm"
-                className="h-9 w-9 p-0 relative hover:bg-primary/10 hover:text-primary transition-colors"
-              >
-                <Bell className="h-4 w-4" />
+              <ModernButton variant="ghost" size="icon" className="relative hover:bg-primary-foreground/10">
+                <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-xs text-white font-medium shadow-lg"
-                  >
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                     {unreadCount}
-                  </motion.div>
+                  </span>
                 )}
               </ModernButton>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-background/95 backdrop-blur-xl border-border/50" align="end">
-              <div className="p-4 border-b border-border/50">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <Bell className="h-4 w-4" />
-                    Notifications
-                  </h4>
-                  <Badge variant="secondary" className="text-xs bg-primary/10 text-primary">
-                    {unreadCount} new
-                  </Badge>
-                </div>
-              </div>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="p-4 font-medium">Notifications</div>
               <div className="max-h-80 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <motion.div
-                    key={notification.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                      "p-4 border-b border-border/50 hover:bg-muted/50 cursor-pointer transition-colors",
-                      notification.unread && "bg-primary/5",
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={cn(
-                          "w-2 h-2 rounded-full mt-2 flex-shrink-0",
-                          notification.type === "success" && "bg-green-500",
-                          notification.type === "warning" && "bg-orange-500",
-                          notification.type === "info" && "bg-blue-500",
-                        )}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{notification.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{notification.description}</p>
-                        <p className="text-xs text-muted-foreground mt-2">{notification.time}</p>
-                      </div>
-                      {notification.unread && (
-                        <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2 animate-pulse" />
-                      )}
-                    </div>
-                  </motion.div>
+                {notifications.map((n) => (
+                  <div key={n.id} className="border-t p-4 text-sm hover:bg-accent">
+                    <p className="font-semibold">{n.title}</p>
+                    <p className="text-muted-foreground">{n.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
+                  </div>
                 ))}
               </div>
-              <div className="p-4 border-t border-border/50">
-                <ModernButton variant="ghost" className="w-full text-sm hover:bg-primary/10">
-                  View All Notifications
-                </ModernButton>
+              <div className="border-t p-2 text-center">
+                <a href="#" className="text-sm font-medium text-primary">
+                  View all notifications
+                </a>
               </div>
             </PopoverContent>
           </Popover>
 
-          {/* Enhanced User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <ModernButton
-                variant="ghost"
-                className="relative h-9 w-9 rounded-full hover:ring-2 hover:ring-primary/20 transition-all duration-200"
-              >
-                <Avatar className="h-9 w-9 ring-2 ring-transparent hover:ring-primary/20 transition-all">
-                  <AvatarImage src="/placeholder.svg?height=36&width=36" alt="Alex Johnson" />
-                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-cyan-500 text-white">AJ</AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-background rounded-full animate-pulse" />
-              </ModernButton>
+              <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-offset-primary ring-primary-foreground/50">
+                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-background/95 backdrop-blur-xl border-border/50" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                      <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Alex Johnson" />
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-cyan-500 text-white">AJ</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium leading-none">Alex Johnson</p>
-                      <p className="text-xs leading-none text-muted-foreground mt-1">alex@company.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs bg-gradient-to-r from-purple-500 to-cyan-500 text-white">
-                      Pro Plan
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      Admin
-                    </Badge>
-                  </div>
-                </div>
-              </DropdownMenuLabel>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="hover:bg-primary/10 focus:bg-primary/10"
-                onClick={() => router.push('/profile')}
-              >
+              <DropdownMenuItem onClick={() => router.push('/profile')}>
                 <User className="mr-2 h-4 w-4" />
-                Profile
-                <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
+                <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="hover:bg-primary/10 focus:bg-primary/10"
-                onClick={() => router.push('/settings')}
-              >
+              <DropdownMenuItem onClick={() => router.push('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
-                <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="hover:bg-primary/10 focus:bg-primary/10"
-                onClick={() => router.push('/help')}
-              >
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Help & Support
-                <DropdownMenuShortcut>⌘?</DropdownMenuShortcut>
+                <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10"
-                onClick={() => logout()}
-              >
+              <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
-                <DropdownMenuShortcut>⌘Q</DropdownMenuShortcut>
+                <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-
-      {/* Mobile Menu Button */}
-      <div className="lg:hidden">
-        <ModernButton
-          variant="ghost"
-          size="sm"
-          className="h-9 w-9 p-0"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <AnimatePresence mode="wait">
-            {mobileMenuOpen ? (
-              <motion.div
-                key="close"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <X className="h-4 w-4" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="menu"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Menu className="h-4 w-4" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </ModernButton>
-      </div>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border/50 lg:hidden"
-          >
-            <div className="px-4 py-6 space-y-4">
-              {/* Mobile Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={searchPlaceholder}
-                  className="pl-10 bg-background/50 border-border/50"
-                />
-              </div>
-
-              {/* Mobile Actions */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ModernButton 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                    className="h-9 w-9 p-0"
-                  >
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  </ModernButton>
-                  <ModernButton variant="ghost" size="sm" className="h-9 w-9 p-0">
-                    <Maximize className="h-4 w-4" />
-                  </ModernButton>
-                  <ModernButton variant="ghost" size="sm" className="h-9 w-9 p-0 relative">
-                    <Bell className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                      <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs">
-                        {unreadCount}
-                      </Badge>
-                    )}
-                  </ModernButton>
-                </div>
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="Alex Johnson" />
-                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-cyan-500 text-white text-xs">AJ</AvatarFallback>
-                </Avatar>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.header>
+    </header>
   )
 }
