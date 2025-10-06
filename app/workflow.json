@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Customer Onboarding",
+    "description": "Workflow to onboard new customers step by step"
+  },
+  {
+    "name": "Invoice Processing",
+    "description": "Automated workflow for invoice approvals and payments"
+  },
+  {
+    "name": "Support Ticket Handling",
+    "description": "Handles customer support tickets and assigns agents"
+  }
+]
