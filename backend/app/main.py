@@ -13,13 +13,13 @@ from loguru import logger
 
 from app.core.database import connect_to_mongo, close_mongo_connection, get_database
 from app.core.config import settings
-from app.routes import auth_router, users_router
+from app.routes import auth_router, users_router, workflow_router
 
 # Initialize FastAPI application
 app = FastAPI(
     title="Backend API",
     version="1.0.0",
-    description="Role-Based Access Control (RBAC) Authentication Service",
+    description="Role-Based Access Control (RBAC) and Workflow Management Service",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -50,6 +50,7 @@ app.router.lifespan_context = lifespan
 # Include routers with prefixes
 app.include_router(auth_router, prefix="/auth")
 app.include_router(users_router, prefix="/users")
+app.include_router(workflow_router)
 
 @app.get("/")
 async def root():
