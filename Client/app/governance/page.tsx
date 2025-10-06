@@ -27,7 +27,7 @@ export default function GovernancePage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-600" />
+              <Shield className="h-5 w-5 text-primary" />
               <span className="text-sm text-muted-foreground">Org-wide</span>
             </div>
             <div className="flex items-center gap-2">
@@ -51,7 +51,7 @@ export default function GovernancePage() {
             <CardContent>
               <div className="text-2xl font-bold">24</div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <CheckCircle className="h-3 w-3 text-green-500" />
+                <CheckCircle className="h-3 w-3 text-success" />
                 18 compliant
               </div>
             </CardContent>
@@ -65,7 +65,7 @@ export default function GovernancePage() {
             <CardContent>
               <div className="text-2xl font-bold">7</div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <AlertTriangle className="h-3 w-3 text-orange-500" />2 high
+                <AlertTriangle className="h-3 w-3 text-warning" />2 high
               </div>
             </CardContent>
           </Card>
@@ -78,7 +78,7 @@ export default function GovernancePage() {
             <CardContent>
               <div className="text-2xl font-bold">12</div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3 text-blue-500" />3 pending review
+                <Clock className="h-3 w-3 text-info" />3 pending review
               </div>
             </CardContent>
           </Card>
@@ -91,7 +91,7 @@ export default function GovernancePage() {
             <CardContent>
               <div className="text-2xl font-bold">35</div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Lock className="h-3 w-3 text-red-500" />5 restricted
+                <Lock className="h-3 w-3 text-destructive" />5 restricted
               </div>
             </CardContent>
           </Card>
@@ -124,7 +124,7 @@ export default function GovernancePage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Shield className="h-5 w-5 text-blue-600" />
+                      <Shield className="h-5 w-5 text-primary" />
                       <div>
                         <div className="font-medium">PII Redaction</div>
                         <div className="text-sm text-muted-foreground">
@@ -142,7 +142,7 @@ export default function GovernancePage() {
 
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-orange-600" />
+                      <AlertTriangle className="h-5 w-5 text-warning" />
                       <div>
                         <div className="font-medium">Toxicity Filter</div>
                         <div className="text-sm text-muted-foreground">
@@ -160,7 +160,7 @@ export default function GovernancePage() {
 
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <Settings className="h-5 w-5 text-purple-600" />
+                      <Settings className="h-5 w-5 text-accent" />
                       <div>
                         <div className="font-medium">Attribution Policy</div>
                         <div className="text-sm text-muted-foreground">
@@ -258,15 +258,15 @@ export default function GovernancePage() {
                     <h4 className="font-medium">Frameworks</h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-blue-600" />
+                        <Shield className="h-4 w-4 text-primary" />
                         <span className="text-sm">HIPAA</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-blue-600" />
+                        <Shield className="h-4 w-4 text-primary" />
                         <span className="text-sm">SOC 2</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-blue-600" />
+                        <Shield className="h-4 w-4 text-primary" />
                         <span className="text-sm">GDPR</span>
                       </div>
                     </div>
@@ -286,7 +286,7 @@ export default function GovernancePage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-success" />
                     <span className="text-sm">Output Drift</span>
                   </div>
                   <Badge variant="secondary">Active</Badge>
@@ -294,7 +294,7 @@ export default function GovernancePage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Database className="h-4 w-4 text-blue-600" />
+                    <Database className="h-4 w-4 text-primary" />
                     <span className="text-sm">PII Incidents</span>
                   </div>
                   <Badge variant="outline">None</Badge>
@@ -302,7 +302,7 @@ export default function GovernancePage() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-orange-600" />
+                    <Clock className="h-4 w-4 text-warning" />
                     <span className="text-sm">Hallucination Rate</span>
                   </div>
                   <Badge variant="outline">Watching</Badge>

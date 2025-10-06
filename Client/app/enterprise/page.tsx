@@ -60,7 +60,7 @@ export default function EnterprisePage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <Users className="h-6 w-6 text-blue-600" />
+                  <Users className="h-6 w-6 text-primary" />
                   <div>
                     <CardTitle className="text-lg">Team Management</CardTitle>
                     <CardDescription>Advanced collaboration tools</CardDescription>

@@ -55,7 +55,7 @@ export default function HelpPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                <Zap className="h-5 w-5 text-blue-600" />
+                <Zap className="h-5 w-5 text-primary" />
                 <div>
                   <div className="font-medium">Create your first Workflow</div>
                   <div className="text-sm text-muted-foreground">Build an AI workflow in minutes</div>
@@ -63,7 +63,7 @@ export default function HelpPage() {
               </div>
 
               <div className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                <Settings className="h-5 w-5 text-green-600" />
+                <Settings className="h-5 w-5 text-success" />
                 <div>
                   <div className="font-medium">Configure ACP / AAP policies</div>
                   <div className="text-sm text-muted-foreground">Set up governance and compliance</div>
@@ -71,7 +71,7 @@ export default function HelpPage() {
               </div>
 
               <div className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
+                <BarChart3 className="h-5 w-5 text-accent" />
                 <div>
                   <div className="font-medium">View Analytics</div>
                   <div className="text-sm text-muted-foreground">Monitor performance and usage</div>
@@ -94,7 +94,7 @@ export default function HelpPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <HelpCircle className="h-5 w-5 text-blue-600" />
+                      <HelpCircle className="h-5 w-5 text-primary" />
                       <div>
                         <div className="font-medium">What is ACP vs AAP?</div>
                         <div className="text-sm text-muted-foreground">Policy types explained</div>
@@ -105,7 +105,7 @@ export default function HelpPage() {
 
                   <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <Zap className="h-5 w-5 text-green-600" />
+                      <Zap className="h-5 w-5 text-success" />
                       <div>
                         <div className="font-medium">Building with Templates</div>
                         <div className="text-sm text-muted-foreground">Use cases and best practices</div>
@@ -145,7 +145,7 @@ export default function HelpPage() {
                   <TabsContent value="tutorials" className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Play className="h-5 w-5 text-blue-600" />
+                        <Play className="h-5 w-5 text-primary" />
                         <div>
                           <div className="font-medium">Tutorial Videos</div>
                           <div className="text-sm text-muted-foreground">12 videos available</div>
@@ -158,7 +158,7 @@ export default function HelpPage() {
                   <TabsContent value="docs" className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-green-600" />
+                        <FileText className="h-5 w-5 text-success" />
                         <div>
                           <div className="font-medium">Documentation</div>
                           <div className="text-sm text-muted-foreground">API & UI guides</div>
@@ -174,7 +174,7 @@ export default function HelpPage() {
                   <TabsContent value="community" className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Users className="h-5 w-5 text-purple-600" />
+                        <Users className="h-5 w-5 text-accent" />
                         <div>
                           <div className="font-medium">Community Forum</div>
                           <div className="text-sm text-muted-foreground">Connect with other users</div>
@@ -208,7 +208,7 @@ export default function HelpPage() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <Zap className="h-5 w-5 text-blue-600" />
+                          <Zap className="h-5 w-5 text-primary" />
                           <div>
                             <div className="font-medium">No-Code Workflow Basics</div>
                             <div className="text-sm text-muted-foreground">
@@ -226,7 +226,7 @@ export default function HelpPage() {
 
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <Shield className="h-5 w-5 text-green-600" />
+                          <Shield className="h-5 w-5 text-success" />
                           <div>
                             <div className="font-medium">Governance & Compliance</div>
                             <div className="text-sm text-muted-foreground">
@@ -244,7 +244,7 @@ export default function HelpPage() {
 
                       <div className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
-                          <BarChart3 className="h-5 w-5 text-purple-600" />
+                          <BarChart3 className="h-5 w-5 text-accent" />
                           <div>
                             <div className="font-medium">Cost Optimization</div>
                             <div className="text-sm text-muted-foreground">
@@ -333,9 +333,9 @@ export default function HelpPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="p-3 bg-primary/5 rounded-lg">
                     <div className="flex items-start gap-2">
-                      <Star className="h-4 w-4 text-blue-600 mt-0.5" />
+                      <Star className="h-4 w-4 text-primary mt-0.5" />
                       <div>
                         <div className="text-sm font-medium">Use roles to restrict sensitive templates</div>
                         <div className="text-xs text-muted-foreground">Control access with granular permissions</div>
@@ -346,9 +346,9 @@ export default function HelpPage() {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-green-50 rounded-lg">
+                  <div className="p-3 bg-success/5 rounded-lg">
                     <div className="flex items-start gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                      <CheckCircle className="h-4 w-4 text-success mt-0.5" />
                       <div>
                         <div className="text-sm font-medium">Rotate API keys every 90 days</div>
                         <div className="text-xs text-muted-foreground">Maintain security best practices</div>

@@ -24,7 +24,7 @@ export default function AdminConsolePage() {
         {/* Header Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-blue-600" />
+            <Building2 className="h-5 w-5 text-primary" />
             <span className="text-sm text-muted-foreground">Org: Acme Inc</span>
           </div>
           <div className="flex gap-2">
@@ -347,8 +347,8 @@ export default function AdminConsolePage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">PG</span>
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <span className="text-primary font-semibold text-sm">PG</span>
                   </div>
                   <div>
                     <div className="font-medium">PostgreSQL</div>

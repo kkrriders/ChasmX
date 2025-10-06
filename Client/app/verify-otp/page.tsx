@@ -8,23 +8,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Shield, Mail, ArrowLeft } from 'lucide-react'
+import { Shield, Mail, ArrowLeft, Workflow } from 'lucide-react'
 
 export default function VerifyOtpPage() {
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const searchParams = useSearchParams()
   const router = useRouter()
   const { verifyOTP } = useAuth()
 
   useEffect(() => {
-    // Get email from URL parameter if provided
     const emailParam = searchParams.get('email')
     if (emailParam) {
       setEmail(emailParam)
     } else {
-      // If no email, redirect to login
       router.push('/auth/login')
     }
   }, [searchParams, router])
@@ -38,11 +37,8 @@ export default function VerifyOtpPage() {
     const result = await verifyOTP(email, otp)
 
     if (result.success) {
-      // Redirect to workbench on success
-      router.push('/workbench')
+      router.push('/acp-aap')
     } else {
-      // Handle error
-      console.error('OTP verification failed:', result.error)
       alert(result.error || 'OTP verification failed')
     }
 
@@ -55,104 +51,111 @@ export default function VerifyOtpPage() {
       return
     }
 
-    try {
-      const response = await fetch('http://localhost:8080/auth/resend-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email
-        }),
-      })
+    setIsResending(true)
 
-      if (response.ok) {
-        alert('OTP resent to your email! Please check your inbox.')
-      } else {
-        const data = await response.json()
-        alert(data.detail || 'Failed to resend OTP. Please try again.')
-      }
+    try {
+      const { api } = await import('@/lib/api')
+      const { API_ENDPOINTS } = await import('@/lib/config')
+
+      await api.post(API_ENDPOINTS.AUTH.RESEND_OTP, { email })
+      alert('OTP resent to your email! Please check your inbox.')
     } catch (error) {
-      console.error('Resend OTP error:', error)
-      alert('Failed to resend OTP. Please check if the backend server is running.')
+      alert(error instanceof Error ? error.message : 'Failed to resend OTP. Please check if the backend server is running.')
+    } finally {
+      setIsResending(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-card to-muted p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Shield className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code sent to your email address
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="border-2">
+          <CardHeader className="space-y-1 text-center">
+            <div className="mx-auto w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
+              <Shield className="h-8 w-8 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
+            <CardDescription>
+              We sent a 6-digit code to <span className="font-medium text-gray-900">{email}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                    disabled
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="otp">Verification Code</Label>
-              <Input
-                id="otp"
-                type="text"
-                placeholder="Enter 6-digit code"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="text-center text-lg tracking-widest"
-                maxLength={6}
-                required
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verification Code</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="000000"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="text-center text-2xl tracking-widest"
+                  required
+                  disabled={isLoading}
+                  maxLength={6}
+                />
+                <p className="text-xs text-center text-gray-500">
+                  Enter the 6-digit code from your email
+                </p>
+              </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || otp.length !== 6}
-            >
-              {isLoading ? 'Verifying...' : 'Verify & Sign In'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Didn't receive the code?{' '}
-              <button
-                onClick={handleResendOTP}
-                className="text-primary hover:underline font-medium"
-                type="button"
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || otp.length !== 6}
               >
-                Resend Code
-              </button>
-            </p>
+                {isLoading ? "Verifying..." : "Verify Email"}
+              </Button>
+            </form>
 
-            <Link
-              href="/auth/login"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Login
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="mt-6 text-center space-y-4">
+              <div className="text-sm text-gray-600">
+                Didn't receive the code?{" "}
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={isResending}
+                  className="text-primary hover:text-primary/80 font-medium"
+                >
+                  {isResending ? "Sending..." : "Resend code"}
+                </button>
+              </div>
+
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to login
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="mt-6 text-center">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+            <Workflow className="h-4 w-4" />
+            <span>Back to ChasmX</span>
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

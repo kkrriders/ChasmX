@@ -1,11 +1,11 @@
 ﻿"use client"
 
-import { BuilderCanvas } from "@/components/builder/builder-canvas"
+import { EnhancedBuilderCanvas } from "@/components/builder/enhanced-builder-canvas"
 
 export default function NewWorkflowPage() {
   return (
     <div className="h-screen w-screen">
-      <BuilderCanvas />
+      <EnhancedBuilderCanvas />
     </div>
   )
 }

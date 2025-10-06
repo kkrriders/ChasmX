@@ -10,14 +10,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
-from dotenv import load_dotenv
 
 from app.core.database import connect_to_mongo, close_mongo_connection, get_database
 from app.core.config import settings
 from app.routes import auth_router, users_router
-
-# Load environment variables
-load_dotenv()
 
 # Initialize FastAPI application
 app = FastAPI(

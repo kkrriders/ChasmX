@@ -7,8 +7,8 @@ interface ModernCardProps {
   description?: string
   children: React.ReactNode
   className?: string
-  variant?: "default" | "glass" | "gradient"
   hover?: boolean
+  lift?: boolean // Subtle lift on hover (Jasper inspired)
 }
 
 export function ModernCard({
@@ -16,26 +16,25 @@ export function ModernCard({
   description,
   children,
   className,
-  variant = "default",
   hover = false,
+  lift = false,
 }: ModernCardProps) {
   return (
     <Card
       className={cn(
         "transition-all duration-300",
-        variant === "glass" && "glass-effect",
-        variant === "gradient" && "gradient-secondary border-0",
-        hover && "hover:shadow-lg hover:-translate-y-1 cursor-pointer",
+        hover && "card-hover cursor-pointer",
+        lift && "hover-lift cursor-pointer",
         className,
       )}
     >
       {(title || description) && (
         <CardHeader>
-          {title && <CardTitle className="text-lg font-semibold">{title}</CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
+          {title && <CardTitle className="text-xl font-bold">{title}</CardTitle>}
+          {description && <CardDescription className="text-sm">{description}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent>{children}</CardContent>
+      <CardContent className={cn(!title && !description && "p-6")}>{children}</CardContent>
     </Card>
   )
 }
