@@ -1,5 +1,6 @@
 "use client"
 
+import { AuthGuard } from "@/components/auth/auth-guard"
 import { MainLayout } from "@/components/layout/main-layout"
 import { ModernCard } from "@/components/ui/modern-card"
 import { ModernButton } from "@/components/ui/modern-button"
@@ -25,10 +26,11 @@ import {
 
 export default function ACPAAPPage() {
   return (
-    <MainLayout
-      title="AI Governance"
-      searchPlaceholder="Search policies, workflows..."
-    >
+    <AuthGuard>
+      <MainLayout
+        title="AI Governance"
+        searchPlaceholder="Search policies, workflows..."
+      >
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6 lg:p-8">
         <div className="max-w-[1800px] mx-auto space-y-8">
 
@@ -294,5 +296,6 @@ export default function ACPAAPPage() {
         </div>
       </div>
     </MainLayout>
+    </AuthGuard>
   )
 }

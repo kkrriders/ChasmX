@@ -35,6 +35,7 @@ import { CustomNode } from '@/components/builder/custom-node'
 import { CustomEdge } from '@/components/builder/custom-edge'
 import { KeyboardShortcutsDialog } from '@/components/builder/keyboard-shortcuts-dialog'
 import { NodeConfigPanel } from '@/components/builder/node-config-panel'
+import { MultiNodeConfigPanel } from '@/components/builder/multi-node-config-panel'
 import { ExecutionPanel } from '@/components/builder/execution-panel'
 import { CommandPalette } from '@/components/builder/command-palette'
 import { DataInspector } from '@/components/builder/data-inspector'
@@ -88,6 +89,8 @@ function EnhancedBuilderCanvasInner() {
   const [showDataInspector, setShowDataInspector] = useState(false)
   const [showVariablesPanel, setShowVariablesPanel] = useState(false)
   const [workflowVariables, setWorkflowVariables] = useState<any[]>([])
+  const [multiSelectNodes, setMultiSelectNodes] = useState<Node[]>([])
+  const [showMultiNodeConfig, setShowMultiNodeConfig] = useState(false)
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { 
@@ -246,6 +249,50 @@ function EnhancedBuilderCanvasInner() {
       return () => clearTimeout(timeoutId)
     }
   }, [nodes, edges])
+
+  // Listen for global custom events dispatched from nodes (duplicate / configure)
+  useEffect(() => {
+    const onDuplicate = (e: any) => {
+      const nodeId = e.detail?.nodeId
+      if (!nodeId) return
+      const node = nodes.find(n => n.id === nodeId)
+      if (!node) return
+      const newNode = {
+        ...node,
+        id: `${node.id}-copy-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+        position: { x: node.position.x + 40, y: node.position.y + 40 },
+        selected: false,
+      }
+      setNodes(nds => [...nds, newNode])
+      toast({ title: 'Duplicated', description: `${node.data?.label || 'Node'} duplicated` })
+    }
+
+    const onConfigure = (e: any) => {
+      const nodeId = e.detail?.nodeId
+      if (!nodeId) return
+      const node = nodes.find(n => n.id === nodeId)
+      if (!node) return
+      setSelectedNode(node)
+      setShowNodeConfig(true)
+    }
+
+    const onDelete = (e: any) => {
+      const nodeId = e.detail?.nodeId
+      if (!nodeId) return
+      setNodes(nds => nds.filter(n => n.id !== nodeId))
+      setEdges(eds => eds.filter(ed => ed.source !== nodeId && ed.target !== nodeId))
+      toast({ title: 'Deleted', description: 'Node removed' })
+    }
+
+    window.addEventListener('node-duplicate', onDuplicate as any)
+    window.addEventListener('node-configure', onConfigure as any)
+    window.addEventListener('node-delete', onDelete as any)
+    return () => {
+      window.removeEventListener('node-duplicate', onDuplicate as any)
+      window.removeEventListener('node-configure', onConfigure as any)
+      window.removeEventListener('node-delete', onDelete as any)
+    }
+  }, [nodes])
 
   // Update zoom level display
   useEffect(() => {
@@ -778,6 +825,41 @@ function EnhancedBuilderCanvasInner() {
     })
   }, [setNodes, setEdges])
 
+  // Handle node click from React Flow canvas
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    // Open the node config panel for the clicked node
+    setSelectedNode(node)
+    setShowNodeConfig(true)
+  }, [])
+
+  const handleSaveMultiple = useCallback((nodesToUpdate: Node[], data: any) => {
+    setNodes(nds => nds.map(n => {
+      if (nodesToUpdate.some(u => u.id === n.id)) {
+        return { ...n, data: { ...n.data, ...data } }
+      }
+      return n
+    }))
+    toast({ title: 'Saved', description: `Updated ${nodesToUpdate.length} node(s)` })
+  }, [setNodes])
+
+  // Keep selectedNode state in sync when selection changes (multi-select support)
+  const onSelectionChange = useCallback((selection: { nodes: Node[] | null; edges: Edge[] | null }) => {
+    try {
+      const selectedNodes = (selection && (selection as any).nodes) || []
+      if (selectedNodes.length > 0) {
+        setSelectedNode(selectedNodes[0])
+        setMultiSelectNodes(selectedNodes)
+        if (selectedNodes.length > 1) setShowMultiNodeConfig(true)
+      } else {
+        setSelectedNode(null)
+        setMultiSelectNodes([])
+        setShowMultiNodeConfig(false)
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [])
+
   return (
     <div className="h-full w-full flex flex-col">
       {/* Toolbar */}
@@ -816,6 +898,8 @@ function EnhancedBuilderCanvasInner() {
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
+            onNodeClick={onNodeClick}
+            onSelectionChange={onSelectionChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onDragOver={onDragOver}
@@ -1013,6 +1097,14 @@ function EnhancedBuilderCanvasInner() {
         open={showNodeConfig}
         onOpenChange={setShowNodeConfig}
         onSave={handleSaveNodeConfig}
+      />
+
+      {/* Multi-node Config Panel */}
+      <MultiNodeConfigPanel
+        nodes={multiSelectNodes}
+        open={showMultiNodeConfig}
+        onOpenChange={setShowMultiNodeConfig}
+        onSaveMultiple={handleSaveMultiple}
       />
 
       {/* Command Palette */}

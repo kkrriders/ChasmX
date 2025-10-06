@@ -1,4 +1,7 @@
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
+import { AuthGuard } from "@/components/auth/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -6,8 +9,9 @@ import { Plus, Play, Pause, MoreHorizontal, TrendingUp, Clock, CheckCircle } fro
 
 export default function WorkflowsPage() {
   return (
-    <MainLayout title="Workflows" searchPlaceholder="Search workflows...">
-      <div className="p-6 space-y-6">
+    <AuthGuard>
+      <MainLayout title="Workflows" searchPlaceholder="Search workflows...">
+        <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -133,5 +137,6 @@ export default function WorkflowsPage() {
         </Card>
       </div>
     </MainLayout>
+    </AuthGuard>
   )
 }
