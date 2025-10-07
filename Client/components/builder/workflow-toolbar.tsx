@@ -101,7 +101,7 @@ export function WorkflowToolbar({
   }
 
   return (
-    <div className="bg-background border-b">
+    <div data-tour-id="workflow-toolbar" className="bg-background border-b">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2 gap-4">
         {/* Left Section - Workflow Info */}

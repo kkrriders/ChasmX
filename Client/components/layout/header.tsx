@@ -111,7 +111,7 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
-          <h1 className="text-xl font-semibold tracking-tight">AI Governance</h1>
+          <h1 className="text-xl font-semibold tracking-tight">ChasmX Dashboard</h1>
         </div>
 
         <div className="flex-1 max-w-md mx-8 hidden md:block">

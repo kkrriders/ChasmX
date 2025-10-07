@@ -310,7 +310,7 @@ export function ComponentLibrary({ onAddComponent }: ComponentLibraryProps) {
   }
 
   return (
-    <div className="w-80 h-full flex flex-col bg-gradient-to-b from-white to-gray-50/30 dark:from-gray-800 dark:to-gray-850 border-r border-gray-200 dark:border-gray-700">
+    <div data-tour-id="component-library" className="w-80 h-full flex flex-col bg-gradient-to-b from-white to-gray-50/30 dark:from-gray-800 dark:to-gray-850 border-r border-gray-200 dark:border-gray-700">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3.5 flex-shrink-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-lg bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-50 dark:to-gray-300 bg-clip-text text-transparent">Component Library</h3>

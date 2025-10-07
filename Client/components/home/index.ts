@@ -1,0 +1,6 @@
+export { HomeHeader } from "./home-header"
+export { HeroSection } from "./hero-section"
+export { NodeDemo } from "./node-demo"
+export { FeaturesCardSection } from "./features-card-section"
+export { TechStackCarousel } from "./tech-stack-carousel"
+export { Footer } from "./footer"
