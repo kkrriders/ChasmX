@@ -41,6 +41,7 @@ import { CommandPalette } from '@/components/builder/command-palette'
 import { DataInspector } from '@/components/builder/data-inspector'
 import { VariablesPanel } from '@/components/builder/variables-panel'
 import { advancedNodeTypes } from '@/components/builder/advanced-nodes'
+import GuidedTour from '@/components/guided-tour'
 import { WorkflowExecutionEngine, ExecutionContext } from '@/lib/workflow-execution-engine'
 import {
   Sheet,
@@ -885,6 +886,8 @@ function EnhancedBuilderCanvasInner() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Guided tour for first-time users */}
+        <GuidedTour />
         {/* Component Library Sidebar */}
         {showLibrary && (
           <div className="w-80 border-r overflow-hidden">

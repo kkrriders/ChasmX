@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
+import "./client-light-fixes.css"
 import { Toaster } from "sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CommandPalette } from "@/components/ui/command-palette"
@@ -29,7 +30,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

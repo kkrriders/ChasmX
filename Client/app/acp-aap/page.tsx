@@ -39,7 +39,7 @@ export default function ACPAAPPage() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div>
                 <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-3 gradient-text">
-                  Governance Dashboard
+                  ChasmX Dashboard
                 </h1>
                 <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl">
                   Monitor and control your AI infrastructure in real-time with intelligent governance
@@ -120,17 +120,17 @@ export default function ACPAAPPage() {
 
                   <div className="space-y-3">
                     {[
-                      { name: "PII Detection", checks: "2,847", success: 100, icon: Eye, color: "primary" },
-                      { name: "Cost Threshold", checks: "1,234", success: 99.8, icon: Zap, color: "warning" },
-                      { name: "Model Allowlist", checks: "3,421", success: 99.9, icon: Lock, color: "success" },
+                      { name: "PII Detection", checks: "2,847", success: 100, icon: Eye, color: "primary", bgClass: "bg-primary/10", textClass: "text-primary" },
+                      { name: "Cost Threshold", checks: "1,234", success: 99.8, icon: Zap, color: "warning", bgClass: "bg-orange-500/10", textClass: "text-orange-500" },
+                      { name: "Model Allowlist", checks: "3,421", success: 99.9, icon: Lock, color: "success", bgClass: "bg-green-500/10", textClass: "text-green-500" },
                     ].map((policy, i) => (
                       <div
                         key={i}
                         className="flex items-center justify-between p-5 border-2 rounded-xl hover:bg-muted/30 hover:border-primary/20 transition-all duration-200 group"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-xl bg-${policy.color}/10 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                            <policy.icon className={`h-6 w-6 text-${policy.color}`} />
+                          <div className={`w-12 h-12 rounded-xl ${policy.bgClass} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                            <policy.icon className={`h-6 w-6 ${policy.textClass}`} />
                           </div>
                           <div>
                             <div className="font-semibold text-base">{policy.name}</div>

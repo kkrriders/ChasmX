@@ -1,0 +1,85 @@
+/* Fixes for light theme: ensure readable text/background on all pages except the Home page.
+   We detect the Home page by the body class `home-hide-scroll` (added by `app/page.tsx`).
+   These rules only apply when the root is NOT .dark (i.e. light theme). They force sensible
+   foreground/background colors for common UI elements so text isn't lost on light pages.
+*/
+
+:root {
+  --cx-text-dark: #111827; /* Gray-900 */
+  --cx-muted: #111827; /* Gray-500 */
+  --cx-input-bg: #ffffff;
+  --cx-border: #e6e6e6;
+  --cx-card-bg: #ffffff;
+}
+
+/* Only target when NOT using the dark mode root class */
+:not(.dark) body:not(.home-hide-scroll),
+:not(.dark) .min-h-screen:not(.home-no-scrollbar) {
+  color: var(--cx-text-dark) !important;
+}
+
+/* Text elements */
+:not(.dark) body:not(.home-hide-scroll) h1,
+:not(.dark) body:not(.home-hide-scroll) h2,
+:not(.dark) body:not(.home-hide-scroll) h3,
+:not(.dark) body:not(.home-hide-scroll) p,
+:not(.dark) body:not(.home-hide-scroll) label,
+:not(.dark) body:not(.home-hide-scroll) span,
+:not(.dark) body:not(.home-hide-scroll) a {
+  color: var(--cx-text-dark) !important;
+}
+
+/* Muted text and placeholders */
+:not(.dark) body:not(.home-hide-scroll) ::placeholder {
+  color: var(--cx-muted) !important;
+  opacity: 1 !important;
+}
+:not(.dark) body:not(.home-hide-scroll) .text-muted,
+:not(.dark) body:not(.home-hide-scroll) .muted,
+:not(.dark) body:not(.home-hide-scroll) .text-muted-foreground,
+:not(.dark) body:not(.home-hide-scroll) .text-muted-foreground * {
+  color: var(--cx-muted) !important;
+}
+
+/* Inputs, textareas, selects and form controls */
+:not(.dark) body:not(.home-hide-scroll) input,
+:not(.dark) body:not(.home-hide-scroll) textarea,
+:not(.dark) body:not(.home-hide-scroll) select,
+:not(.dark) body:not(.home-hide-scroll) .form-control,
+:not(.dark) body:not(.home-hide-scroll) .input,
+:not(.dark) body:not(.home-hide-scroll) .textarea {
+  background: var(--cx-input-bg) !important;
+  color: var(--cx-text-dark) !important;
+  border-color: var(--cx-border) !important;
+}
+
+/* Cards, panels and popovers */
+:not(.dark) body:not(.home-hide-scroll) .card,
+:not(.dark) body:not(.home-hide-scroll) .panel,
+:not(.dark) body:not(.home-hide-scroll) .popover,
+:not(.dark) body:not(.home-hide-scroll) .dialog,
+:not(.dark) body:not(.home-hide-scroll) .modal {
+  background: var(--cx-card-bg) !important;
+  color: var(--cx-text-dark) !important;
+  border-color: var(--cx-border) !important;
+}
+
+/* Ensure icons/SVGs inherit text color */
+:not(.dark) body:not(.home-hide-scroll) svg,
+:not(.dark) body:not(.home-hide-scroll) .icon {
+  color: inherit !important;
+  /* fill: currentColor !important; */
+}
+
+/* Buttons that might be dark-on-dark due to custom classes: ensure readable text */
+:not(.dark) body:not(.home-hide-scroll) .btn,
+:not(.dark) body:not(.home-hide-scroll) button {
+  color: inherit !important;
+}
+
+/* Utility: if any element accidentally uses text-white on light pages, override it
+   (be careful: this will only affect non-home pages when not in dark mode).
+*/
+:not(.dark) body:not(.home-hide-scroll) .text-white {
+  color: var(--cx-text-dark) !important;
+}
