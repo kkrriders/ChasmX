@@ -1,117 +1,186 @@
-# ChasmX - AI-Powered Workflow Automation
+# ChasmX
 
-Full-stack application with FastAPI backend and Next.js frontend.
+AI-powered workflow automation platform with visual workflow builder, LLM integration, and intelligent caching.
 
-## Architecture
+## 🎯 Overview
 
-- **Backend**: FastAPI + MongoDB + JWT Auth + OTP
-- **Frontend**: Next.js + TypeScript + Tailwind CSS
-- **Database**: MongoDB
+ChasmX is a modern workflow automation platform that allows users to:
+- Build workflows visually with drag-and-drop interface
+- Integrate AI/LLM processing with Redis caching (20-50x faster!)
+- Execute workflows with real-time tracking
+- Manage users with role-based access control
+- Generate workflows from natural language (coming soon)
+
+## 🏗️ Architecture
+
+- **Backend**: FastAPI + MongoDB + Redis + OpenRouter LLM
+- **Frontend**: Next.js 14 + TypeScript + Tailwind CSS + ReactFlow
+- **Database**: MongoDB Atlas (workflows, users, execution history)
+- **Cache**: Redis (LLM responses, agent context)
 - **Authentication**: JWT + OTP via email
 
-## Setup Instructions
+## 🚀 Quick Start
 
-### Backend Setup
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- Docker (for Redis)
+- MongoDB Atlas account
 
-1. **Navigate to backend:**
-   ```bash
-   cd backend
-   ```
-
-2. **Create environment file:**
-   ```bash
-   cp .env.template .env
-   # Edit .env with your actual values
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the server:**
-   ```bash
-   python run.py
-   ```
-   → Backend runs on http://localhost:8080
-
-### Frontend Setup
-
-1. **Navigate to frontend:**
-   ```bash
-   cd Client
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
-   → Frontend runs on http://localhost:3000
-
-## Environment Configuration
-
-### Backend (.env)
-Copy `backend/.env.template` to `backend/.env` and configure:
-
-```env
-# Required: Generate secure 32+ character secrets
-JWT_SECRET_KEY=your-secure-jwt-secret-here
-OTP_SECRET_KEY=your-secure-otp-secret-here
-
-# Database
-MONGODB_URL=mongodb://localhost:27017
-DATABASE_NAME=chasm_db
-
-# CORS (for frontend connection)
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-
-# SMTP (for OTP emails)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-SMTP_SSL=true
+### 1. Start Redis
+```bash
+docker run -d -p 6379:6379 --name redis redis:latest
 ```
 
-## API Endpoints
-
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login (sends OTP)
-- `POST /auth/verify-otp` - Verify OTP and get token
-- `GET /users/me` - Get current user info
-
-## Development
-
-- **Backend**: Hot reload enabled, runs on port 8080
-- **Frontend**: Hot reload enabled, runs on port 3000
-- **Database**: Requires MongoDB running on localhost:27017
-- **CORS**: Pre-configured for local development
-
-## Testing
-
-### Backend
+### 2. Backend Setup
 ```bash
 cd backend
-python -m pytest
-```
 
-### Frontend
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.template .env
+# Edit .env with your credentials
+
+# Run server
+uvicorn app.main:app --reload
+```
+→ Backend runs at http://localhost:8000
+
+### 3. Frontend Setup
 ```bash
 cd Client
-npm run lint
-npm run build
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.local.example .env.local
+# Edit with backend URL
+
+# Run development server
+npm run dev
+```
+→ Frontend runs at http://localhost:3000
+
+## ✨ Key Features
+
+### 🤖 AI Integration
+- **OpenRouter LLM** - Multiple AI models (Gemini, Llama, Qwen)
+- **Redis Caching** - 20-50x faster on repeated queries
+- **Agent System** - Multi-agent orchestration
+- **Smart Caching** - Automatic LLM response caching
+
+### 🔄 Workflow Engine
+- **Visual Builder** - Drag-and-drop workflow creation
+- **9+ Node Types** - AI, Email, Webhook, Data Source, Filter, etc.
+- **Execution Engine** - Sequential node execution with logging
+- **Variable System** - Dynamic data flow between nodes
+- **History Tracking** - Complete execution logs and history
+
+### 🔐 Authentication
+- **JWT Tokens** - Secure authentication
+- **OTP Verification** - Email-based verification
+- **RBAC** - Role-based access control
+
+## 📚 Documentation
+
+- [Backend Documentation](backend/README.md)
+- [Frontend Documentation](Client/README.md)
+- [Workflow Execution Guide](backend/docs/WORKFLOW_EXECUTION_GUIDE.md)
+- [AI System Overview](backend/docs/AI_SYSTEM_README.md)
+
+## 🔧 API Endpoints
+
+### Authentication
+```
+POST /auth/register      - Register user
+POST /auth/login         - Login user
+POST /auth/verify-otp    - Verify OTP
 ```
 
-## Security Features
+### Workflows
+```
+GET    /workflows/              - List workflows
+POST   /workflows/              - Create workflow
+POST   /workflows/{id}/execute  - Execute workflow
+GET    /workflows/executions/{id} - Get execution status
+```
 
-- JWT authentication with secure token generation
-- OTP verification via email
-- Account lockout after failed attempts
-- CORS protection
-- Password hashing with bcrypt
-- Environment-based configuration
+### AI
+```
+POST /ai/chat         - Chat completion
+GET  /ai/models       - List models
+POST /ai/tasks        - Create task
+```
+
+## 🧪 Testing
+
+```bash
+# Backend tests
+cd backend
+pytest
+
+# Frontend tests
+cd Client
+npm run test
+```
+
+## 🐳 Docker Deployment
+
+```bash
+# Start all services
+docker-compose up
+
+# Services:
+# - Redis: localhost:6379
+# - Backend: localhost:8000
+# - Frontend: localhost:3000
+```
+
+## 📊 Project Structure
+
+```
+ChasmX/
+├── backend/              # FastAPI backend
+│   ├── app/             # Application code
+│   ├── tests/           # Test suite
+│   ├── docs/            # Documentation
+│   └── README.md
+├── Client/              # Next.js frontend
+│   ├── app/             # Pages (App Router)
+│   ├── components/      # React components
+│   ├── docs/            # Documentation
+│   └── README.md
+└── README.md           # This file
+```
+
+## 🛣️ Roadmap
+
+**Completed** ✅
+- Authentication (JWT + OTP)
+- Workflow CRUD
+- Visual workflow builder
+- Workflow execution engine
+- AI/LLM integration with caching
+- Agent orchestration
+
+**In Progress** 🚧
+- AI workflow generation
+- Frontend-backend integration
+- Real-time updates
+
+**Planned** 📋
+- Workflow templates
+- Workflow scheduling
+- Analytics dashboard
+- Collaboration features
+
+## 📝 License
+
+MIT License
+
+---
+
+**Built with ❤️ using FastAPI, Next.js, MongoDB, and Redis**

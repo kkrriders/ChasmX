@@ -14,6 +14,8 @@ from loguru import logger
 from app.core.database import connect_to_mongo, close_mongo_connection, get_database
 from app.core.config import settings
 from app.routes import auth_router, users_router, workflow_router
+from app.routes.ai import router as ai_router
+from app.services.ai_service_manager import ai_service_manager
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -39,8 +41,17 @@ async def lifespan(app: FastAPI):
     try:
         await connect_to_mongo()
         logger.info("Startup: MongoDB connected, Authentication service ready")
+
+        # Initialize AI services
+        await ai_service_manager.initialize()
+        logger.info("Startup: AI services initialized")
+
         yield
     finally:
+        # Shutdown AI services
+        await ai_service_manager.shutdown()
+        logger.info("Shutdown: AI services closed")
+
         await close_mongo_connection()
         logger.info("Shutdown: MongoDB connection closed")
 
@@ -51,6 +62,7 @@ app.router.lifespan_context = lifespan
 app.include_router(auth_router, prefix="/auth")
 app.include_router(users_router, prefix="/users")
 app.include_router(workflow_router)
+app.include_router(ai_router)
 
 @app.get("/")
 async def root():
