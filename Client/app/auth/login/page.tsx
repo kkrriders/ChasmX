@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, memo, useEffect } from "react"
+import { useState, useCallback, memo, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight, Workflow, Shield, Zap, CheckCircle
 import { useAuth } from "@/hooks/use-auth"
 import { AuthGuard } from "@/components/auth/auth-guard"
 
-const LoginPage = memo(function LoginPage() {
+const LoginContent = memo(function LoginContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -250,6 +250,18 @@ const LoginPage = memo(function LoginPage() {
   )
 })
 
-LoginPage.displayName = 'LoginPage'
+LoginContent.displayName = 'LoginContent'
+
+function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  )
+}
 
 export default LoginPage

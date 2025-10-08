@@ -12,7 +12,7 @@ from .cache.redis_cache import RedisCache, CacheConfig
 from .agents.acp import AgentContextProtocol, ContextStore
 from .agents.aap import AgentMessageBus
 from .agents.orchestrator import AgentOrchestrator
-from ..core.config_ai import ai_settings
+from ..core.config import ai_settings
 
 
 class AIServiceManager:

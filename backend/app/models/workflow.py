@@ -41,9 +41,9 @@ class Edge(BaseModel):
     from_: str = Field(..., alias="from")
     to: str
 
-    class Config:
-        populate_by_name = True
-        allow_population_by_field_name = True
+    model_config = {
+        "populate_by_name": True
+    }
 
 class WorkflowVariable(BaseModel):
     id: str
@@ -94,3 +94,7 @@ class WorkflowRun(Document):
             "workflow_id",
             "execution_id"
         ]
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
