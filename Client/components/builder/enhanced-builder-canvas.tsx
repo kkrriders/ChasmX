@@ -56,6 +56,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2 } from 'lucide-react'
+import { api } from '@/lib/api'
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode as any,
@@ -92,6 +93,9 @@ function EnhancedBuilderCanvasInner() {
   const [workflowVariables, setWorkflowVariables] = useState<any[]>([])
   const [multiSelectNodes, setMultiSelectNodes] = useState<Node[]>([])
   const [showMultiNodeConfig, setShowMultiNodeConfig] = useState(false)
+  const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null)
+  const [isExecuting, setIsExecuting] = useState(false)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { 
@@ -239,6 +243,16 @@ function EnhancedBuilderCanvasInner() {
       setHasUnsavedChanges(true)
     }
   }, [nodes, edges])
+
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [])
 
   // Update history when nodes or edges change
   useEffect(() => {
@@ -642,73 +656,161 @@ function EnhancedBuilderCanvasInner() {
   }
 
   // Handle save
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     const workflow = {
       name: workflowName,
-      nodes,
-      edges,
-      createdAt: new Date().toISOString(),
-      version: '1.0',
+      nodes: nodes.map(node => ({
+        id: node.id,
+        type: node.type || 'custom',
+        config: node.data || {},
+        position: node.position
+      })),
+      edges: edges.map(edge => ({
+        from: edge.source,
+        to: edge.target
+      })),
+      variables: workflowVariables,
+      status: "active",
+      metadata: {
+        description: "Created from visual builder",
+        author: "user",
+        version: "1.0"
+      }
     }
 
-    // Save to localStorage
-    localStorage.setItem(`workflow-${Date.now()}`, JSON.stringify(workflow))
-    localStorage.setItem('latest-workflow', JSON.stringify(workflow))
-    
-    toast({ 
-      title: "Success", 
-      description: "Workflow saved successfully",
-      duration: 3000,
-    })
-  }, [workflowName, nodes, edges])
+    try {
+      // Save to backend
+      const response = await api.post<any>('/workflows/', workflow)
+      setCurrentWorkflowId(response.id)
+      setLastSaved(new Date())
+      setHasUnsavedChanges(false)
+
+      // Also save to localStorage as backup
+      localStorage.setItem('latest-workflow', JSON.stringify(workflow))
+
+      toast({
+        title: "Success",
+        description: `Workflow saved to server (ID: ${response.id})`,
+        duration: 3000,
+      })
+
+      return response.id
+    } catch (error: any) {
+      console.error('Failed to save workflow:', error)
+      toast({
+        title: "Error",
+        description: `Failed to save workflow: ${error.message}`,
+        variant: "destructive",
+        duration: 5000,
+      })
+      return null
+    }
+  }, [workflowName, nodes, edges, workflowVariables])
+
+  // Poll execution status
+  const pollExecutionStatus = useCallback(async (executionId: string) => {
+    try {
+      const status = await api.get<any>(`/workflows/executions/${executionId}`)
+
+      setExecutionContext({
+        executionId: status.execution_id,
+        workflowId: status.workflow_id,
+        status: status.status,
+        nodeStates: status.node_states || {},
+        logs: status.logs || [],
+        errors: status.errors || [],
+        startTime: status.start_time,
+        endTime: status.end_time
+      } as any)
+
+      // Stop polling if execution is complete
+      if (status.status === 'success' || status.status === 'error') {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+        setIsExecuting(false)
+
+        toast({
+          title: status.status === 'success' ? "Execution Complete" : "Execution Failed",
+          description: status.status === 'success'
+            ? "Workflow executed successfully"
+            : `Error: ${status.errors?.[0]?.message || 'Unknown error'}`,
+          variant: status.status === 'success' ? "default" : "destructive",
+          duration: 3000,
+        })
+      }
+    } catch (error: any) {
+      console.error('Failed to poll execution status:', error)
+    }
+  }, [])
 
   // Handle run workflow execution
   const handleRun = useCallback(async () => {
     if (nodes.length === 0) {
-      toast({ 
-        title: "Error", 
-        description: "Add nodes to your workflow first", 
-        variant: "destructive" 
+      toast({
+        title: "Error",
+        description: "Add nodes to your workflow first",
+        variant: "destructive"
       })
       return
     }
 
     try {
-      // Create execution engine
-      const engine = new WorkflowExecutionEngine(
-        nodes,
-        edges,
-        (context) => {
-          setExecutionContext(context)
+      setIsExecuting(true)
+
+      // Save workflow first (or use existing ID)
+      let workflowId = currentWorkflowId
+      if (!workflowId) {
+        workflowId = await handleSave()
+        if (!workflowId) {
+          setIsExecuting(false)
+          return
+        }
+      }
+
+      // Prepare input variables
+      const inputs = workflowVariables.reduce((acc: any, v: any) => {
+        acc[v.name] = v.value || v.defaultValue
+        return acc
+      }, {})
+
+      // Execute workflow via backend API
+      const response = await api.post<any>(
+        `/workflows/${workflowId}/execute`,
+        {
+          inputs: inputs,
+          async_execution: true
         }
       )
-      
-      setExecutionEngine(engine)
+
       setShowExecution(true)
-      
+
       toast({
-        title: "Starting Execution",
-        description: "Workflow execution started",
+        title: "Execution Started",
+        description: `Workflow execution started (ID: ${response.execution_id})`,
         duration: 2000,
       })
 
-      // Start execution
-      await engine.start()
-      
-      toast({
-        title: "Execution Complete",
-        description: "Workflow executed successfully",
-        duration: 3000,
-      })
+      // Start polling for status updates
+      pollIntervalRef.current = setInterval(() => {
+        pollExecutionStatus(response.execution_id)
+      }, 1000) // Poll every second
+
+      // Initial poll
+      pollExecutionStatus(response.execution_id)
+
     } catch (error: any) {
+      console.error('Failed to execute workflow:', error)
+      setIsExecuting(false)
       toast({
         title: "Execution Failed",
-        description: error.message,
+        description: `Failed to start execution: ${error.message}`,
         variant: "destructive",
         duration: 5000,
       })
     }
-  }, [nodes, edges])
+  }, [nodes, edges, workflowVariables, currentWorkflowId, handleSave, pollExecutionStatus])
 
   // Handle pause execution
   const handlePauseExecution = useCallback(() => {

@@ -1,7 +1,4 @@
-"""
-AI Service Manager - Centralized manager for all AI services.
-Handles initialization, lifecycle, and provides easy access to services.
-"""
+
 from typing import Optional
 from loguru import logger
 

@@ -46,7 +46,8 @@ export class AuthService {
     console.log('AuthService - checking tokens:', { token: !!token, userEmail })
 
     // Only consider authenticated if we have both token and user data
-    if (token && userEmail) {
+    // AND we're not on the login page (to avoid race conditions)
+    if (token && userEmail && !window.location.pathname.includes('/auth/login')) {
       // In a real app, you'd validate the token with the server
       // For now, we'll assume it's valid if both exist
       console.log('AuthService - Setting authenticated state')
@@ -62,8 +63,10 @@ export class AuthService {
     } else {
       // Clear any incomplete auth data
       console.log('AuthService - Clearing auth data')
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('user_email')
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user_email')
+      }
       this.authState.isAuthenticated = false
       this.authState.user = null
       this.notify()
@@ -90,7 +93,9 @@ export class AuthService {
     this.notify()
 
     try {
-      await api.post(API_ENDPOINTS.AUTH.LOGIN, { email, password })
+      const response = await api.post<{ message: string }>(API_ENDPOINTS.AUTH.LOGIN, { email, password })
+
+      console.log('Login API response:', response)
 
       // OTP has been sent, return success with otpRequired flag
       this.authState.isLoading = false
@@ -98,6 +103,7 @@ export class AuthService {
       return { success: true, otpRequired: true }
 
     } catch (error) {
+      console.error('Login error:', error)
       this.authState.isLoading = false
       this.notify()
       return {

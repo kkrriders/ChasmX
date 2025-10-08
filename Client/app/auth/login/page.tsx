@@ -24,6 +24,12 @@ const LoginContent = memo(function LoginContent() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
+    // Clear any existing auth tokens when landing on login page
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user_email')
+    }
+
     const emailParam = searchParams.get('email')
     if (emailParam) {
       setEmail(emailParam)
