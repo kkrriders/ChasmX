@@ -8,8 +8,6 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   // Fix for multiple lockfiles warning
   outputFileTracingRoot: process.cwd(),
-  // Enable standalone output for Docker
-  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: false,
   },
