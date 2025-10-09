@@ -71,8 +71,12 @@ class AIServiceManager:
 
     async def _init_redis_cache(self):
         """Initialize Redis cache"""
+        # Use REDIS_URL if provided (for Docker), otherwise use individual settings
+        import os
+        redis_host = os.getenv('REDIS_HOST', ai_settings.REDIS_HOST)
+
         cache_config = CacheConfig(
-            host=ai_settings.REDIS_HOST,
+            host=redis_host,
             port=ai_settings.REDIS_PORT,
             db=ai_settings.REDIS_DB,
             password=ai_settings.REDIS_PASSWORD,
@@ -81,7 +85,7 @@ class AIServiceManager:
 
         self.redis_cache = RedisCache(cache_config)
         await self.redis_cache.connect()
-        logger.info("Initialized Redis Cache")
+        logger.info(f"Initialized Redis Cache at {redis_host}:{ai_settings.REDIS_PORT}")
 
     async def _init_llm_provider(self):
         """Initialize LLM provider with model configurations"""
