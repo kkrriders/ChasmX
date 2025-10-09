@@ -1,9 +1,9 @@
 "use client"
 
-import { memo, useCallback } from "react"
+import { memo, useState } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
-import { ModernCard } from "@/components/ui/modern-card"
-import { ModernButton } from "@/components/ui/modern-button"
+import { AuthGuard } from "@/components/auth/auth-guard"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
@@ -23,293 +23,326 @@ import {
   Key,
   Lock,
   CheckCircle2,
+  TrendingUp,
+  Activity,
+  Users,
+  Eye
 } from "lucide-react"
 
 const SettingsPage = memo(function SettingsPage() {
-  const handleSave = useCallback(() => {
-    // Handle save logic
-  }, [])
+  const [searchQuery, setSearchQuery] = useState("")
 
   return (
-    <MainLayout title="Settings" searchPlaceholder="Search settings...">
-      <div className="p-8 space-y-8 hero-gradient animate-fade-in">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 gradient-accent rounded-xl flex items-center justify-center shadow-soft">
-                <Settings className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold">Settings</h1>
-                <p className="text-muted-foreground">Manage your account and application preferences</p>
+    <AuthGuard>
+      <MainLayout title="Settings" searchPlaceholder="Search settings...">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+          {/* Header */}
+          <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      Settings
+                    </h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      Manage your account and application preferences
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">All settings synced</span>
+                  </div>
+                  <Button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium">
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-          <div onClick={handleSave}>
-            <ModernButton gradient glow>
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </ModernButton>
-          </div>
+          </header>
+
+          <main className="px-6 py-8 max-w-7xl mx-auto">
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Settings Navigation */}
+              <div className="space-y-6">
+                {/* Settings Categories */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Settings</h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Configure your account</p>
+                  </div>
+                  <div className="p-6 space-y-2">
+                    <button className="w-full flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left border border-blue-200 dark:border-blue-800">
+                      <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium text-slate-900 dark:text-white">Profile</span>
+                    </button>
+                    <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left">
+                      <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                      <span className="font-medium text-slate-900 dark:text-white">Notifications</span>
+                    </button>
+                    <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left">
+                      <Shield className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                      <span className="font-medium text-slate-900 dark:text-white">Security</span>
+                    </button>
+                    <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left">
+                      <Palette className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                      <span className="font-medium text-slate-900 dark:text-white">Appearance</span>
+                    </button>
+                    <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left">
+                      <Database className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                      <span className="font-medium text-slate-900 dark:text-white">Data & Privacy</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Account Status</h2>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">98%</div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400">Profile Complete</div>
+                    </div>
+                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="h-full w-[98%] bg-green-500 rounded-full"></div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">Premium Plan</div>
+                      <div className="text-xs text-slate-600 dark:text-slate-400">Active until Dec 2025</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Settings Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Profile Settings */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Information</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Update your personal information</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-sm font-medium text-slate-700 dark:text-slate-300">First Name</Label>
+                        <Input id="firstName" defaultValue="Alex" className="border-slate-200 dark:border-slate-700" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</Label>
+                        <Input id="lastName" defaultValue="Johnson" className="border-slate-200 dark:border-slate-700" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mt-6">
+                      <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input id="email" type="email" defaultValue="alex@example.com" className="pl-10 border-slate-200 dark:border-slate-700" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mt-6">
+                      <Label htmlFor="company" className="text-sm font-medium text-slate-700 dark:text-slate-300">Company</Label>
+                      <Input id="company" defaultValue="Tech Corp" className="border-slate-200 dark:border-slate-700" />
+                    </div>
+
+                    <div className="space-y-2 mt-6">
+                      <Label htmlFor="bio" className="text-sm font-medium text-slate-700 dark:text-slate-300">Bio</Label>
+                      <Textarea
+                        id="bio"
+                        placeholder="Tell us about yourself..."
+                        defaultValue="AI enthusiast and workflow automation specialist."
+                        className="border-slate-200 dark:border-slate-700 min-h-[100px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notification Settings */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <Bell className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Notification Preferences</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Choose how you want to be notified</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {[
+                        { title: "Email Notifications", desc: "Receive notifications via email", checked: true },
+                        { title: "Workflow Alerts", desc: "Get notified about workflow status changes", checked: true },
+                        { title: "Security Alerts", desc: "Important security notifications", checked: true },
+                        { title: "Marketing Updates", desc: "Product updates and feature announcements", checked: false },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors">
+                          <div>
+                            <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{item.desc}</p>
+                          </div>
+                          <Switch defaultChecked={item.checked} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security Settings */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Security Settings</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Manage your account security</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</Label>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Input id="currentPassword" type="password" className="pl-10 border-slate-200 dark:border-slate-700" />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</Label>
+                            <Input id="newPassword" type="password" className="border-slate-200 dark:border-slate-700" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">Confirm Password</Label>
+                            <Input id="confirmPassword" type="password" className="border-slate-200 dark:border-slate-700" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-slate-900 dark:text-white">Two-Factor Authentication</h4>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">Add an extra layer of security</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              Enabled
+                            </Badge>
+                            <Button variant="outline" size="sm">
+                              Manage
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                              <Key className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-slate-900 dark:text-white">API Keys</h4>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">Manage your API access tokens</p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm">
+                            <Key className="w-4 h-4 mr-2" />
+                            View Keys
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Appearance Settings */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                        <Palette className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Appearance</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Customize the look and feel</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="theme" className="text-sm font-medium text-slate-700 dark:text-slate-300">Theme</Label>
+                        <Select defaultValue="system">
+                          <SelectTrigger id="theme" className="w-full border-slate-200 dark:border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="light">Light</SelectItem>
+                            <SelectItem value="dark">Dark</SelectItem>
+                            <SelectItem value="system">System</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="language" className="text-sm font-medium text-slate-700 dark:text-slate-300">Language</Label>
+                        <Select defaultValue="en">
+                          <SelectTrigger id="language" className="w-full border-slate-200 dark:border-slate-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="es">Spanish</SelectItem>
+                            <SelectItem value="fr">French</SelectItem>
+                            <SelectItem value="de">German</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div>
+                          <h4 className="font-medium text-slate-900 dark:text-white">Compact Mode</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Use a more compact layout</p>
+                        </div>
+                        <Switch />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Settings Navigation */}
-          <div className="space-y-4">
-            <ModernCard className="border-gradient shadow-soft">
-              <div className="space-y-2">
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl gradient-primary text-white shadow-glow transition-all">
-                  <User className="h-5 w-5" />
-                  <span className="font-semibold">Profile</span>
-                </button>
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-card transition-all text-foreground">
-                  <Bell className="h-5 w-5" />
-                  <span>Notifications</span>
-                </button>
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-card transition-all text-foreground">
-                  <Shield className="h-5 w-5" />
-                  <span>Security</span>
-                </button>
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-card transition-all text-foreground">
-                  <Palette className="h-5 w-5" />
-                  <span>Appearance</span>
-                </button>
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-card transition-all text-foreground">
-                  <Database className="h-5 w-5" />
-                  <span>Data & Privacy</span>
-                </button>
-              </div>
-            </ModernCard>
-
-            {/* Quick Stats */}
-            <ModernCard className="border-gradient gradient-card shadow-soft">
-              <div className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">98%</div>
-                  <div className="text-xs text-muted-foreground">Profile Complete</div>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full w-[98%] gradient-primary rounded-full"></div>
-                </div>
-              </div>
-            </ModernCard>
-          </div>
-
-          {/* Settings Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Profile Settings */}
-            <ModernCard className="border-gradient shadow-lg-modern">
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Profile Information</h2>
-                    <p className="text-sm text-muted-foreground">Update your personal information and preferences</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-semibold">First Name</Label>
-                    <Input id="firstName" defaultValue="Alex" className="border-border/50 focus:border-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-semibold">Last Name</Label>
-                    <Input id="lastName" defaultValue="Johnson" className="border-border/50 focus:border-primary" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="email" type="email" defaultValue="alex@example.com" className="pl-10 border-border/50 focus:border-primary" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="company" className="text-sm font-semibold">Company</Label>
-                  <Input id="company" defaultValue="Tech Corp" className="border-border/50 focus:border-primary" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio" className="text-sm font-semibold">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    placeholder="Tell us about yourself..."
-                    defaultValue="AI enthusiast and workflow automation specialist."
-                    className="border-border/50 focus:border-primary min-h-[100px]"
-                  />
-                </div>
-              </div>
-            </ModernCard>
-
-            {/* Notification Settings */}
-            <ModernCard className="border-gradient shadow-lg-modern">
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Bell className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Notification Preferences</h2>
-                    <p className="text-sm text-muted-foreground">Choose how you want to be notified</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { title: "Email Notifications", desc: "Receive notifications via email", checked: true },
-                    { title: "Workflow Alerts", desc: "Get notified about workflow status changes", checked: true },
-                    { title: "Security Alerts", desc: "Important security notifications", checked: true },
-                    { title: "Marketing Updates", desc: "Product updates and feature announcements", checked: false },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-gradient-card rounded-xl border border-border/30 hover:border-primary/30 transition-all">
-                      <div>
-                        <h4 className="font-semibold">{item.title}</h4>
-                        <p className="text-sm text-muted-foreground">{item.desc}</p>
-                      </div>
-                      <Switch defaultChecked={item.checked} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </ModernCard>
-
-            {/* Security Settings */}
-            <ModernCard className="border-gradient shadow-lg-modern">
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 bg-success/10 rounded-xl flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Security Settings</h2>
-                    <p className="text-sm text-muted-foreground">Manage your account security</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentPassword" className="text-sm font-semibold">Current Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="currentPassword" type="password" className="pl-10 border-border/50 focus:border-primary" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="newPassword" className="text-sm font-semibold">New Password</Label>
-                      <Input id="newPassword" type="password" className="border-border/50 focus:border-primary" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-sm font-semibold">Confirm Password</Label>
-                      <Input id="confirmPassword" type="password" className="border-border/50 focus:border-primary" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-5 bg-gradient-card rounded-xl border border-green-200 dark:border-green-900">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 gradient-success rounded-lg flex items-center justify-center">
-                        <CheckCircle2 className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold">Two-Factor Authentication</h4>
-                        <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                        Enabled
-                      </Badge>
-                      <ModernButton>
-                        Manage
-                      </ModernButton>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-5 bg-gradient-card rounded-xl border border-border/50 hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Key className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold">API Keys</h4>
-                        <p className="text-sm text-muted-foreground">Manage your API access tokens</p>
-                      </div>
-                    </div>
-                    <ModernButton>
-                      <Key className="h-4 w-4 mr-2" />
-                      View Keys
-                    </ModernButton>
-                  </div>
-                </div>
-              </div>
-            </ModernCard>
-
-            {/* Appearance Settings */}
-            <ModernCard className="border-gradient shadow-lg-modern">
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
-                    <Palette className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">Appearance</h2>
-                    <p className="text-sm text-muted-foreground">Customize the look and feel</p>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="theme" className="text-sm font-semibold">Theme</Label>
-                    <Select defaultValue="system">
-                      <SelectTrigger id="theme" className="w-full border-border/50 focus:border-primary">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Light</SelectItem>
-                        <SelectItem value="dark">Dark</SelectItem>
-                        <SelectItem value="system">System</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="language" className="text-sm font-semibold">Language</Label>
-                    <Select defaultValue="en">
-                      <SelectTrigger id="language" className="w-full border-border/50 focus:border-primary">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-gradient-card rounded-xl border border-border/30 hover:border-primary/30 transition-all">
-                  <div>
-                    <h4 className="font-semibold">Compact Mode</h4>
-                    <p className="text-sm text-muted-foreground">Use a more compact layout</p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
-            </ModernCard>
-          </div>
-        </div>
-      </div>
-    </MainLayout>
+      </MainLayout>
+    </AuthGuard>
   )
 })
 

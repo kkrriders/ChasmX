@@ -19,6 +19,7 @@ import {
   Tag,
   Moon,
   Sun,
+  Sparkles,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import {
@@ -55,6 +56,7 @@ interface WorkflowToolbarProps {
   onExport?: () => void
   onImport?: () => void
   onShare?: () => void
+  onAiGenerate?: () => void
   canUndo?: boolean
   canRedo?: boolean
   zoomLevel?: number
@@ -75,6 +77,7 @@ export function WorkflowToolbar({
   onExport,
   onImport,
   onShare,
+  onAiGenerate,
   canUndo = false,
   canRedo = false,
   zoomLevel = 100,
@@ -178,6 +181,19 @@ export function WorkflowToolbar({
 
         {/* Center Section - Actions */}
         <div className="flex items-center gap-2">
+          {onAiGenerate && (
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={onAiGenerate}
+              title="Generate with AI"
+              className="gap-1.5"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden md:inline">AI Generate</span>
+            </Button>
+          )}
+
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button 
               variant="ghost" 

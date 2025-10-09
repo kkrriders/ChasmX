@@ -41,6 +41,7 @@ import { CommandPalette } from '@/components/builder/command-palette'
 import { DataInspector } from '@/components/builder/data-inspector'
 import { VariablesPanel } from '@/components/builder/variables-panel'
 import { advancedNodeTypes } from '@/components/builder/advanced-nodes'
+import { AiWorkflowGenerator } from '@/components/workflows/ai-workflow-generator'
 import GuidedTour from '@/components/guided-tour'
 import { WorkflowExecutionEngine, ExecutionContext } from '@/lib/workflow-execution-engine'
 import {
@@ -55,7 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2 } from 'lucide-react'
+import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2, Sparkles } from 'lucide-react'
 import { api } from '@/lib/api'
 
 const nodeTypes: NodeTypes = {
@@ -81,6 +82,7 @@ function EnhancedBuilderCanvasInner() {
   const [showNodeConfig, setShowNodeConfig] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showExecution, setShowExecution] = useState(false)
+  const [showAiGenerator, setShowAiGenerator] = useState(false)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [zoomLevel, setZoomLevel] = useState(100)
   const [copiedNodes, setCopiedNodes] = useState<Node[]>([])
@@ -928,6 +930,20 @@ function EnhancedBuilderCanvasInner() {
     })
   }, [setNodes, setEdges])
 
+  // Handle AI workflow generation
+  const handleAiWorkflowGenerated = useCallback((workflow: any, response: any) => {
+    if (workflow && workflow.nodes && workflow.edges) {
+      setNodes(workflow.nodes)
+      setEdges(workflow.edges)
+      setWorkflowName(workflow.name || "AI Generated Workflow")
+      setShowAiGenerator(false)
+      toast({
+        title: "Workflow Generated",
+        description: response.summary || "AI workflow has been loaded into the canvas"
+      })
+    }
+  }, [setNodes, setEdges])
+
   // Handle node click from React Flow canvas
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     // Open the node config panel for the clicked node
@@ -981,6 +997,7 @@ function EnhancedBuilderCanvasInner() {
         onExport={handleExport}
         onImport={handleImport}
         onShare={handleShare}
+        onAiGenerate={() => setShowAiGenerator(true)}
         canUndo={history.canUndo()}
         canRedo={history.canRedo()}
         zoomLevel={zoomLevel}
@@ -1067,6 +1084,16 @@ function EnhancedBuilderCanvasInner() {
                 <GitBranch className="h-4 w-4 mr-1" />
                 Templates
               </Button>
+              {/* <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowAiGenerator(true)}
+                title="Generate workflow with AI"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                AI Generate
+              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
@@ -1142,15 +1169,24 @@ function EnhancedBuilderCanvasInner() {
                   </div>
                   <h3 className="text-lg font-semibold mb-2 text-center">Build Your Workflow</h3>
                   <p className="text-muted-foreground mb-4 text-center">
-                    Choose components from the library or start with a template
+                    Choose components from the library, start with a template, or let AI generate one for you
                   </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setShowLibrary(true)} className="flex-1">
-                      Browse Components
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={() => setShowAiGenerator(true)} 
+                      className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generate with AI
                     </Button>
-                    <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
-                      Use Template
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setShowLibrary(true)} variant="outline" className="flex-1">
+                        Browse Components
+                      </Button>
+                      <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
+                        Use Template
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1263,6 +1299,15 @@ function EnhancedBuilderCanvasInner() {
         variables={workflowVariables}
         onVariablesChange={setWorkflowVariables}
       />
+
+      {/* AI Workflow Generator */}
+      {showAiGenerator && (
+        <Dialog open={showAiGenerator} onOpenChange={setShowAiGenerator}>
+          <DialogContent className="max-w-2xl">
+            <AiWorkflowGenerator onGenerated={handleAiWorkflowGenerated} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
