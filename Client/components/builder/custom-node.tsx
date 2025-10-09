@@ -27,7 +27,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps) => {
     <div 
       className={`px-4 py-3 shadow-md rounded-lg border-2 bg-white dark:bg-gray-800 min-w-[200px] max-w-[280px] relative group ${
         selected
-          ? 'border-primary shadow-lg ring-2 ring-primary/20'
+          ? 'border-[rgb(var(--brand-500))] shadow-lg ring-2 ring-[rgba(var(--brand-500),0.12)]'
           : 'border-gray-200 dark:border-gray-700'
       }`}
       onDoubleClick={() => setEditingLabel(true)}
@@ -105,9 +105,9 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps) => {
       </div>
 
       {/* Quick action buttons placed at top-right (visible on hover) */}
-      <div className="absolute top-2 right-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+      <div className="node-quick-toolbar opacity-0 group-hover:opacity-100 transition-opacity">
         <button
-          className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600"
+          className="node-action-btn bg-gray-100 hover:bg-gray-200 text-gray-600"
           title="Duplicate"
           onClick={(e) => {
             e.stopPropagation()
@@ -119,7 +119,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps) => {
         </button>
 
         <button
-          className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600"
+          className="node-action-btn bg-gray-100 hover:bg-gray-200 text-gray-600"
           title="Settings"
           onClick={(e) => {
             e.stopPropagation()
@@ -131,7 +131,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps) => {
         </button>
 
         <button
-          className="p-1 rounded bg-white hover:bg-red-50 text-red-600 border border-red-100 shadow-sm"
+          className="node-action-btn bg-white hover:bg-red-50 text-red-600 border border-red-100 shadow-sm"
           title="Delete"
           onClick={(e) => {
             e.stopPropagation()

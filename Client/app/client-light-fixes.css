@@ -72,10 +72,10 @@
 }
 
 /* Buttons that might be dark-on-dark due to custom classes: ensure readable text */
-:not(.dark) body:not(.home-hide-scroll) .btn,
+/* :not(.dark) body:not(.home-hide-scroll) .btn,
 :not(.dark) body:not(.home-hide-scroll) button {
   color: inherit !important;
-}
+} */
 
 /* Utility: if any element accidentally uses text-white on light pages, override it
    (be careful: this will only affect non-home pages when not in dark mode).

@@ -4,48 +4,62 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Corporate palette (light) */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 221 39% 11%; /* #111827 - primary text */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 221 39% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 241 81% 62%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --popover-foreground: 221 39% 11%;
+    --primary: 213 90% 42.5%; /* #0B63CE */
+    --primary-foreground: 0 0% 100%; /* white on primary */
+    --secondary: 220 8% 98%; /* subtle light gray */
+    --secondary-foreground: 221 12% 18%;
+    --muted: 220 8% 98%;
+    --muted-foreground: 221 12% 40%;
+    --accent: 213 94% 67.8%; /* #60A5FA */
+    --accent-foreground: 221 39% 11%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 241 81% 62%;
+    --border: 210 20% 95%;
+    --input: 210 20% 95%;
+    --ring: 213 90% 42.5%;
     --radius: 0.5rem;
+    /* Brand tokens (derived from UI screenshots / theme) */
+    /* RGB triplet stored so we can use "rgb(var(--brand-500))" and with alpha "rgb(var(--brand-500)/0.12)" */
+    --brand-500: 81 78 236; /* #514eec - primary purple used in UI */
+    --brand-600: 65 61 215; /* slightly darker */
+    --brand: rgb(var(--brand-500));
+    --brand-foreground: 255 255 255;
+    --success: 16 185 129; /* #10b981 */
+    --warning: 245 158 11; /* #f59e0b */
+    --danger: 239 68 68; /* #ef4444 */
+    --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-md: 0 8px 20px rgba(15,23,42,0.06);
+    --gap: 12px;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    /* Corporate palette (dark) */
+    --background: 220 12% 6%; /* deep navy/charcoal */
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 220 12% 8%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 220 12% 8%;
     --popover-foreground: 0 0% 98%;
-    --primary: 241 81% 62%;
+    --primary: 210 96% 32.7%; /* #0353A4 - darker primary for dark mode */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 220 9% 14%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --muted: 220 9% 14%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 213 94% 67.8%;
+    --accent-foreground: 220 12% 6%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 241 81% 62%;
+    --border: 220 8% 14%;
+    --input: 220 8% 14%;
+    --ring: 213 90% 42.5%;
   }
 }
 
