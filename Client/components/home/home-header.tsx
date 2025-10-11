@@ -43,7 +43,7 @@ export function HomeHeader() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#5250ed] to-[#4149d1] flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#5250ed] to-[#4149d1] flex items-center justify-center transition-transform shadow-lg">
               <span className="text-white font-bold text-xl">C</span>
             </div>
             <span className={cn(

@@ -372,9 +372,19 @@ export function ComponentLibrary({ onAddComponent }: ComponentLibraryProps) {
             <button
               key={component.id}
               type="button"
-              className="w-full text-left focus:outline-none focus-visible:outline-none active:outline-none group"
+              role="button"
+              aria-pressed="false"
+              aria-label={`Add ${component.name} component`}
+              className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:outline-none group"
               onClick={() => onAddComponent(component)}
               draggable
+              onKeyDown={(e) => {
+                // Allow Enter/Space to activate the add action for keyboard users
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onAddComponent(component)
+                }
+              }}
               onDragStart={(e) => {
                 e.dataTransfer.setData('application/reactflow', JSON.stringify(component))
                 e.dataTransfer.effectAllowed = 'move'

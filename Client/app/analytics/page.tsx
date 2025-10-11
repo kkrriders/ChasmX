@@ -3,12 +3,9 @@
 import { memo, useState, useEffect } from "react"
 import { MainLayout } from "@/components/layout/main-layout"
 import { AuthGuard } from "@/components/auth/auth-guard"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Download,
   TrendingUp,
@@ -22,7 +19,12 @@ import {
   RefreshCw,
   Calculator,
   Eye,
-  EyeOff
+  EyeOff,
+  Shield,
+  AlertTriangle,
+  Target,
+  Users,
+  Database
 } from "lucide-react"
 import {
   LineChart,
@@ -96,13 +98,6 @@ const nodePerformanceData = [
   { node: 'Node-05', cpu: 41, memory: 53, latency: 110 },
 ]
 
-// Model pricing for cost estimation
-const modelPricing = {
-  'gpt-4o': { input: 0.0000025, output: 0.00001 },
-  'claude-3-haiku': { input: 0.00000025, output: 0.00000125 },
-  'llama-3.1-70b': { input: 0.0000008, output: 0.0000016 },
-}
-
 // Real-time metrics hook
 function useRealtimeMetrics() {
   const [metrics, setMetrics] = useState({
@@ -132,108 +127,6 @@ function useRealtimeMetrics() {
   return metrics
 }
 
-// Cost estimation component
-function CostEstimationUI() {
-  const [inputs, setInputs] = useState({
-    requests: 100000,
-    model: 'gpt-4o',
-    avgTokens: 500,
-    cacheHitRate: 85,
-  })
-  const [estimatedCost, setEstimatedCost] = useState(0)
-  const [showBreakdown, setShowBreakdown] = useState(false)
-
-  useEffect(() => {
-    const pricing = modelPricing[inputs.model as keyof typeof modelPricing]
-    const cacheMissRate = (100 - inputs.cacheHitRate) / 100
-    const effectiveRequests = inputs.requests * cacheMissRate
-    const inputCost = effectiveRequests * inputs.avgTokens * pricing.input
-    const outputCost = effectiveRequests * inputs.avgTokens * pricing.output
-    setEstimatedCost(inputCost + outputCost)
-  }, [inputs])
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calculator className="h-5 w-5" />
-          Cost Estimation Calculator
-        </CardTitle>
-        <CardDescription>
-          Estimate costs for your workflow executions
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="requests">Monthly Requests</Label>
-            <Input
-              id="requests"
-              type="number"
-              value={inputs.requests}
-              onChange={(e) => setInputs(prev => ({ ...prev, requests: Number(e.target.value) }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
-            <Select value={inputs.model} onValueChange={(value) => setInputs(prev => ({ ...prev, model: value }))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                <SelectItem value="claude-3-haiku">Claude 3 Haiku</SelectItem>
-                <SelectItem value="llama-3.1-70b">Llama 3.1 70B</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tokens">Avg Tokens per Request</Label>
-            <Input
-              id="tokens"
-              type="number"
-              value={inputs.avgTokens}
-              onChange={(e) => setInputs(prev => ({ ...prev, avgTokens: Number(e.target.value) }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="cache">Cache Hit Rate (%)</Label>
-            <Input
-              id="cache"
-              type="number"
-              value={inputs.cacheHitRate}
-              onChange={(e) => setInputs(prev => ({ ...prev, cacheHitRate: Number(e.target.value) }))}
-            />
-          </div>
-        </div>
-
-        <div className="p-4 bg-muted rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-semibold">Estimated Monthly Cost</span>
-            <span className="text-2xl font-bold text-primary">${estimatedCost.toFixed(2)}</span>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowBreakdown(!showBreakdown)}
-            className="mt-2"
-          >
-            {showBreakdown ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-            {showBreakdown ? 'Hide' : 'Show'} Breakdown
-          </Button>
-          {showBreakdown && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              <div>Effective requests: {Math.round(inputs.requests * (100 - inputs.cacheHitRate) / 100).toLocaleString()}</div>
-              <div>Input tokens cost: ${(estimatedCost * 0.2).toFixed(2)}</div>
-              <div>Output tokens cost: ${(estimatedCost * 0.8).toFixed(2)}</div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 const AnalyticsPage = memo(function AnalyticsPage() {
   const realtimeMetrics = useRealtimeMetrics()
   const [timeRange, setTimeRange] = useState('30d')
@@ -241,341 +134,546 @@ const AnalyticsPage = memo(function AnalyticsPage() {
   return (
     <AuthGuard>
       <MainLayout title="Analytics Dashboard" searchPlaceholder="Search analytics...">
-        <div className="p-6 space-y-6" style={{ contain: 'layout style paint' }}>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
           {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                <span className="text-sm text-muted-foreground">Real-time Analytics</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-green-600">Live</span>
+          <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+            <div className="px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                      Analytics Dashboard
+                    </h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      Real-time insights and performance metrics
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Live</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {[
+                      { label: '7d', value: '7d' },
+                      { label: '30d', value: '30d' },
+                      { label: '90d', value: '90d' },
+                    ].map((range) => (
+                      <button
+                        key={range.value}
+                        onClick={() => setTimeRange(range.value)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          timeRange === range.value
+                            ? "bg-blue-600 text-white"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                  <Button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh
+                  </Button>
+                  <Button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <Download className="w-4 h-4" />
+                    Export
+                  </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={timeRange === '7d' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTimeRange('7d')}
-                >
-                  7d
-                </Button>
-                <Button
-                  variant={timeRange === '30d' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTimeRange('30d')}
-                >
-                  30d
-                </Button>
-                <Button
-                  variant={timeRange === '90d' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTimeRange('90d')}
-                >
-                  90d
-                </Button>
+            </div>
+          </header>
+
+          <main className="px-6 py-8 max-w-7xl mx-auto">
+            {/* Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Total Requests */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                    <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    +12%
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Requests</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatNumber(realtimeMetrics.totalRequests)}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">+12% from last month</p>
+                </div>
+              </div>
+
+              {/* Success Rate */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                    <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    +0.2%
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Success Rate</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{realtimeMetrics.successRate.toFixed(1)}%</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">+0.2% from last month</p>
+                </div>
+              </div>
+
+              {/* Avg Latency */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+                    <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                    <TrendingUp className="w-3 h-3 mr-1 rotate-180" />
+                    -15ms
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Latency</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatLatency(realtimeMetrics.avgLatency)}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">-15ms from last month</p>
+                </div>
+              </div>
+
+              {/* Cost */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                    <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    +8%
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Cost</p>
+                  <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(realtimeMetrics.cost)}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">+8% from last month</p>
+                </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </div>
-          </div>
 
-          {/* Real-time Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(realtimeMetrics.totalRequests)}</div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  +12% from last month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{realtimeMetrics.successRate.toFixed(1)}%</div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                  +0.2% from last month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Latency</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatLatency(realtimeMetrics.avgLatency)}</div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-red-500" />
-                  -15ms from last month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Cost</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(realtimeMetrics.cost)}</div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3 text-orange-500" />
-                  +8% from last month
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Workflows</CardTitle>
-                <Zap className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{realtimeMetrics.activeWorkflows}</div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Activity className="h-3 w-3 text-blue-500" />
-                  Currently running
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Execution Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Execution Timeline</CardTitle>
-                <CardDescription>Workflow executions over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={executionTimelineData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="executions" stroke="#8884d8" strokeWidth={2} />
-                    <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} />
-                    <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Success/Failure Pie Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Success vs Failure Rate</CardTitle>
-                <CardDescription>Overall execution outcomes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={successFailureData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name} ${(Number(value) * 1).toFixed(1)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {successFailureData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any) => `${Number(value)}%`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Cost per Workflow */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Cost per Workflow</CardTitle>
-                <CardDescription>Monthly costs by workflow type</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={costPerWorkflowData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="workflow" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="cost" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Cache Hit Rate */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Cache Hit Rate</CardTitle>
-                <CardDescription>Cache performance over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={cacheHitRateData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="hitRate" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Node Performance Heatmap */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Node Performance Heatmap</CardTitle>
-              <CardDescription>Real-time node metrics and performance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-5 gap-4">
-                {nodePerformanceData.map((node) => (
-                  <div key={node.node} className="text-center">
-                    <div className="font-medium text-sm mb-2">{node.node}</div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span>CPU</span>
-                        <span>{node.cpu}%</span>
+            {/* Main Content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Content Area */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Execution Timeline Chart */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div
-                        className="h-2 bg-gray-200 rounded"
-                        style={{
-                          background: `linear-gradient(to right, ${
-                            node.cpu > 70 ? '#ef4444' : node.cpu > 50 ? '#f59e0b' : '#10b981'
-                          } ${node.cpu}%, #e5e7eb ${node.cpu}%)`
-                        }}
-                      />
-                      <div className="flex items-center justify-between text-xs">
-                        <span>Memory</span>
-                        <span>{node.memory}%</span>
-                      </div>
-                      <div
-                        className="h-2 bg-gray-200 rounded"
-                        style={{
-                          background: `linear-gradient(to right, ${
-                            node.memory > 70 ? '#ef4444' : node.memory > 50 ? '#f59e0b' : '#10b981'
-                          } ${node.memory}%, #e5e7eb ${node.memory}%)`
-                        }}
-                      />
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {node.latency}ms latency
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Execution Timeline</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Daily execution trends over time</p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cost Estimation UI */}
-          <CostEstimationUI />
-
-          {/* Quality & Safety (keeping existing structure but can be enhanced) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quality & Safety</CardTitle>
-              <CardDescription>Monitor content quality and safety metrics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="all" className="space-y-4">
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="toxicity">Toxicity</TabsTrigger>
-                  <TabsTrigger value="pii">PII</TabsTrigger>
-                  <TabsTrigger value="hallucination">Hallucination</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="all">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Block Rate</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">0.7%</div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3 text-orange-500" />
-                          82 events
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">PII Incidents</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">3</div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 text-primary" />
-                          last 24h
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Hallucination Rate</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">1.9%</div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <TrendingUp className="h-3 w-3 text-red-500" />
-                          trending down
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">User Feedback</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold">4.6 / 5</div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Star className="h-3 w-3 text-yellow-500" />
-                          1.3k ratings
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="p-6">
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={executionTimelineData}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                          <XAxis dataKey="date" className="text-slate-600 dark:text-slate-400" />
+                          <YAxis className="text-slate-600 dark:text-slate-400" />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'rgb(255 255 255)',
+                              border: '1px solid rgb(226 232 240)',
+                              borderRadius: '8px'
+                            }}
+                          />
+                          <Legend />
+                          <Line type="monotone" dataKey="executions" stroke="#3b82f6" strokeWidth={2} name="Total" />
+                          <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} name="Success" />
+                          <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={2} name="Failed" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
+                </div>
+
+                {/* Success/Failure Modern Chart */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                        <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Success vs Failure Rate</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Overall execution outcomes</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="h-80 flex items-center justify-center">
+                      <div className="relative w-64 h-64">
+                        {/* Modern Gauge Chart */}
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                          {/* Background circle */}
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r="50"
+                            fill="none"
+                            stroke="rgb(226 232 240)"
+                            strokeWidth="8"
+                            className="dark:stroke-slate-700"
+                          />
+                          {/* Success arc */}
+                          <circle
+                            cx="60"
+                            cy="60"
+                            r="50"
+                            fill="none"
+                            stroke="#10b981"
+                            strokeWidth="8"
+                            strokeDasharray={`${(successFailureData[0].value / 100) * 314} 314`}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-out"
+                          />
+                        </svg>
+
+                        {/* Center content */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <div className="text-4xl font-bold text-slate-900 dark:text-white">
+                            {successFailureData[0].value.toFixed(1)}%
+                          </div>
+                          <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">Success Rate</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                            {successFailureData[1].value.toFixed(1)}% failed
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex justify-center gap-6 mt-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          Success ({successFailureData[0].value.toFixed(1)}%)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          Failed ({successFailureData[1].value.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Cost per Workflow */}
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                          <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Cost per Workflow</h2>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Monthly costs by workflow type</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={costPerWorkflowData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                            <XAxis dataKey="workflow" className="text-slate-600 dark:text-slate-400" />
+                            <YAxis className="text-slate-600 dark:text-slate-400" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgb(255 255 255)',
+                                border: '1px solid rgb(226 232 240)',
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Bar dataKey="cost" fill="#8884d8" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Cache Hit Rate */}
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                          <Database className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Cache Hit Rate</h2>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">Cache performance over time</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <div className="h-80">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={cacheHitRateData}>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
+                            <XAxis dataKey="time" className="text-slate-600 dark:text-slate-400" />
+                            <YAxis className="text-slate-600 dark:text-slate-400" />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'rgb(255 255 255)',
+                                border: '1px solid rgb(226 232 240)',
+                                borderRadius: '8px'
+                              }}
+                            />
+                            <Area type="monotone" dataKey="hitRate" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quality & Safety */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                        <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quality & Safety</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Monitor content quality and safety metrics</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <Tabs defaultValue="all" className="space-y-4">
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="all">All</TabsTrigger>
+                        <TabsTrigger value="toxicity">Toxicity</TabsTrigger>
+                        <TabsTrigger value="pii">PII</TabsTrigger>
+                        <TabsTrigger value="hallucination">Hallucination</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="all">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">Block Rate</h3>
+                              <div className="p-1 bg-orange-100 dark:bg-orange-900/30 rounded">
+                                <TrendingUp className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">0.7%</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">82 events</p>
+                          </div>
+
+                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">PII Incidents</h3>
+                              <div className="p-1 bg-red-100 dark:bg-red-900/30 rounded">
+                                <AlertTriangle className="w-3 h-3 text-red-600 dark:text-red-400" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">3</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">last 24h</p>
+                          </div>
+
+                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">Hallucination Rate</h3>
+                              <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded">
+                                <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400 rotate-180" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">1.9%</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">trending down</p>
+                          </div>
+
+                          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">User Feedback</h3>
+                              <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
+                                <Star className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                              </div>
+                            </div>
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">4.6 / 5</div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">1.3k ratings</p>
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar */}
+              <div className="space-y-6">
+                {/* Active Workflows */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                        <Zap className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Active Workflows</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{realtimeMetrics.activeWorkflows} currently running</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">{realtimeMetrics.activeWorkflows}</div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Active Workflows</p>
+                    </div>
+                    <div className="space-y-3">
+                      {[
+                        { name: 'Lead Scoring', status: 'running', progress: 75 },
+                        { name: 'Content Generation', status: 'running', progress: 60 },
+                        { name: 'Data Analysis', status: 'running', progress: 90 },
+                      ].map((workflow, i) => (
+                        <div key={i} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium text-slate-900 dark:text-white">{workflow.name}</span>
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              {workflow.status}
+                            </Badge>
+                          </div>
+                          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                            <div
+                              className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${workflow.progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cost Calculator */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                        <Calculator className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Cost Calculator</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">Estimate costs for your workflows</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">$2,450.00</div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Estimated monthly cost</p>
+                    </div>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      <Calculator className="w-4 h-4 mr-2" />
+                      Open Calculator
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Actions</h2>
+                  </div>
+                  <div className="p-6 space-y-3">
+                    <button className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-left border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-3">
+                        <Download className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div>
+                          <div className="font-medium text-slate-900 dark:text-white">Export Report</div>
+                          <div className="text-xs text-slate-600 dark:text-slate-400">Download analytics data</div>
+                        </div>
+                      </div>
+                    </button>
+                    <button className="w-full p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <RefreshCw className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                        <div>
+                          <div className="font-medium text-slate-900 dark:text-white">Refresh Data</div>
+                          <div className="text-xs text-slate-600 dark:text-slate-400">Update all metrics</div>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Node Performance Heatmap */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mt-8">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <Activity className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Node Performance Heatmap</h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Real-time node metrics and performance</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-5 gap-4">
+                  {nodePerformanceData.map((node) => (
+                    <div key={node.node} className="text-center">
+                      <div className="font-medium text-sm mb-2 text-slate-900 dark:text-white">{node.node}</div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                          <span>CPU</span>
+                          <span>{node.cpu}%</span>
+                        </div>
+                        <div
+                          className="h-2 bg-slate-200 dark:bg-slate-700 rounded"
+                          style={{
+                            background: `linear-gradient(to right, ${
+                              node.cpu > 70 ? '#ef4444' : node.cpu > 50 ? '#f59e0b' : '#10b981'
+                            } ${node.cpu}%, #e5e7eb ${node.cpu}%)`
+                          }}
+                        />
+                        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                          <span>Memory</span>
+                          <span>{node.memory}%</span>
+                        </div>
+                        <div
+                          className="h-2 bg-slate-200 dark:bg-slate-700 rounded"
+                          style={{
+                            background: `linear-gradient(to right, ${
+                              node.memory > 70 ? '#ef4444' : node.memory > 50 ? '#f59e0b' : '#10b981'
+                            } ${node.memory}%, #e5e7eb ${node.memory}%)`
+                          }}
+                        />
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          {node.latency}ms latency
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
       </MainLayout>
     </AuthGuard>

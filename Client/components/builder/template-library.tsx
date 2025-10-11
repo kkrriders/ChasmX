@@ -1,10 +1,12 @@
 "use client"
 
+import React from 'react'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Play, Clock, GitBranch, Save } from "lucide-react"
+import { Play, Clock, GitBranch, Save, X, Sparkles, Star, Users } from "lucide-react"
 import { Node, Edge } from 'reactflow'
 
 interface WorkflowTemplate {
@@ -233,108 +235,228 @@ interface TemplateLibraryProps {
   onClose?: () => void
 }
 
+const getComplexityColor = (complexity: string) => {
+  switch (complexity) {
+    case "beginner":
+      return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+    case "intermediate":
+      return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+    case "advanced":
+      return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+    default:
+      return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+  }
+}
+
+const getComplexityIcon = (complexity: string) => {
+  switch (complexity) {
+    case "beginner":
+      return "🟢"
+    case "intermediate":
+      return "🟡"
+    case "advanced":
+      return "🔴"
+    default:
+      return "⚪"
+  }
+}
+
 export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryProps) {
-  const getComplexityColor = (complexity: string) => {
-    switch (complexity) {
-      case "beginner":
-        return "bg-gradient-to-br from-emerald-50 to-green-100 text-emerald-700 dark:from-emerald-900/30 dark:to-green-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50 font-medium"
-      case "intermediate":
-        return "bg-gradient-to-br from-[#514eec]/10 to-purple-100 text-[#514eec] dark:from-[#514eec]/20 dark:to-purple-900/40 dark:text-purple-300 border-[#514eec]/30 dark:border-purple-800/50 font-medium"
-      case "advanced":
-        return "bg-gradient-to-br from-orange-50 to-amber-100 text-orange-700 dark:from-orange-900/30 dark:to-amber-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800/50 font-medium"
-      default:
-        return "bg-gradient-to-br from-slate-100 to-gray-100 text-slate-700 border-slate-200/50 font-medium"
-    }
+  const [selected, setSelected] = React.useState<WorkflowTemplate | null>(templates[0] || null)
+
+  const selectAndClose = (template: WorkflowTemplate) => {
+    onSelectTemplate(template)
+    if (onClose) onClose()
   }
 
   return (
-    <div className="w-full max-h-[calc(80vh-12rem)] flex flex-col">
-      <div className="relative p-8 border-b border-[#514eec]/10 bg-gradient-to-br from-[#514eec]/5 via-purple-50/50 to-white dark:from-[#514eec]/10 dark:via-purple-950/20 dark:to-slate-950 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(81,78,236,0.1),transparent_50%)]" />
-        <div className="relative flex items-center gap-4 mb-3">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#514eec] to-purple-600 flex items-center justify-center shadow-lg shadow-[#514eec]/20 ring-2 ring-[#514eec]/20">
-            <Save className="h-6 w-6 text-white" />
+    <div className="w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
+      {/* Header */}
+      <div className="relative bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-4 md:p-6">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-[#514eec] to-[#7c3aed] flex items-center justify-center text-white font-bold text-base md:text-lg shadow-lg">
+              <Sparkles className="h-5 w-5 md:h-6 md:w-6" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Workflow Templates</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Choose from pre-built templates to get started quickly</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-[#514eec] via-purple-600 to-[#514eec] bg-clip-text text-transparent">
-              Workflow Templates
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-              Start with a pre-built template or create from scratch
-            </p>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900/50 dark:to-slate-950">
-        <ScrollArea className="h-full w-full">
-          <div className="space-y-4 p-6">
-            {templates.map((template) => (
-              <Card
-                key={template.id}
-                className="relative overflow-hidden hover:shadow-xl hover:shadow-[#514eec]/10 hover:-translate-y-1 transition-all duration-300 group bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-700/80 hover:border-[#514eec]/30"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#514eec]/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <CardContent className="relative p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg mb-2 group-hover:text-[#514eec] transition-colors text-slate-900 dark:text-white">
-                        {template.name}
-                      </h4>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {template.description}
-                      </p>
-                    </div>
-                    <Badge className={`${getComplexityColor(template.complexity)} shadow-sm border ml-3`}>
-                      {template.complexity}
-                    </Badge>
-                  </div>
 
-                  <div className="relative bg-gradient-to-br from-[#514eec]/5 via-purple-50/50 to-slate-50/50 dark:from-[#514eec]/10 dark:via-purple-950/30 dark:to-slate-900/50 rounded-xl p-4 mb-4 border border-[#514eec]/10 dark:border-[#514eec]/20 shadow-sm">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(81,78,236,0.03),transparent_70%)]" />
-                    <p className="relative text-xs font-mono text-slate-700 dark:text-slate-300 leading-relaxed">
-                      {template.preview}
-                    </p>
-                  </div>
+      {/* Content */}
+      <div className="flex flex-col lg:flex-row min-h-[500px] lg:min-h-[600px] max-h-[70vh] lg:max-h-[80vh]">
+        {/* Template List - Left Side */}
+        <div className="flex-1 lg:w-3/5 border-r border-slate-200 dark:border-slate-700 lg:border-r">
+          <div className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white">Available Templates</h3>
+              <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-xs">
+                {templates.length} templates
+              </Badge>
+            </div>
 
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-br from-[#514eec]/10 to-purple-100/50 dark:from-[#514eec]/20 dark:to-purple-950/30 border border-[#514eec]/20 dark:border-[#514eec]/30">
-                        <GitBranch className="h-3.5 w-3.5 text-[#514eec]" />
-                        <span className="font-semibold text-[#514eec]">{template.nodeCount} nodes</span>
+            <ScrollArea className="h-[400px] lg:h-[500px] pr-2 md:pr-4">
+              <div className="space-y-3 md:space-y-4">
+                {templates.map((template) => (
+                  <Card
+                    key={template.id}
+                    className={`cursor-pointer transition-all duration-200 hover:shadow-lg border-2 rounded-xl overflow-hidden ${
+                      selected?.id === template.id
+                        ? 'border-[#514eec] bg-[#514eec]/5 dark:bg-[#514eec]/10 shadow-md'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                    }`}
+                    onClick={() => setSelected(template)}
+                  >
+                    <CardContent className="p-0">
+                      <div className="p-3 md:p-4">
+                        <div className="flex flex-col sm:items-start gap-3 mb-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-slate-900 dark:text-white text-base md:text-lg truncate">{template.name}</h4>
+                              <Badge className={`text-xs px-2 py-1 w-fit ${getComplexityColor(template.complexity)}`}>
+                                {getComplexityIcon(template.complexity)} {template.complexity}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 line-clamp-2">
+                              {template.description}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-3 md:gap-4 text-xs text-slate-500 dark:text-slate-400 mb-3">
+                              <div className="flex items-center gap-1">
+                                <GitBranch className="h-3 w-3" />
+                                <span>{template.nodeCount} nodes</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                <span>{template.category}</span>
+                              </div>
+                            </div>
+                            <div className="text-xs font-mono bg-slate-50 dark:bg-slate-800 p-3 rounded-lg text-slate-700 dark:text-slate-300 border overflow-hidden">
+                              <div className="whitespace-pre-wrap">{template.preview}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {template.tags.slice(0, 4).map((tag) => (
+                            <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        {/* Action */}
+                        <div className="mt-3 flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              selectAndClose(template)
+                            }}
+                            className="bg-[#514eec] hover:bg-[#4338ca] text-white shadow-sm w-full sm:w-auto"
+                          >
+                            <Play className="h-3 w-3 mr-1" />
+                            Use
+                          </Button>
+                        </div>
                       </div>
-                      <Badge variant="outline" className="text-xs shadow-sm border-slate-300 dark:border-slate-600">
-                        {template.category}
-                      </Badge>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+
+        {/* Preview Panel - Right Side */}
+        <div className="lg:w-2/5 bg-slate-50 dark:bg-slate-800/50">
+          <div className="p-4 md:p-6 h-full overflow-y-auto">
+            <h3 className="text-base md:text-lg font-semibold text-slate-900 dark:text-white mb-4 md:mb-6">Template Preview</h3>
+
+            {selected ? (
+              <div className="space-y-4 md:space-y-6">
+                {/* Template Header */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#514eec] to-[#7c3aed] flex items-center justify-center text-white font-bold">
+                      {selected.name.charAt(0)}
                     </div>
-                    <Button 
-                      size="sm" 
-                      className="bg-gradient-to-r from-[#514eec] to-purple-600 hover:from-[#514eec]/90 hover:to-purple-700 text-white shadow-md hover:shadow-lg hover:shadow-[#514eec]/20 transition-all duration-300 font-medium"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onSelectTemplate(template)
-                      }}
-                    >
-                      <Play className="h-4 w-4 mr-1.5" />
-                      Use Template
-                    </Button>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-slate-900 dark:text-white truncate">{selected.name}</h4>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{selected.category}</p>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-[#514eec]/10 dark:border-[#514eec]/20">
-                    {template.tags.map(tag => (
-                      <Badge 
-                        key={tag} 
-                        variant="secondary" 
-                        className="text-xs px-3 py-1 bg-gradient-to-br from-slate-100 via-slate-50 to-white dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-900 border border-slate-200/80 dark:border-slate-700/80 hover:border-[#514eec]/30 hover:bg-[#514eec]/5 transition-all duration-200 cursor-default"
-                      >
-                        {tag}
+                  <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">
+                    {selected.description}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-3 md:gap-4 text-sm text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-1">
+                      <GitBranch className="h-4 w-4" />
+                      <span>{selected.nodeCount} nodes</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Badge className={`text-xs ${getComplexityColor(selected.complexity)}`}>
+                        {getComplexityIcon(selected.complexity)} {selected.complexity}
                       </Badge>
-                    ))}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+
+                {/* Workflow Preview */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 md:p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+                  <h5 className="font-medium text-slate-900 dark:text-white mb-3">Workflow Structure</h5>
+                  <div className="text-xs font-mono bg-slate-50 dark:bg-slate-800 p-3 md:p-4 rounded-lg text-slate-700 dark:text-slate-300 border break-words">
+                    {selected.preview}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    This template includes {selected.nodeCount} pre-configured nodes ready to use.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  <Button
+                    onClick={() => selectAndClose(selected)}
+                    className="w-full bg-[#514eec] hover:bg-[#4338ca] text-white shadow-sm h-10 md:h-11"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Use This Template
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelected(null)}
+                    className="w-full h-10 md:h-11"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                <div className="h-12 w-12 md:h-16 md:w-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-4">
+                  <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-slate-400" />
+                </div>
+                <h4 className="font-medium text-slate-900 dark:text-white mb-2">No Template Selected</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 px-4">
+                  Click on a template from the list to see its preview and details.
+                </p>
+              </div>
+            )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   )

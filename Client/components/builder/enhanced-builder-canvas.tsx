@@ -41,6 +41,7 @@ import { CommandPalette } from '@/components/builder/command-palette'
 import { DataInspector } from '@/components/builder/data-inspector'
 import { VariablesPanel } from '@/components/builder/variables-panel'
 import { advancedNodeTypes } from '@/components/builder/advanced-nodes'
+import { AiWorkflowGenerator } from '@/components/workflows/ai-workflow-generator'
 import GuidedTour from '@/components/guided-tour'
 import { WorkflowExecutionEngine, ExecutionContext } from '@/lib/workflow-execution-engine'
 import {
@@ -55,7 +56,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2 } from 'lucide-react'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2, Sparkles } from 'lucide-react'
 import { api } from '@/lib/api'
 
 const nodeTypes: NodeTypes = {
@@ -81,11 +83,13 @@ function EnhancedBuilderCanvasInner() {
   const [showNodeConfig, setShowNodeConfig] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showExecution, setShowExecution] = useState(false)
+  const [showAiGenerator, setShowAiGenerator] = useState(false)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [zoomLevel, setZoomLevel] = useState(100)
   const [copiedNodes, setCopiedNodes] = useState<Node[]>([])
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [executionContext, setExecutionContext] = useState<ExecutionContext | null>(null)
   const [executionEngine, setExecutionEngine] = useState<WorkflowExecutionEngine | null>(null)
   const [showDataInspector, setShowDataInspector] = useState(false)
@@ -109,6 +113,20 @@ function EnhancedBuilderCanvasInner() {
   } = useReactFlow()
 
   const history = useWorkflowHistory()
+
+  // Helper to detect typing fields so global keyboard handlers don't intercept user input
+  const isTypingField = (target: EventTarget | null) => {
+    if (!target) return false
+    const t = target as HTMLElement
+    const tag = t.tagName?.toUpperCase()
+    if (!tag) return false
+    return (
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      (t as HTMLElement).isContentEditable
+    )
+  }
 
   // Handle drag over
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -223,15 +241,21 @@ function EnhancedBuilderCanvasInner() {
     if (nodes.length === 0 && edges.length === 0) return
 
     const autoSaveInterval = setInterval(() => {
-      const workflow = {
-        name: workflowName,
-        nodes,
-        edges,
-        savedAt: new Date().toISOString(),
+      try {
+        setIsSaving(true)
+        const workflow = {
+          name: workflowName,
+          nodes,
+          edges,
+          savedAt: new Date().toISOString(),
+        }
+        localStorage.setItem('autosave-workflow', JSON.stringify(workflow))
+        setLastSaved(new Date())
+        setHasUnsavedChanges(false)
+      } finally {
+        // small delay for UX so the saving indicator is visible briefly
+        setTimeout(() => setIsSaving(false), 300)
       }
-      localStorage.setItem('autosave-workflow', JSON.stringify(workflow))
-      setLastSaved(new Date())
-      setHasUnsavedChanges(false)
     }, 30000) // Auto-save every 30 seconds
 
     return () => clearInterval(autoSaveInterval)
@@ -446,6 +470,8 @@ function EnhancedBuilderCanvasInner() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when the user is typing in an input/textarea/select or contentEditable
+      if (isTypingField(e.target)) return
       // Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
@@ -657,6 +683,7 @@ function EnhancedBuilderCanvasInner() {
 
   // Handle save
   const handleSave = useCallback(async () => {
+    setIsSaving(true)
     const workflow = {
       name: workflowName,
       nodes: nodes.map(node => ({
@@ -704,6 +731,9 @@ function EnhancedBuilderCanvasInner() {
         duration: 5000,
       })
       return null
+    } finally {
+      // ensure saving indicator is turned off
+      setIsSaving(false)
     }
   }, [workflowName, nodes, edges, workflowVariables])
 
@@ -747,6 +777,7 @@ function EnhancedBuilderCanvasInner() {
 
   // Handle run workflow execution
   const handleRun = useCallback(async () => {
+    console.debug('[enhanced-builder] handleRun called, nodes.length=', nodes.length)
     if (nodes.length === 0) {
       toast({
         title: "Error",
@@ -811,6 +842,27 @@ function EnhancedBuilderCanvasInner() {
       })
     }
   }, [nodes, edges, workflowVariables, currentWorkflowId, handleSave, pollExecutionStatus])
+
+  // Listen for global run events (fallback if some toolbar instance doesn't pass handler prop)
+  useEffect(() => {
+    const onGlobalRun = () => {
+      try {
+        handleRun()
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('workflow-run', onGlobalRun as any)
+    return () => window.removeEventListener('workflow-run', onGlobalRun as any)
+  }, [handleRun])
+
+  // Open execution panel immediately when requested by toolbar for quick UI feedback
+  useEffect(() => {
+    const onOpenExecution = () => setShowExecution(true)
+    window.addEventListener('workflow-open-execution-panel', onOpenExecution as any)
+    return () => window.removeEventListener('workflow-open-execution-panel', onOpenExecution as any)
+  }, [setShowExecution])
 
   // Handle pause execution
   const handlePauseExecution = useCallback(() => {
@@ -928,6 +980,20 @@ function EnhancedBuilderCanvasInner() {
     })
   }, [setNodes, setEdges])
 
+  // Handle AI workflow generation
+  const handleAiWorkflowGenerated = useCallback((workflow: any, response: any) => {
+    if (workflow && workflow.nodes && workflow.edges) {
+      setNodes(workflow.nodes)
+      setEdges(workflow.edges)
+      setWorkflowName(workflow.name || "AI Generated Workflow")
+      setShowAiGenerator(false)
+      toast({
+        title: "Workflow Generated",
+        description: response.summary || "AI workflow has been loaded into the canvas"
+      })
+    }
+  }, [setNodes, setEdges])
+
   // Handle node click from React Flow canvas
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     // Open the node config panel for the clicked node
@@ -981,9 +1047,11 @@ function EnhancedBuilderCanvasInner() {
         onExport={handleExport}
         onImport={handleImport}
         onShare={handleShare}
+        onAiGenerate={() => setShowAiGenerator(true)}
         canUndo={history.canUndo()}
         canRedo={history.canRedo()}
         zoomLevel={zoomLevel}
+        isSaving={isSaving}
       />
 
       {/* Main Content */}
@@ -1067,6 +1135,16 @@ function EnhancedBuilderCanvasInner() {
                 <GitBranch className="h-4 w-4 mr-1" />
                 Templates
               </Button>
+              {/* <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowAiGenerator(true)}
+                title="Generate workflow with AI"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                AI Generate
+              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
@@ -1094,14 +1172,14 @@ function EnhancedBuilderCanvasInner() {
                 <Variable className="h-4 w-4 mr-1" />
                 Variables
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowValidation(true)}
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
                 Validate
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
@@ -1142,15 +1220,24 @@ function EnhancedBuilderCanvasInner() {
                   </div>
                   <h3 className="text-lg font-semibold mb-2 text-center">Build Your Workflow</h3>
                   <p className="text-muted-foreground mb-4 text-center">
-                    Choose components from the library or start with a template
+                    Choose components from the library, start with a template, or let AI generate one for you
                   </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setShowLibrary(true)} className="flex-1">
-                      Browse Components
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={() => setShowAiGenerator(true)} 
+                      className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generate with AI
                     </Button>
-                    <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
-                      Use Template
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setShowLibrary(true)} variant="outline" className="flex-1">
+                        Browse Components
+                      </Button>
+                      <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
+                        Use Template
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1179,14 +1266,17 @@ function EnhancedBuilderCanvasInner() {
 
       {/* Templates Dialog */}
       <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
-        <DialogContent className="max-w-4xl max-h-[80vh] bg-white dark:bg-gray-900 opacity-100">
-          <DialogHeader>
-            <DialogTitle>Choose a Template</DialogTitle>
-          </DialogHeader>
-          <TemplateLibrary 
-            onSelectTemplate={handleSelectTemplate}
-            onClose={() => setShowTemplates(false)}
-          />
+        {/* Allow dialog content to be much wider so TemplateLibrary can render without clipping */}
+        <DialogContent showCloseButton={false} className="top-[0%] left-[20%] translate-x-0 translate-y-0 w-[90vw] max-w-[1100px] max-h-[85vh] p-0 bg-transparent dark:bg-transparent border-0 rounded-none shadow-none">
+          <VisuallyHidden.Root>
+            <DialogTitle>Workflow Templates</DialogTitle>
+          </VisuallyHidden.Root>
+          <div className="w-full p-4 md:p-6">
+            <TemplateLibrary 
+              onSelectTemplate={handleSelectTemplate}
+              onClose={() => setShowTemplates(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1245,6 +1335,8 @@ function EnhancedBuilderCanvasInner() {
         onPause={handlePauseExecution}
         onResume={handleResumeExecution}
         onStop={handleStopExecution}
+        onRun={handleRun}
+        isExecuting={isExecuting}
       />
 
       {/* Data Inspector Panel */}
@@ -1263,6 +1355,15 @@ function EnhancedBuilderCanvasInner() {
         variables={workflowVariables}
         onVariablesChange={setWorkflowVariables}
       />
+
+      {/* AI Workflow Generator */}
+      {showAiGenerator && (
+        <Dialog open={showAiGenerator} onOpenChange={setShowAiGenerator}>
+          <DialogContent className="max-w-2xl">
+            <AiWorkflowGenerator onGenerated={handleAiWorkflowGenerated} />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

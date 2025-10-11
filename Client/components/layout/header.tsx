@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Bell, Search, Command, Sun, Moon, Maximize, Settings, User, LogOut, HelpCircle, Sparkles, Zap, Menu, X } from "lucide-react"

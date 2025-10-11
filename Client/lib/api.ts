@@ -35,9 +35,15 @@ class APIClient {
       }
     }
 
-    const url = `${this.baseURL}${endpoint}`
+    // Allow passing absolute URLs as endpoint for flexibility in tests or external calls
+    const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`
 
     try {
+      // Helpful debug log to inspect which URL is being requested
+      // (useful when diagnosing `Failed to fetch` errors)
+      // eslint-disable-next-line no-console
+      console.debug('[api] request', { method: restOptions.method ?? 'GET', url })
+
       const response = await fetch(url, {
         ...restOptions,
         headers: requestHeaders,
@@ -57,9 +63,16 @@ class APIClient {
 
       return {} as T
     } catch (error) {
+      // Enhance fetch errors with URL/method context to make debugging easier.
       if (error instanceof Error) {
-        throw error
+        // eslint-disable-next-line no-console
+        console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+        throw new Error(`Failed to fetch ${url}: ${error.message}`)
       }
+
+      // Fallback
+      // eslint-disable-next-line no-console
+      console.error('[api] unknown request error', { url, method: restOptions.method ?? 'GET' })
       throw new Error('An unknown error occurred')
     }
   }

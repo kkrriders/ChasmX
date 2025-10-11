@@ -283,7 +283,7 @@ export const Sidebar = memo(function Sidebar() {
           </div>
         )}
 
-        {/* Logout button for expanded state */}
+        {/* Logout button for expanded state
         {!collapsed && (
           <div className="p-4 border-t border-sidebar-border/50">
             <ModernButton
@@ -295,7 +295,7 @@ export const Sidebar = memo(function Sidebar() {
               Sign Out
             </ModernButton>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   )

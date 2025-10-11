@@ -24,10 +24,16 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/workflows/${id}`,
     DELETE: (id: string) => `/workflows/${id}`,
     EXECUTE: (id: string) => `/workflows/${id}/execute`,
+    EXECUTIONS: (id: string) => `/workflows/${id}/executions`,
+    EXECUTION: (executionId: string) => `/workflows/executions/${executionId}`,
+    EXECUTION_STREAM: (executionId: string) => `/ws/executions/${executionId}`,
   },
   // User endpoints
   USER: {
     PROFILE: '/user/profile',
     UPDATE: '/user/update',
+  },
+  AI: {
+    GENERATE_WORKFLOW: '/ai/workflows/generate',
   },
 } as const

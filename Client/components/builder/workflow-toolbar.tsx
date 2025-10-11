@@ -19,6 +19,7 @@ import {
   Tag,
   Moon,
   Sun,
+  Sparkles,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import {
@@ -55,9 +56,11 @@ interface WorkflowToolbarProps {
   onExport?: () => void
   onImport?: () => void
   onShare?: () => void
+  onAiGenerate?: () => void
   canUndo?: boolean
   canRedo?: boolean
   zoomLevel?: number
+  isSaving?: boolean
 }
 
 export function WorkflowToolbar({
@@ -75,9 +78,11 @@ export function WorkflowToolbar({
   onExport,
   onImport,
   onShare,
+  onAiGenerate,
   canUndo = false,
   canRedo = false,
   zoomLevel = 100,
+  isSaving = false,
 }: WorkflowToolbarProps) {
   const { theme, setTheme } = useTheme()
   const [description, setDescription] = useState("")
@@ -106,13 +111,25 @@ export function WorkflowToolbar({
       <div className="flex items-center justify-between px-4 py-2 gap-4">
         {/* Left Section - Workflow Info */}
         <div className="flex items-center gap-3 flex-1">
+          <label htmlFor="workflow-name" className="sr-only">Workflow name</label>
           <Input
+            id="workflow-name"
+            aria-label="Workflow name"
             type="text"
             value={workflowName}
             onChange={(e) => onWorkflowNameChange(e.target.value)}
-            className="w-64 h-9 font-medium"
+            className="w-64 h-9 font-medium focus:ring-2 focus:ring-primary/50"
             placeholder="Workflow name..."
           />
+          {isSaving && (
+            <div aria-live="polite" className="text-xs text-muted-foreground ml-2 flex items-center gap-1">
+              <svg className="animate-spin h-3 w-3 text-primary" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              Saving...
+            </div>
+          )}
           
           <Dialog>
             <DialogTrigger asChild>
@@ -178,22 +195,39 @@ export function WorkflowToolbar({
 
         {/* Center Section - Actions */}
         <div className="flex items-center gap-2">
+          {onAiGenerate && (
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={onAiGenerate}
+              title="Generate with AI"
+              className="gap-1.5"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span className="hidden md:inline">AI Generate</span>
+            </Button>
+          )}
+
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="sm"
               onClick={onUndo}
               disabled={!canUndo}
+              aria-label="Undo (Ctrl+Z)"
               title="Undo (Ctrl+Z)"
+              className="focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <Undo className="h-4 w-4" />
             </Button>
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="sm"
               onClick={onRedo}
               disabled={!canRedo}
+              aria-label="Redo (Ctrl+Y)"
               title="Redo (Ctrl+Y)"
+              className="focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <Redo className="h-4 w-4" />
             </Button>
@@ -202,9 +236,11 @@ export function WorkflowToolbar({
           <div className="flex items-center gap-1 border rounded-lg p-1">
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="sm"
               onClick={onZoomOut}
+              aria-label="Zoom out"
               title="Zoom Out"
+              className="focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
@@ -213,17 +249,21 @@ export function WorkflowToolbar({
             </span>
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="sm"
               onClick={onZoomIn}
+              aria-label="Zoom in"
               title="Zoom In"
+              className="focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>
             <Button 
-              variant="ghost" 
-              size="sm" 
+              variant="ghost"
+              size="sm"
               onClick={onFitView}
+              aria-label="Fit view"
               title="Fit View"
+              className="focus-visible:ring-2 focus-visible:ring-primary/50"
             >
               <Maximize className="h-4 w-4" />
             </Button>
@@ -231,7 +271,7 @@ export function WorkflowToolbar({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" aria-label="Export menu" className="focus-visible:ring-2 focus-visible:ring-primary/50">
                 <Download className="h-4 w-4 mr-1" />
                 Export
               </Button>
@@ -250,7 +290,8 @@ export function WorkflowToolbar({
 
           <Button variant="outline" size="sm" onClick={onImport}>
             <Upload className="h-4 w-4 mr-1" />
-            Import
+            <span aria-hidden>Import</span>
+            <span className="sr-only">Import workflow</span>
           </Button>
         </div>
 
@@ -267,15 +308,47 @@ export function WorkflowToolbar({
 
           <Button variant="outline" size="sm" onClick={onShare}>
             <Share2 className="h-4 w-4 mr-1" />
-            Share
+            <span aria-hidden>Share</span>
+            <span className="sr-only">Share workflow link</span>
           </Button>
 
-          <Button variant="outline" size="sm" onClick={onSave}>
+          <Button variant="outline" size="sm" onClick={onSave} aria-label="Save workflow" className="focus-visible:ring-2 focus-visible:ring-primary/50">
             <Save className="h-4 w-4 mr-1" />
             Save
           </Button>
 
-          <Button size="sm" onClick={onRun}>
+          <Button
+            size="sm"
+            onClick={() => {
+              // Guard: do nothing if there are no nodes
+              if (nodeCount === 0) return
+
+              console.debug('[workflow-toolbar] Run button clicked, onRun present:', !!onRun)
+
+              // Immediately open the execution panel for quick feedback
+              try {
+                console.debug('[workflow-toolbar] Dispatching workflow-open-execution-panel event')
+                window.dispatchEvent(new CustomEvent('workflow-open-execution-panel'))
+              } catch (e) {
+                // ignore
+              }
+
+              // Primary: call provided handler (which will actually start execution)
+              if (onRun) return onRun()
+
+              // Fallback: dispatch a global event so builders that didn't pass the prop still run
+              try {
+                console.debug('[workflow-toolbar] Dispatching global workflow-run event')
+                window.dispatchEvent(new CustomEvent('workflow-run'))
+              } catch (e) {
+                // no-op
+              }
+            }}
+            aria-label="Run workflow"
+            disabled={nodeCount === 0}
+            title={nodeCount === 0 ? 'Add nodes to enable Run' : undefined}
+            className={`focus-visible:ring-2 focus-visible:ring-primary/50 ${nodeCount === 0 ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
             <Play className="h-4 w-4 mr-1" />
             Run
           </Button>
