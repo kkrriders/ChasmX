@@ -88,6 +88,7 @@ function EnhancedBuilderCanvasInner() {
   const [copiedNodes, setCopiedNodes] = useState<Node[]>([])
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [executionContext, setExecutionContext] = useState<ExecutionContext | null>(null)
   const [executionEngine, setExecutionEngine] = useState<WorkflowExecutionEngine | null>(null)
   const [showDataInspector, setShowDataInspector] = useState(false)
@@ -111,6 +112,20 @@ function EnhancedBuilderCanvasInner() {
   } = useReactFlow()
 
   const history = useWorkflowHistory()
+
+  // Helper to detect typing fields so global keyboard handlers don't intercept user input
+  const isTypingField = (target: EventTarget | null) => {
+    if (!target) return false
+    const t = target as HTMLElement
+    const tag = t.tagName?.toUpperCase()
+    if (!tag) return false
+    return (
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      (t as HTMLElement).isContentEditable
+    )
+  }
 
   // Handle drag over
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -225,15 +240,21 @@ function EnhancedBuilderCanvasInner() {
     if (nodes.length === 0 && edges.length === 0) return
 
     const autoSaveInterval = setInterval(() => {
-      const workflow = {
-        name: workflowName,
-        nodes,
-        edges,
-        savedAt: new Date().toISOString(),
+      try {
+        setIsSaving(true)
+        const workflow = {
+          name: workflowName,
+          nodes,
+          edges,
+          savedAt: new Date().toISOString(),
+        }
+        localStorage.setItem('autosave-workflow', JSON.stringify(workflow))
+        setLastSaved(new Date())
+        setHasUnsavedChanges(false)
+      } finally {
+        // small delay for UX so the saving indicator is visible briefly
+        setTimeout(() => setIsSaving(false), 300)
       }
-      localStorage.setItem('autosave-workflow', JSON.stringify(workflow))
-      setLastSaved(new Date())
-      setHasUnsavedChanges(false)
     }, 30000) // Auto-save every 30 seconds
 
     return () => clearInterval(autoSaveInterval)
@@ -448,6 +469,8 @@ function EnhancedBuilderCanvasInner() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when the user is typing in an input/textarea/select or contentEditable
+      if (isTypingField(e.target)) return
       // Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
@@ -659,6 +682,7 @@ function EnhancedBuilderCanvasInner() {
 
   // Handle save
   const handleSave = useCallback(async () => {
+    setIsSaving(true)
     const workflow = {
       name: workflowName,
       nodes: nodes.map(node => ({
@@ -706,6 +730,9 @@ function EnhancedBuilderCanvasInner() {
         duration: 5000,
       })
       return null
+    } finally {
+      // ensure saving indicator is turned off
+      setIsSaving(false)
     }
   }, [workflowName, nodes, edges, workflowVariables])
 
@@ -749,6 +776,7 @@ function EnhancedBuilderCanvasInner() {
 
   // Handle run workflow execution
   const handleRun = useCallback(async () => {
+    console.debug('[enhanced-builder] handleRun called, nodes.length=', nodes.length)
     if (nodes.length === 0) {
       toast({
         title: "Error",
@@ -813,6 +841,27 @@ function EnhancedBuilderCanvasInner() {
       })
     }
   }, [nodes, edges, workflowVariables, currentWorkflowId, handleSave, pollExecutionStatus])
+
+  // Listen for global run events (fallback if some toolbar instance doesn't pass handler prop)
+  useEffect(() => {
+    const onGlobalRun = () => {
+      try {
+        handleRun()
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('workflow-run', onGlobalRun as any)
+    return () => window.removeEventListener('workflow-run', onGlobalRun as any)
+  }, [handleRun])
+
+  // Open execution panel immediately when requested by toolbar for quick UI feedback
+  useEffect(() => {
+    const onOpenExecution = () => setShowExecution(true)
+    window.addEventListener('workflow-open-execution-panel', onOpenExecution as any)
+    return () => window.removeEventListener('workflow-open-execution-panel', onOpenExecution as any)
+  }, [setShowExecution])
 
   // Handle pause execution
   const handlePauseExecution = useCallback(() => {
@@ -1001,6 +1050,7 @@ function EnhancedBuilderCanvasInner() {
         canUndo={history.canUndo()}
         canRedo={history.canRedo()}
         zoomLevel={zoomLevel}
+        isSaving={isSaving}
       />
 
       {/* Main Content */}
@@ -1121,14 +1171,14 @@ function EnhancedBuilderCanvasInner() {
                 <Variable className="h-4 w-4 mr-1" />
                 Variables
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowValidation(true)}
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
                 Validate
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
@@ -1281,6 +1331,8 @@ function EnhancedBuilderCanvasInner() {
         onPause={handlePauseExecution}
         onResume={handleResumeExecution}
         onStop={handleStopExecution}
+        onRun={handleRun}
+        isExecuting={isExecuting}
       />
 
       {/* Data Inspector Panel */}

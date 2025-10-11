@@ -1,3 +1,5 @@
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
 import WorkflowsClient from "@/components/workflows/workflows-client"
 

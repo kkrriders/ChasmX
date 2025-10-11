@@ -26,6 +26,7 @@ import {
   BarChart3,
   AlertCircle,
   Info,
+  X,
   Wrench,
 } from 'lucide-react'
 
@@ -36,6 +37,8 @@ interface ExecutionPanelProps {
   onPause?: () => void
   onResume?: () => void
   onStop?: () => void
+  onRun?: () => void
+  isExecuting?: boolean
 }
 
 export function ExecutionPanel({
@@ -45,6 +48,8 @@ export function ExecutionPanel({
   onPause,
   onResume,
   onStop,
+  onRun,
+  isExecuting,
 }: ExecutionPanelProps) {
   const [progress, setProgress] = useState(0)
 
@@ -116,23 +121,55 @@ export function ExecutionPanel({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="right" className="w-[600px] sm:w-[700px] bg-white dark:bg-slate-950 border-l border-[#514eec]/20">
           <SheetHeader className="p-6 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#514eec] flex items-center justify-center">
-                <Activity className="h-5 w-5 text-white" />
+            <div className="flex items-start justify-between w-full">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#514eec] flex items-center justify-center">
+                  <Activity className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <SheetTitle className="text-xl font-semibold text-slate-900 dark:text-white">
+                    Workflow Execution
+                  </SheetTitle>
+                  <SheetDescription className="text-sm text-slate-500 dark:text-slate-400">Monitor your workflow progress</SheetDescription>
+                </div>
               </div>
-              <div>
-                <SheetTitle className="text-xl font-semibold text-slate-900 dark:text-white">
-                  Workflow Execution
-                </SheetTitle>
-                <SheetDescription className="text-sm text-slate-500 dark:text-slate-400">Monitor your workflow progress</SheetDescription>
+              <div className="flex items-center gap-2">
+                {/* <button
+                  onClick={() => onOpenChange(false)}
+                  className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                  title="Close"
+                  aria-label="Close execution panel"
+                >
+                  <X className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                </button> */}
               </div>
             </div>
           </SheetHeader>
           <div className="flex items-center justify-center h-[400px] p-8">
             <div className="text-center max-w-md">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#514eec] flex items-center justify-center">
-                <Play className="h-8 w-8 text-white" />
-              </div>
+              <button
+                onClick={() => {
+                  if (isExecuting) return
+                  if (onRun) return onRun()
+                  // fallback global event
+                  try {
+                    window.dispatchEvent(new CustomEvent('workflow-run'))
+                  } catch (e) {}
+                }}
+                disabled={isExecuting}
+                className={`w-16 h-16 mx-auto mb-4 rounded-full ${isExecuting ? 'bg-gray-300 dark:bg-slate-800 cursor-not-allowed' : 'bg-[#514eec] hover:scale-105'} flex items-center justify-center shadow-lg transform transition-all`}
+                title={isExecuting ? 'Execution in progress' : 'Run workflow'}
+                aria-label="Run workflow"
+              >
+                {isExecuting ? (
+                  <svg className="h-6 w-6 text-white animate-spin" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : (
+                  <Play className="h-8 w-8 text-white" />
+                )}
+              </button>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Ready to Execute</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">Click the Run button to start your workflow execution</p>
             </div>
@@ -166,18 +203,28 @@ export function ExecutionPanel({
                 Workflow Execution
               </SheetTitle>
             </div>
-            <Badge
-              className={executionContext.status === 'success' 
-                ? 'bg-emerald-500 text-white px-3 py-1' 
-                : executionContext.status === 'running'
-                ? 'bg-[#514eec] text-white px-3 py-1'
-                : executionContext.status === 'error'
-                ? 'bg-red-500 text-white px-3 py-1'
-                : 'bg-slate-500 text-white px-3 py-1'
-              }
-            >
-              {executionContext.status.toUpperCase()}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge
+                className={executionContext.status === 'success'
+                  ? 'bg-emerald-500 text-white px-3 py-1'
+                  : executionContext.status === 'running'
+                  ? 'bg-[#514eec] text-white px-3 py-1'
+                  : executionContext.status === 'error'
+                  ? 'bg-red-500 text-white px-3 py-1'
+                  : 'bg-slate-500 text-white px-3 py-1'
+                }
+              >
+                {executionContext.status.toUpperCase()}
+              </Badge>
+              <button
+                onClick={() => onOpenChange(false)}
+                className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+                title="Close"
+                aria-label="Close execution panel"
+              >
+                <X className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+              </button>
+            </div>
           </div>
 
           {/* Execution ID Card */}

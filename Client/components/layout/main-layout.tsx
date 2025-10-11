@@ -1,5 +1,6 @@
-import type React from "react"
-import { memo } from "react"
+"use client"
+
+import React, { memo } from "react"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
 
@@ -9,7 +10,7 @@ interface MainLayoutProps {
   searchPlaceholder?: string
 }
 
-// Keep MainLayout as a (server) component that composes client components
+// MainLayout is a client component that composes other client components
 const MainLayout = memo(function MainLayout({ children, title, searchPlaceholder }: MainLayoutProps) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">

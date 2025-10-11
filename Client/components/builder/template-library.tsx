@@ -249,14 +249,14 @@ export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryPr
 
   return (
     <div className="w-full max-h-[calc(80vh-12rem)] flex flex-col">
-      <div className="relative p-8 border-b border-[#514eec]/10 bg-gradient-to-br from-[#514eec]/5 via-purple-50/50 to-white dark:from-[#514eec]/10 dark:via-purple-950/20 dark:to-slate-950 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(81,78,236,0.1),transparent_50%)]" />
+      <div className="relative p-8 border-b border-[rgba(var(--brand-500),0.08)] bg-gradient-to-br from-[rgba(var(--brand-500),0.05)] via-white/40 to-white dark:from-[rgba(var(--brand-500),0.08)] dark:to-slate-950 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--brand-500),0.10),transparent_50%)]" />
         <div className="relative flex items-center gap-4 mb-3">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#514eec] to-purple-600 flex items-center justify-center shadow-lg shadow-[#514eec]/20 ring-2 ring-[#514eec]/20">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[rgb(var(--brand-500))] to-[rgba(var(--brand-500),0.9)] flex items-center justify-center shadow-lg" style={{ boxShadow: '0 10px 30px rgba(var(--brand-500),0.12)' }}>
             <Save className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-[#514eec] via-purple-600 to-[#514eec] bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-[rgb(var(--brand-500))] via-[rgba(var(--brand-500),0.9)] to-[rgb(var(--brand-500))] bg-clip-text text-transparent">
               Workflow Templates
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
@@ -271,9 +271,9 @@ export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryPr
             {templates.map((template) => (
               <Card
                 key={template.id}
-                className="relative overflow-hidden hover:shadow-xl hover:shadow-[#514eec]/10 hover:-translate-y-1 transition-all duration-300 group bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-700/80 hover:border-[#514eec]/30"
+                className="relative overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-700/80"
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#514eec]/5 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'radial-gradient(circle at 80% 10%, rgba(var(--brand-500),0.06), transparent 40%)' }} />
                 <CardContent className="relative p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -289,8 +289,8 @@ export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryPr
                     </Badge>
                   </div>
 
-                  <div className="relative bg-gradient-to-br from-[#514eec]/5 via-purple-50/50 to-slate-50/50 dark:from-[#514eec]/10 dark:via-purple-950/30 dark:to-slate-900/50 rounded-xl p-4 mb-4 border border-[#514eec]/10 dark:border-[#514eec]/20 shadow-sm">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(81,78,236,0.03),transparent_70%)]" />
+                  <div className="relative rounded-xl p-4 mb-4 border shadow-sm" style={{ background: 'linear-gradient(180deg, rgba(var(--brand-500),0.03), rgba(255,255,255,0.4))', borderColor: 'rgba(var(--brand-500),0.08)' }}>
+                    <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 10% 20%, rgba(var(--brand-500),0.03), transparent 70%)' }} />
                     <p className="relative text-xs font-mono text-slate-700 dark:text-slate-300 leading-relaxed">
                       {template.preview}
                     </p>
@@ -298,9 +298,9 @@ export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryPr
 
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3 text-xs">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-br from-[#514eec]/10 to-purple-100/50 dark:from-[#514eec]/20 dark:to-purple-950/30 border border-[#514eec]/20 dark:border-[#514eec]/30">
-                        <GitBranch className="h-3.5 w-3.5 text-[#514eec]" />
-                        <span className="font-semibold text-[#514eec]">{template.nodeCount} nodes</span>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border" style={{ background: 'linear-gradient(90deg, rgba(var(--brand-500),0.06), rgba(255,255,255,0.6))', borderColor: 'rgba(var(--brand-500),0.12)' }}>
+                        <GitBranch className="h-3.5 w-3.5" style={{ color: 'rgb(var(--brand-500))' }} />
+                        <span className="font-semibold" style={{ color: 'rgb(var(--brand-500))' }}>{template.nodeCount} nodes</span>
                       </div>
                       <Badge variant="outline" className="text-xs shadow-sm border-slate-300 dark:border-slate-600">
                         {template.category}
@@ -308,7 +308,7 @@ export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryPr
                     </div>
                     <Button 
                       size="sm" 
-                      className="bg-gradient-to-r from-[#514eec] to-purple-600 hover:from-[#514eec]/90 hover:to-purple-700 text-white shadow-md hover:shadow-lg hover:shadow-[#514eec]/20 transition-all duration-300 font-medium"
+                      className="text-white shadow-md hover:shadow-lg transition-all duration-300 font-medium"
                       onClick={(e) => {
                         e.stopPropagation()
                         onSelectTemplate(template)
@@ -324,7 +324,8 @@ export function TemplateLibrary({ onSelectTemplate, onClose }: TemplateLibraryPr
                       <Badge 
                         key={tag} 
                         variant="secondary" 
-                        className="text-xs px-3 py-1 bg-gradient-to-br from-slate-100 via-slate-50 to-white dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-900 border border-slate-200/80 dark:border-slate-700/80 hover:border-[#514eec]/30 hover:bg-[#514eec]/5 transition-all duration-200 cursor-default"
+                        className="text-xs px-3 py-1 bg-slate-100 border border-slate-200/80 cursor-default"
+                        style={{ transition: 'all 200ms' }}
                       >
                         {tag}
                       </Badge>

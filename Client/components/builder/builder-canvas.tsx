@@ -60,6 +60,20 @@ import {
   Copy,
 } from 'lucide-react'
 
+// Helper to detect typing fields so global keyboard handlers don't intercept user input
+function isTypingField(target: EventTarget | null) {
+  if (!target) return false
+  const t = target as HTMLElement
+  const tag = t.tagName?.toUpperCase()
+  if (!tag) return false
+  return (
+    tag === 'INPUT' ||
+    tag === 'TEXTAREA' ||
+    tag === 'SELECT' ||
+    (t as HTMLElement).isContentEditable
+  )
+}
+
 // Component Library Items
 interface ComponentItem {
   id: string
@@ -417,6 +431,8 @@ function BuilderCanvasInner() {
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Ignore when typing in an input/textarea/select or contentEditable
+    if (isTypingField(event.target)) return
     // Delete selected nodes with Delete or Backspace
     if (event.key === 'Delete' || event.key === 'Backspace') {
       const selectedNodes = getNodes().filter(node => node.selected)

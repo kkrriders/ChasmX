@@ -268,16 +268,16 @@ const TeamsPage = memo(function TeamsPage() {
                   <div className="p-6">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
                             <Mail className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                           </div>
-                          <div>
-                            <h3 className="font-medium text-slate-900 dark:text-white text-sm">john.doe@example.com</h3>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">Invited 2 days ago</p>
+                          <div className="min-w-0">
+                            <h3 className="font-medium text-slate-900 dark:text-white text-sm truncate">john.doe@example.com</h3>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate">Invited 2 days ago</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <Badge variant="outline" className="text-xs">Editor</Badge>
                           <Button variant="outline" size="sm">
                             Resend
@@ -332,8 +332,8 @@ const TeamsPage = memo(function TeamsPage() {
                     <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Common tasks</p>
                   </div>
                   <div className="p-6 space-y-3">
-                    <Button className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-left border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-center gap-3">
+                    <Button className="w-full h-14 px-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-left border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-3 h-full">
                         <UserPlus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         <div>
                           <div className="font-medium text-slate-900 dark:text-white">Bulk Invite</div>
@@ -341,8 +341,8 @@ const TeamsPage = memo(function TeamsPage() {
                         </div>
                       </div>
                     </Button>
-                    <Button className="w-full p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
+                    <Button className="w-full h-14 px-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-3 h-full">
                         <Settings className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                         <div>
                           <div className="font-medium text-slate-900 dark:text-white">Access Settings</div>
