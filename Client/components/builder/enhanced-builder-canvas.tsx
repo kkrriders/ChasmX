@@ -56,6 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
 import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2, Sparkles } from 'lucide-react'
 import { api } from '@/lib/api'
 
@@ -1265,14 +1266,17 @@ function EnhancedBuilderCanvasInner() {
 
       {/* Templates Dialog */}
       <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
-        <DialogContent className="max-w-4xl max-h-[80vh] bg-white dark:bg-gray-900 opacity-100">
-          <DialogHeader>
-            <DialogTitle>Choose a Template</DialogTitle>
-          </DialogHeader>
-          <TemplateLibrary 
-            onSelectTemplate={handleSelectTemplate}
-            onClose={() => setShowTemplates(false)}
-          />
+        {/* Allow dialog content to be much wider so TemplateLibrary can render without clipping */}
+        <DialogContent showCloseButton={false} className="top-[0%] left-[20%] translate-x-0 translate-y-0 w-[90vw] max-w-[1100px] max-h-[85vh] p-0 bg-transparent dark:bg-transparent border-0 rounded-none shadow-none">
+          <VisuallyHidden.Root>
+            <DialogTitle>Workflow Templates</DialogTitle>
+          </VisuallyHidden.Root>
+          <div className="w-full p-4 md:p-6">
+            <TemplateLibrary 
+              onSelectTemplate={handleSelectTemplate}
+              onClose={() => setShowTemplates(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

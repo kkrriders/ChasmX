@@ -153,7 +153,7 @@ export function Footer() {
               <span>© 2025 ChasmX. All rights reserved.</span>
               <span className="hidden sm:inline">|</span>
               <span className="hidden sm:inline flex items-center gap-1">
-                Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by ChasmX Team
+                Made By ChasmX Team "CodroidHub"
               </span>
             </div>
             <div className="flex items-center gap-3">
