@@ -1,0 +1,59 @@
+{
+  "name": "Simple Q&A - Node Communication Demo",
+  "status": "active",
+  "metadata": {
+    "description": "Demonstrates basic node-to-node communication with a student asking a teacher for information",
+    "tags": ["demo", "communication", "education"],
+    "author": "ChasmX Team",
+    "version": "1.0"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "position": {"x": 100, "y": 200},
+      "config": {}
+    },
+    {
+      "id": "student",
+      "type": "ai-processor",
+      "position": {"x": 300, "y": 200},
+      "config": {
+        "name": "Student",
+        "description": "A curious student learning about science",
+        "prompt": "I'm a student who needs to learn about photosynthesis. Ask the teacher node to explain it to me using: CALL: ask_node('teacher', 'Can you explain photosynthesis in simple terms?')",
+        "can_communicate": true,
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.7,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "id": "teacher",
+      "type": "ai-processor",
+      "position": {"x": 600, "y": 200},
+      "config": {
+        "name": "Teacher",
+        "description": "An experienced teacher who explains scientific concepts clearly",
+        "system_prompt": "You are a knowledgeable teacher who explains scientific concepts in a clear, simple way suitable for students.",
+        "prompt": "You are ready to answer questions about science topics.",
+        "can_communicate": true,
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.8,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "position": {"x": 900, "y": 200},
+      "config": {}
+    }
+  ],
+  "edges": [
+    {"from": "start", "to": "student"},
+    {"from": "student", "to": "teacher"},
+    {"from": "teacher", "to": "end"}
+  ],
+  "variables": []
+}

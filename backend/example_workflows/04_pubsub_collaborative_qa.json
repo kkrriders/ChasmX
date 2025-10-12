@@ -1,0 +1,77 @@
+{
+  "name": "Redis Pub/Sub Q&A Demo",
+  "status": "active",
+  "metadata": {
+    "description": "Demonstrates Redis Pub/Sub communication mode with async node messaging",
+    "tags": ["demo", "pubsub", "async", "communication"],
+    "author": "ChasmX Team",
+    "version": "1.0",
+    "communication_mode": "pubsub"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "position": {"x": 50, "y": 300},
+      "config": {}
+    },
+    {
+      "id": "student",
+      "type": "ai-processor",
+      "position": {"x": 250, "y": 300},
+      "config": {
+        "name": "Student Agent",
+        "description": "A curious student asking questions",
+        "system_prompt": "You are a curious student eager to learn. Ask clear, specific questions to understand topics better.",
+        "prompt": "You are learning about quantum computing. Ask the teacher about the basics of quantum entanglement using: CALL: ask_node('teacher', 'Can you explain quantum entanglement in simple terms?')",
+        "can_communicate": true,
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.7,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "id": "teacher",
+      "type": "ai-processor",
+      "position": {"x": 550, "y": 300},
+      "config": {
+        "name": "Teacher Agent",
+        "description": "An expert teacher explaining concepts",
+        "system_prompt": "You are an experienced physics teacher. Explain complex concepts in clear, simple language with examples.",
+        "prompt": "You are a physics teacher. When asked questions, provide clear, accurate explanations with real-world examples.",
+        "can_communicate": true,
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.5,
+        "max_tokens": 2048
+      }
+    },
+    {
+      "id": "coordinator",
+      "type": "ai-processor",
+      "position": {"x": 850, "y": 300},
+      "config": {
+        "name": "Learning Coordinator",
+        "description": "Coordinates the learning session",
+        "system_prompt": "You coordinate learning sessions. After reviewing the Q&A, broadcast a summary to all participants.",
+        "prompt": "Review the learning session and broadcast a summary using: CALL: broadcast_message('Learning session on quantum entanglement completed successfully. Key concepts covered: superposition, entanglement, and measurement.')",
+        "can_communicate": true,
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.6,
+        "max_tokens": 1024
+      }
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "position": {"x": 1100, "y": 300},
+      "config": {}
+    }
+  ],
+  "edges": [
+    {"from": "start", "to": "student"},
+    {"from": "student", "to": "teacher"},
+    {"from": "teacher", "to": "coordinator"},
+    {"from": "coordinator", "to": "end"}
+  ],
+  "variables": []
+}

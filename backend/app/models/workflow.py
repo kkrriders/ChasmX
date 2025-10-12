@@ -87,6 +87,7 @@ class WorkflowRun(Document):
     node_states: Dict[str, Any]
     errors: Optional[List[Dict[str, Any]]] = []
     logs: Optional[List[Dict[str, Any]]] = []
+    communication_log: Optional[List[Dict[str, Any]]] = []
 
     class Settings:
         name = "workflow_runs"
