@@ -18,8 +18,8 @@ export const API_ENDPOINTS = {
   },
   // Workflow endpoints
   WORKFLOWS: {
-    LIST: '/workflows',
-    CREATE: '/workflows',
+    LIST: '/workflows/',
+    CREATE: '/workflows/',
     GET: (id: string) => `/workflows/${id}`,
     UPDATE: (id: string) => `/workflows/${id}`,
     DELETE: (id: string) => `/workflows/${id}`,

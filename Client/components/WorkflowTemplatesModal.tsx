@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -44,11 +45,21 @@ const TEMPLATES: Template[] = [
 
 export function WorkflowTemplatesModal() {
   const [selectedId, setSelectedId] = useState<string>(TEMPLATES[0].id)
+  const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   const selected = TEMPLATES.find((t) => t.id === selectedId) ?? TEMPLATES[0]
 
+  const handleUseTemplate = () => {
+    // Store the selected template ID in localStorage so the builder can load it
+    localStorage.setItem('pending-template-id', selected.id)
+    // Navigate to the builder page
+    router.push('/workflows/enhanced')
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="default">Open Templates</Button>
       </DialogTrigger>
@@ -72,7 +83,7 @@ export function WorkflowTemplatesModal() {
             <p className="text-muted-foreground mt-2">{selected.description}</p>
 
             <div className="mt-6 flex items-center gap-3">
-              <Button variant="default">Use Template</Button>
+              <Button variant="default" onClick={handleUseTemplate}>Use Template</Button>
               <Button variant="outline" onClick={() => setSelectedId('')}>Clear selection</Button>
             </div>
 
