@@ -18,7 +18,7 @@
   color: var(--cx-text-dark) !important;
 }
 
-/* Text elements */
+/* Text elements
 :not(.dark) body:not(.home-hide-scroll) h1,
 :not(.dark) body:not(.home-hide-scroll) h2,
 :not(.dark) body:not(.home-hide-scroll) h3,
@@ -27,7 +27,7 @@
 :not(.dark) body:not(.home-hide-scroll) span,
 :not(.dark) body:not(.home-hide-scroll) a {
   color: var(--cx-text-dark) !important;
-}
+} */
 
 /* Muted text and placeholders */
 :not(.dark) body:not(.home-hide-scroll) ::placeholder {
@@ -80,6 +80,6 @@
 /* Utility: if any element accidentally uses text-white on light pages, override it
    (be careful: this will only affect non-home pages when not in dark mode).
 */
-:not(.dark) body:not(.home-hide-scroll) .text-white {
+/* :not(.dark) body:not(.home-hide-scroll) .text-white {
   color: var(--cx-text-dark) !important;
-}
+} */

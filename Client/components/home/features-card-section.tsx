@@ -63,12 +63,12 @@ const features = [
 const pricingPlans = [
   {
     name: "Starter",
-    price: "$0",
+    price: "Free",
     period: "/month",
     description: "Perfect for individuals and small teams",
     features: [
-      "Up to 100 workflow runs/month",
-      "5 active workflows",
+      "Up to 10 workflow runs/month",
+      "3 active workflows",
       "Basic integrations",
       "Community support",
       "7-day execution history",
@@ -79,7 +79,7 @@ const pricingPlans = [
   },
   {
     name: "Professional",
-    price: "$49",
+    price: "2999",
     period: "/month",
     description: "For growing teams and businesses",
     features: [
@@ -118,7 +118,7 @@ const pricingPlans = [
 export function FeaturesCardSection() {
   return (
     <section className="py-20 bg-gradient-to-b from-white to-slate-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+  <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Features Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -127,13 +127,13 @@ export function FeaturesCardSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 bg-purple-500/10 text-purple-600 border-purple-500/20">
+          <Badge className="mb-4 bg-purple-500/10 text-purple-600 border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-300">
             Features
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
             Everything You Need to <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">Succeed</span>
           </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
             Powerful features designed to help you build, deploy, and scale your workflows effortlessly
           </p>
         </motion.div>
@@ -149,14 +149,14 @@ export function FeaturesCardSection() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Card className="relative overflow-hidden border-slate-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl h-full group">
+                <Card className="relative overflow-hidden border-slate-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl h-full group dark:border-slate-700 dark:hover:border-purple-400">
                   <CardContent className="p-6">
                     <div className={`absolute top-0 right-0 w-32 h-32 ${feature.bgGlow} blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
                     <div className={`p-3 rounded-xl bg-gradient-to-br ${feature.color} w-fit mb-4`}>
                       <Icon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">{feature.title}</h3>
-                    <p className="text-slate-600 leading-relaxed">{feature.description}</p>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{feature.title}</h3>
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{feature.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -172,13 +172,13 @@ export function FeaturesCardSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4 bg-blue-500/10 text-blue-600 border-blue-500/20">
+          <Badge className="mb-4 bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
             Pricing
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
             Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Perfect Plan</span>
           </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
             Start free, scale as you grow. No hidden fees, cancel anytime.
           </p>
         </motion.div>
@@ -197,8 +197,8 @@ export function FeaturesCardSection() {
               >
                 <Card className={`relative overflow-hidden h-full ${
                   plan.popular 
-                    ? "border-purple-500 border-2 shadow-2xl shadow-purple-500/20" 
-                    : "border-slate-200"
+                    ? "border-purple-500 border-2 shadow-2xl shadow-purple-500/20 dark:shadow-purple-600/20" 
+                    : "border-slate-200 dark:border-slate-700"
                 }`}>
                   {plan.popular && (
                     <div className="absolute top-0 inset-x-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold text-center py-2">
@@ -208,19 +208,19 @@ export function FeaturesCardSection() {
                   <CardContent className={`p-8 ${plan.popular ? "pt-14" : ""}`}>
                     <div className="flex items-center gap-3 mb-4">
                       <div className={`p-2 rounded-lg ${
-                        plan.popular ? "bg-purple-500/10" : "bg-slate-100"
+                        plan.popular ? "bg-purple-500/10" : "bg-slate-100 dark:bg-slate-800"
                       }`}>
                         <Icon className={`w-5 h-5 ${
-                          plan.popular ? "text-purple-600" : "text-slate-600"
+                          plan.popular ? "text-purple-600 dark:text-purple-300" : "text-slate-600 dark:text-slate-300"
                         }`} />
                       </div>
-                      <h3 className="text-2xl font-bold text-slate-900">{plan.name}</h3>
+                      <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{plan.name}</h3>
                     </div>
                     <div className="mb-4">
-                      <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
-                      <span className="text-slate-600">{plan.period}</span>
+                      <span className="text-4xl font-bold text-slate-900 dark:text-slate-100">{plan.price}</span>
+                      <span className="text-slate-600 dark:text-slate-300">{plan.period}</span>
                     </div>
-                    <p className="text-slate-600 mb-6">{plan.description}</p>
+                    <p className="text-slate-600 dark:text-slate-300 mb-6">{plan.description}</p>
                     <button className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
                       plan.popular
                         ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-500/50"
@@ -231,10 +231,10 @@ export function FeaturesCardSection() {
                     <ul className="mt-6 space-y-3">
                       {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-2 text-sm">
-                          <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className="text-slate-600">{feature}</span>
+                          <span className="text-slate-600 dark:text-slate-300">{feature}</span>
                         </li>
                       ))}
                     </ul>
