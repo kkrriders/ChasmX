@@ -163,6 +163,7 @@ class ExecutionStatusResponse(BaseModel):
     node_states: Dict[str, Any] = Field(default_factory=dict)
     logs: List[Dict[str, Any]] = Field(default_factory=list)
     errors: List[Dict[str, Any]] = Field(default_factory=list)
+    communication_log: List[Dict[str, Any]] = Field(default_factory=list, description="Inter-node communication log")
 
     class Config:
         from_attributes = True
@@ -291,7 +292,8 @@ async def list_workflow_executions(workflow_id: str) -> List[ExecutionStatusResp
             end_time=run.end_time,
             node_states=run.node_states,
             logs=run.logs or [],
-            errors=run.errors or []
+            errors=run.errors or [],
+            communication_log=run.communication_log or []
         )
         for run in runs
     ]
@@ -326,7 +328,8 @@ async def get_execution_status(execution_id: str) -> ExecutionStatusResponse:
             end_time=run.end_time,
             node_states=run.node_states,
             logs=run.logs or [],
-            errors=run.errors or []
+            errors=run.errors or [],
+            communication_log=run.communication_log or []
         )
 
     except HTTPException:

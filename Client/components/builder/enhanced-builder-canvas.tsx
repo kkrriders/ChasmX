@@ -213,8 +213,37 @@ function EnhancedBuilderCanvasInner() {
     });
   }, [nodes, edges, setNodes, fitView]);
 
-  // Load workflow from localStorage on mount
+  // Load workflow from localStorage on mount (check for pending template first)
   useEffect(() => {
+    // Check if there's a pending template to load
+    const pendingTemplateId = localStorage.getItem('pending-template-id')
+    if (pendingTemplateId) {
+      // Clear the pending template flag
+      localStorage.removeItem('pending-template-id')
+
+      // Import template library to access templates
+      import('@/components/builder/template-library').then((module) => {
+        // Find the template by ID (map simple IDs to actual template IDs)
+        const templateIdMap: Record<string, string> = {
+          'data-pipeline': 'data-processing',
+          'email-automation': 'email-automation',
+          'ai-content': 'ai-content-generator',
+        }
+        const actualTemplateId = templateIdMap[pendingTemplateId] || pendingTemplateId
+
+        // Note: We can't easily access the templates array from here since it's not exported
+        // So we'll trigger the templates dialog instead
+        setShowTemplates(true)
+        toast({
+          title: "Template Ready",
+          description: "Please select your template from the library",
+          duration: 3000,
+        })
+      })
+      return
+    }
+
+    // Otherwise load autosaved workflow
     const saved = localStorage.getItem('autosave-workflow')
     if (saved) {
       try {

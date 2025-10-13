@@ -250,6 +250,12 @@ class AgentMessageBus:
         try:
             while self.listening:
                 try:
+                    # Check if pubsub has active subscriptions
+                    if not self.pubsub or not hasattr(self.pubsub, 'connection') or not self.pubsub.connection:
+                        # No active subscriptions, just wait
+                        await asyncio.sleep(1)
+                        continue
+
                     message = await self.pubsub.get_message(
                         ignore_subscribe_messages=True,
                         timeout=1.0
@@ -261,7 +267,9 @@ class AgentMessageBus:
                 except asyncio.CancelledError:
                     break
                 except Exception as e:
-                    logger.error(f"Error in listen loop: {e}")
+                    # Only log errors that aren't about missing subscriptions
+                    if "pubsub connection not set" not in str(e).lower():
+                        logger.error(f"Error in listen loop: {e}")
                     await asyncio.sleep(1)
 
         except asyncio.CancelledError:
