@@ -18,7 +18,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white home-no-scrollbar">
+    <div className="min-h-screen bg-white home-no-scrollbar home-page">
       {/* Navigation Header */}
       <HomeHeader />
 
