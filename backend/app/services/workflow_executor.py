@@ -14,7 +14,15 @@ from loguru import logger
 import asyncio
 import uuid
 import json
+import os
 from enum import Enum
+import ssl
+import aiosmtplib
+import aiohttp
+from email.mime.text import MIMEText as MimeText
+from email.mime.multipart import MIMEMultipart as MimeMultipart
+from email.mime.base import MIMEBase as MimeBase
+from email import encoders
 
 from ..models.workflow import (
     Workflow,
@@ -470,23 +478,94 @@ Use these functions when you need to coordinate with other nodes in the workflow
     async def _execute_email_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute email node - sends email via SMTP"""
         try:
+            # Extract and interpolate email configuration
             to_email = self._interpolate_variables(node.config.get("to", ""), context)
             subject = self._interpolate_variables(node.config.get("subject", ""), context)
             body = self._interpolate_variables(node.config.get("body", ""), context)
+            
+            # Optional email fields
+            from_email = self._interpolate_variables(
+                node.config.get("from", os.getenv("SMTP_FROM_EMAIL", "noreply@chasmx.ai")), 
+                context
+            )
+            cc = self._interpolate_variables(node.config.get("cc", ""), context)
+            bcc = self._interpolate_variables(node.config.get("bcc", ""), context)
+            
+            # Email format (html or text)
+            email_format = node.config.get("format", "text")  # 'html' or 'text'
+            
+            # Retry configuration
+            max_retries = node.config.get("retries", 3)
+            retry_delay = node.config.get("retry_delay", 1)  # seconds
 
             logger.info(f"Email Node: Sending to {to_email}")
 
-            # TODO: Implement actual email sending via aiosmtplib
-            # For now, simulate
-            await asyncio.sleep(0.5)
+            # Validate required fields
+            if not to_email:
+                raise ValueError("Recipient email address is required")
+            if not subject:
+                raise ValueError("Email subject is required")
+            if not body:
+                raise ValueError("Email body is required")
 
-            return {
-                "status": "completed",
-                "output": f"Email sent to {to_email}",
-                "to": to_email,
-                "subject": subject,
-                "timestamp": datetime.utcnow().isoformat()
+            # SMTP configuration from environment variables
+            smtp_config = {
+                "hostname": os.getenv("SMTP_HOST", "localhost"),
+                "port": int(os.getenv("SMTP_PORT", 587)),
+                "username": os.getenv("SMTP_USERNAME"),
+                "password": os.getenv("SMTP_PASSWORD"),
+                "use_tls": os.getenv("SMTP_USE_TLS", "true").lower() == "true",
+                "use_ssl": os.getenv("SMTP_USE_SSL", "false").lower() == "true",
             }
+
+            # Allow node-specific SMTP override
+            if "smtp" in node.config:
+                smtp_override = node.config["smtp"]
+                smtp_config.update({
+                    "hostname": smtp_override.get("host", smtp_config["hostname"]),
+                    "port": smtp_override.get("port", smtp_config["port"]),
+                    "username": smtp_override.get("username", smtp_config["username"]),
+                    "password": smtp_override.get("password", smtp_config["password"]),
+                    "use_tls": smtp_override.get("use_tls", smtp_config["use_tls"]),
+                    "use_ssl": smtp_override.get("use_ssl", smtp_config["use_ssl"]),
+                })
+
+            # Send email with retry logic
+            last_error = None
+            for attempt in range(max_retries + 1):
+                try:
+                    await self._send_email(
+                        smtp_config=smtp_config,
+                        from_email=from_email,
+                        to_email=to_email,
+                        cc=cc,
+                        bcc=bcc,
+                        subject=subject,
+                        body=body,
+                        email_format=email_format
+                    )
+                    
+                    logger.info(f"Email sent successfully to {to_email} on attempt {attempt + 1}")
+                    
+                    return {
+                        "status": "completed",
+                        "output": f"Email sent to {to_email}",
+                        "to": to_email,
+                        "subject": subject,
+                        "attempts": attempt + 1,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                except Exception as e:
+                    last_error = e
+                    if attempt < max_retries:
+                        logger.warning(f"Email send attempt {attempt + 1} failed: {str(e)}. Retrying in {retry_delay}s...")
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        logger.error(f"Email send failed after {max_retries + 1} attempts: {str(e)}")
+
+            # If we get here, all retries failed
+            raise last_error or Exception("Email send failed")
 
         except Exception as e:
             logger.error(f"Email node execution failed: {str(e)}")
@@ -495,6 +574,72 @@ Use these functions when you need to coordinate with other nodes in the workflow
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }
+
+    async def _send_email(
+        self,
+        smtp_config: Dict[str, Any],
+        from_email: str,
+        to_email: str,
+        cc: str,
+        bcc: str,
+        subject: str,
+        body: str,
+        email_format: str = "text"
+    ):
+        """Send email using aiosmtplib"""
+        # Create message
+        if email_format.lower() == "html":
+            msg = MimeMultipart("alternative")
+            msg.attach(MimeText(body, "html"))
+        else:
+            msg = MimeText(body, "plain")
+        
+        msg["Subject"] = subject
+        msg["From"] = from_email
+        msg["To"] = to_email
+        
+        if cc:
+            msg["Cc"] = cc
+        if bcc:
+            msg["Bcc"] = bcc
+
+        # Prepare recipient list
+        recipients = [to_email]
+        if cc:
+            recipients.extend([email.strip() for email in cc.split(",")])
+        if bcc:
+            recipients.extend([email.strip() for email in bcc.split(",")])
+
+        # Configure SSL context
+        if smtp_config["use_ssl"] or smtp_config["use_tls"]:
+            ssl_context = ssl.create_default_context()
+        else:
+            ssl_context = None
+
+        # Send email
+        if smtp_config["use_ssl"]:
+            # Use SSL from the start
+            async with aiosmtplib.SMTP(
+                hostname=smtp_config["hostname"],
+                port=smtp_config["port"],
+                use_tls=False,
+                tls_context=ssl_context
+            ) as smtp:
+                await smtp.connect()
+                if smtp_config["username"] and smtp_config["password"]:
+                    await smtp.login(smtp_config["username"], smtp_config["password"])
+                await smtp.send_message(msg, recipients=recipients)
+        else:
+            # Use STARTTLS or no encryption
+            async with aiosmtplib.SMTP(
+                hostname=smtp_config["hostname"],
+                port=smtp_config["port"],
+                use_tls=smtp_config["use_tls"],
+                tls_context=ssl_context if smtp_config["use_tls"] else None
+            ) as smtp:
+                if smtp_config["username"] and smtp_config["password"]:
+                    await smtp.login(smtp_config["username"], smtp_config["password"])
+                await smtp.send_message(msg, recipients=recipients)
 
     async def _execute_data_source_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute data source node - fetches data from databases/APIs"""
@@ -526,21 +671,89 @@ Use these functions when you need to coordinate with other nodes in the workflow
     async def _execute_webhook_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute webhook node - makes HTTP request"""
         try:
+            # Extract and interpolate webhook configuration
             url = self._interpolate_variables(node.config.get("url", ""), context)
-            method = node.config.get("method", "POST")
+            method = node.config.get("method", "POST").upper()
+            
+            # Request data/body
+            body_data = node.config.get("body", {})
+            if isinstance(body_data, str):
+                body_data = self._interpolate_variables(body_data, context)
+            elif isinstance(body_data, dict):
+                # Recursively interpolate dictionary values
+                body_data = self._interpolate_dict_values(body_data, context)
+            
+            # Headers configuration
+            headers = node.config.get("headers", {})
+            if isinstance(headers, dict):
+                headers = self._interpolate_dict_values(headers, context)
+            
+            # Authentication
+            auth_config = node.config.get("auth", {})
+            
+            # Query parameters
+            params = node.config.get("params", {})
+            if isinstance(params, dict):
+                params = self._interpolate_dict_values(params, context)
+            
+            # Timeout and retry configuration
+            timeout = node.config.get("timeout", 30)  # seconds
+            max_retries = node.config.get("retries", 3)
+            retry_delay = node.config.get("retry_delay", 1)  # seconds
+            
+            # Response validation
+            expected_status = node.config.get("expected_status", [200, 201, 202, 204])
+            if isinstance(expected_status, int):
+                expected_status = [expected_status]
 
             logger.info(f"Webhook Node: {method} {url}")
 
-            # TODO: Implement actual HTTP request using aiohttp
-            await asyncio.sleep(0.5)
+            # Validate required fields
+            if not url:
+                raise ValueError("Webhook URL is required")
 
-            return {
-                "status": "completed",
-                "output": {"status_code": 200, "response": "success"},
-                "url": url,
-                "method": method,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            # Execute webhook with retry logic
+            last_error = None
+            for attempt in range(max_retries + 1):
+                try:
+                    response_data = await self._execute_http_request(
+                        url=url,
+                        method=method,
+                        headers=headers,
+                        body_data=body_data,
+                        params=params,
+                        auth_config=auth_config,
+                        timeout=timeout
+                    )
+                    
+                    # Check if status code is expected
+                    if response_data["status_code"] not in expected_status:
+                        raise ValueError(
+                            f"Unexpected status code {response_data['status_code']}. "
+                            f"Expected one of: {expected_status}"
+                        )
+                    
+                    logger.info(f"Webhook request successful on attempt {attempt + 1}")
+                    
+                    return {
+                        "status": "completed",
+                        "output": response_data,
+                        "url": url,
+                        "method": method,
+                        "attempts": attempt + 1,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                except Exception as e:
+                    last_error = e
+                    if attempt < max_retries:
+                        logger.warning(f"Webhook attempt {attempt + 1} failed: {str(e)}. Retrying in {retry_delay}s...")
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        logger.error(f"Webhook failed after {max_retries + 1} attempts: {str(e)}")
+
+            # If we get here, all retries failed
+            raise last_error or Exception("Webhook request failed")
 
         except Exception as e:
             logger.error(f"Webhook node execution failed: {str(e)}")
@@ -549,6 +762,105 @@ Use these functions when you need to coordinate with other nodes in the workflow
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }
+
+    async def _execute_http_request(
+        self,
+        url: str,
+        method: str,
+        headers: Dict[str, str],
+        body_data: Any,
+        params: Dict[str, str],
+        auth_config: Dict[str, Any],
+        timeout: int
+    ) -> Dict[str, Any]:
+        """Execute HTTP request using aiohttp"""
+        
+        # Prepare request headers
+        request_headers = {"User-Agent": "ChasmX-Workflow-Engine/1.0"}
+        request_headers.update(headers)
+        
+        # Handle authentication
+        auth = None
+        if auth_config:
+            auth_type = auth_config.get("type", "").lower()
+            if auth_type == "basic":
+                username = auth_config.get("username", "")
+                password = auth_config.get("password", "")
+                if username and password:
+                    auth = aiohttp.BasicAuth(username, password)
+            elif auth_type == "bearer":
+                token = auth_config.get("token", "")
+                if token:
+                    request_headers["Authorization"] = f"Bearer {token}"
+            elif auth_type == "api_key":
+                key = auth_config.get("key", "")
+                header_name = auth_config.get("header", "X-API-Key")
+                if key:
+                    request_headers[header_name] = key
+
+        # Prepare request body
+        json_data = None
+        data = None
+        
+        if body_data:
+            content_type = request_headers.get("Content-Type", "").lower()
+            if content_type.startswith("application/json") or isinstance(body_data, dict):
+                json_data = body_data
+                if "Content-Type" not in request_headers:
+                    request_headers["Content-Type"] = "application/json"
+            else:
+                data = body_data if isinstance(body_data, (str, bytes)) else str(body_data)
+
+        # Configure timeout
+        timeout_config = aiohttp.ClientTimeout(total=timeout)
+
+        # Execute request
+        async with aiohttp.ClientSession(timeout=timeout_config) as session:
+            async with session.request(
+                method=method,
+                url=url,
+                headers=request_headers,
+                params=params,
+                json=json_data,
+                data=data,
+                auth=auth
+            ) as response:
+                # Read response
+                response_text = ""
+                response_json = None
+                try:
+                    response_text = await response.text()
+                    if response.content_type == "application/json":
+                        response_json = await response.json()
+                except Exception as e:
+                    logger.warning(f"Failed to parse response: {e}")
+
+                return {
+                    "status_code": response.status,
+                    "headers": dict(response.headers),
+                    "text": response_text,
+                    "json": response_json,
+                    "content_type": response.content_type,
+                    "size": len(response_text),
+                    "url": str(response.url)
+                }
+
+    def _interpolate_dict_values(self, data: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """Recursively interpolate dictionary values"""
+        result = {}
+        for key, value in data.items():
+            if isinstance(value, str):
+                result[key] = self._interpolate_variables(value, context)
+            elif isinstance(value, dict):
+                result[key] = self._interpolate_dict_values(value, context)
+            elif isinstance(value, list):
+                result[key] = [
+                    self._interpolate_variables(item, context) if isinstance(item, str) else item
+                    for item in value
+                ]
+            else:
+                result[key] = value
+        return result
 
     async def _execute_filter_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute filter node - filters data based on conditions"""

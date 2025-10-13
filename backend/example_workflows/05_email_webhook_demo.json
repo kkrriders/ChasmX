@@ -1,0 +1,164 @@
+{
+  "name": "Email & Webhook Demo Workflow",
+  "description": "Demonstrates real email and webhook functionality with variable interpolation",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "position": {"x": 100, "y": 100},
+      "config": {}
+    },
+    {
+      "id": "ai_processor", 
+      "type": "ai-processor",
+      "position": {"x": 300, "y": 100},
+      "config": {
+        "prompt": "Generate a personalized welcome message for {{user_name}} who just signed up for our {{service_plan}} plan. Make it friendly and informative.",
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.7,
+        "max_tokens": 300
+      }
+    },
+    {
+      "id": "send_welcome_email",
+      "type": "email",
+      "position": {"x": 500, "y": 50},
+      "config": {
+        "to": "{{user_email}}",
+        "cc": "support@chasmx.ai",
+        "subject": "Welcome to ChasmX, {{user_name}}!",
+        "body": "<!DOCTYPE html><html><body><h2>Welcome to ChasmX!</h2><p>{{outputs.ai_processor}}</p><p>Your {{service_plan}} plan is now active.</p><p>Best regards,<br>The ChasmX Team</p></body></html>",
+        "format": "html",
+        "retries": 3,
+        "retry_delay": 2
+      }
+    },
+    {
+      "id": "notify_analytics",
+      "type": "webhook", 
+      "position": {"x": 500, "y": 150},
+      "config": {
+        "url": "https://api.analytics.company.com/events",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "X-Source": "chasmx-workflow"
+        },
+        "body": {
+          "event_type": "user_signup_completed",
+          "user_id": "{{user_id}}",
+          "user_email": "{{user_email}}",
+          "user_name": "{{user_name}}",
+          "service_plan": "{{service_plan}}",
+          "ai_message_generated": true,
+          "email_sent": true,
+          "timestamp": "{{timestamp}}",
+          "metadata": {
+            "workflow_id": "email-webhook-demo",
+            "ai_model": "google/gemini-2.0-flash-exp:free",
+            "source": "chasmx"
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "token": "{{analytics_api_token}}"
+        },
+        "timeout": 15,
+        "retries": 2,
+        "expected_status": [200, 202]
+      }
+    },
+    {
+      "id": "slack_notification",
+      "type": "webhook",
+      "position": {"x": 700, "y": 100},
+      "config": {
+        "url": "{{slack_webhook_url}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "text": "🎉 New user signup completed!",
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*New User Signup*\n• Name: {{user_name}}\n• Email: {{user_email}}\n• Plan: {{service_plan}}\n• Welcome email sent ✅"
+              }
+            }
+          ]
+        },
+        "timeout": 10,
+        "retries": 1
+      }
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "position": {"x": 900, "y": 100},
+      "config": {}
+    }
+  ],
+  "edges": [
+    {"from": "start", "to": "ai_processor"},
+    {"from": "ai_processor", "to": "send_welcome_email"},
+    {"from": "ai_processor", "to": "notify_analytics"},
+    {"from": "send_welcome_email", "to": "slack_notification"},
+    {"from": "notify_analytics", "to": "slack_notification"},
+    {"from": "slack_notification", "to": "end"}
+  ],
+  "variables": [
+    {
+      "name": "user_id",
+      "type": "string",
+      "description": "Unique user identifier",
+      "required": true
+    },
+    {
+      "name": "user_name", 
+      "type": "string",
+      "description": "Full name of the user",
+      "required": true
+    },
+    {
+      "name": "user_email",
+      "type": "string", 
+      "description": "User's email address",
+      "required": true
+    },
+    {
+      "name": "service_plan",
+      "type": "string",
+      "description": "Selected service plan (Basic, Pro, Enterprise)",
+      "required": true
+    },
+    {
+      "name": "analytics_api_token",
+      "type": "string",
+      "description": "Bearer token for analytics API",
+      "required": false
+    },
+    {
+      "name": "slack_webhook_url",
+      "type": "string", 
+      "description": "Slack webhook URL for notifications",
+      "required": false
+    },
+    {
+      "name": "timestamp",
+      "type": "string",
+      "description": "Current timestamp",
+      "required": false
+    }
+  ],
+  "status": "active",
+  "metadata": {
+    "description": "Complete user onboarding workflow with AI-generated welcome message, email notification, analytics tracking, and Slack notification",
+    "author": "ChasmX Team",
+    "version": "1.0",
+    "tags": ["email", "webhook", "onboarding", "ai", "notifications"],
+    "communication_mode": "simple"
+  }
+}
