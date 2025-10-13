@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from loguru import logger
 
 from ..services.ai_service_manager import ai_service_manager
 from ..services.llm.base import LLMRequest, LLMResponse, LLMMessage, ModelRole
@@ -438,6 +439,156 @@ async def get_agent_context(agent_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get context: {str(e)}"
+        )
+
+
+# Workflow Generation Endpoints
+
+class WorkflowGenerationRequest(BaseModel):
+    """Request to generate a workflow from a prompt"""
+    prompt: str = Field(..., description="Natural language description of the workflow")
+
+
+class WorkflowGenerationResponse(BaseModel):
+    """Response from workflow generation"""
+    workflow: Optional[Dict[str, Any]] = Field(None, description="Generated workflow structure")
+    summary: str = Field(..., description="Summary of the generated workflow")
+    reasoning: Optional[str] = Field(None, description="Reasoning behind workflow design")
+
+
+@router.post("/workflows/generate", response_model=WorkflowGenerationResponse)
+async def generate_workflow(request: WorkflowGenerationRequest):
+    """
+    Generate a workflow structure from a natural language prompt using AI.
+    """
+    try:
+        llm_service = ai_service_manager.get_llm_service()
+
+        # Create a system prompt for workflow generation
+        system_message = LLMMessage(
+            role=ModelRole.SYSTEM,
+            content="""You are an expert workflow designer. Given a user's description, generate a workflow structure with nodes and edges.
+
+The workflow should have this structure:
+{
+  "name": "Workflow Name",
+  "description": "Brief description",
+  "nodes": [
+    {
+      "id": "unique_id",
+      "type": "trigger|action|condition|transform",
+      "label": "Node Label",
+      "data": {
+        "config": {}
+      },
+      "position": {"x": 0, "y": 0}
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_id",
+      "from": "source_node_id",
+      "to": "target_node_id"
+    }
+  ]
+}
+
+Available node types:
+- trigger: Starts the workflow (webhook, schedule, email)
+- action: Performs an action (send_email, http_request, slack_message)
+- condition: Branching logic
+- transform: Data transformation
+
+Return ONLY valid JSON. After the JSON, add a line break and provide a brief summary and reasoning."""
+        )
+
+        user_message = LLMMessage(
+            role=ModelRole.USER,
+            content=f"Create a workflow for: {request.prompt}"
+        )
+
+        # Generate workflow using LLM
+        llm_request = LLMRequest(
+            messages=[system_message, user_message],
+            model_id="google/gemini-2.0-flash-exp:free",
+            temperature=0.7,
+            max_tokens=2000,
+            use_cache=False
+        )
+
+        response = await llm_service.complete(llm_request)
+
+        # Parse the response to extract JSON and text
+        content = response.content.strip()
+
+        # Try to extract JSON from response
+        import json as json_lib
+        import re
+
+        # Find JSON object in response
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        workflow_data = None
+        summary = ""
+        reasoning = ""
+
+        if json_match:
+            try:
+                workflow_data = json_lib.loads(json_match.group(0))
+                # Get text after JSON as summary/reasoning
+                remaining_text = content[json_match.end():].strip()
+                if remaining_text:
+                    lines = remaining_text.split('\n')
+                    summary = lines[0] if lines else ""
+                    reasoning = '\n'.join(lines[1:]) if len(lines) > 1 else ""
+            except json_lib.JSONDecodeError:
+                pass
+
+        # If no valid JSON found, create a simple workflow
+        if not workflow_data:
+            workflow_data = {
+                "name": "Generated Workflow",
+                "description": request.prompt,
+                "nodes": [
+                    {
+                        "id": "start",
+                        "type": "trigger",
+                        "label": "Start",
+                        "data": {"config": {}},
+                        "position": {"x": 100, "y": 100}
+                    },
+                    {
+                        "id": "action1",
+                        "type": "action",
+                        "label": "Action",
+                        "data": {"config": {}},
+                        "position": {"x": 300, "y": 100}
+                    }
+                ],
+                "edges": [
+                    {
+                        "id": "edge1",
+                        "from": "start",
+                        "to": "action1"
+                    }
+                ]
+            }
+            summary = "Generated a basic workflow structure"
+            reasoning = "Created a simple two-node workflow as a starting point"
+
+        if not summary:
+            summary = f"Generated workflow based on: {request.prompt[:100]}"
+
+        return WorkflowGenerationResponse(
+            workflow=workflow_data,
+            summary=summary,
+            reasoning=reasoning if reasoning else None
+        )
+
+    except Exception as e:
+        logger.error(f"Workflow generation error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Workflow generation failed: {str(e)}"
         )
 
 

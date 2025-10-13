@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 import { Check, Copy, Loader2, Sparkles } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -77,8 +77,14 @@ export function AiWorkflowGenerator({
       setError(null)
       setResponse(null)
       setIsLoading(false)
+      onGenerated?.(null, {} as GeneratedWorkflowResponse) // Notify parent on close
     }
   }
+
+  // Open dialog when component mounts
+  useEffect(() => {
+    setOpen(true)
+  }, [])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

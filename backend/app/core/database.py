@@ -4,6 +4,7 @@ from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from beanie import init_beanie
 from fastapi import Depends
+from loguru import logger
 from app.core.config import settings
 
 # Global MongoDB client instance
@@ -43,11 +44,11 @@ async def connect_to_mongo():
             database=database,
             document_models=[Workflow, WorkflowRun]
         )
-        print(f"Beanie initialized with collections: Workflow, WorkflowRun")
+        logger.info("Beanie initialized with collections: Workflow, WorkflowRun")
 
     except Exception as e:
         # Log error and raise - don't start app without database
-        print(f"Error: MongoDB connection failed: {str(e)}")
+        logger.error(f"MongoDB connection failed: {str(e)}")
         if client:
             client.close()
         client = None

@@ -8,7 +8,14 @@
       "Bash(npm install:*)",
       "Bash(mkdir:*)",
       "Bash(tree:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(python3 -m py_compile:*)",
+      "Bash(node:*)",
+      "Bash(timeout 3 node dev_tools/mock-run-server.js)",
+      "Bash(docker-compose config:*)",
+      "Bash(ls:*)",
+      "Bash(docker-compose down:*)"
     ],
     "deny": [],
     "ask": []

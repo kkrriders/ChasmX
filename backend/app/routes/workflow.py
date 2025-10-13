@@ -65,7 +65,7 @@ async def list_workflows() -> List[WorkflowSummary]:
 async def get_workflow(workflow_id: str) -> Workflow:
     try:
         object_id = ObjectId(workflow_id)
-    except:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid workflow ID format"
@@ -83,7 +83,7 @@ async def get_workflow(workflow_id: str) -> Workflow:
 async def update_workflow(workflow_id: str, update_data: WorkflowUpdate) -> Workflow:
     try:
         object_id = ObjectId(workflow_id)
-    except:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid workflow ID format"
@@ -113,7 +113,7 @@ async def update_workflow(workflow_id: str, update_data: WorkflowUpdate) -> Work
 async def delete_workflow(workflow_id: str) -> Dict[str, str]:
     try:
         object_id = ObjectId(workflow_id)
-    except:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid workflow ID format"
@@ -200,7 +200,7 @@ async def execute_workflow(
         # Validate workflow ID
         try:
             object_id = ObjectId(workflow_id)
-        except:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid workflow ID format"
@@ -274,7 +274,7 @@ async def list_workflow_executions(workflow_id: str) -> List[ExecutionStatusResp
     """
     try:
         object_id = ObjectId(workflow_id)
-    except:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid workflow ID format"

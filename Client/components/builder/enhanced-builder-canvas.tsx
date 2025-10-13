@@ -1387,11 +1387,7 @@ function EnhancedBuilderCanvasInner() {
 
       {/* AI Workflow Generator */}
       {showAiGenerator && (
-        <Dialog open={showAiGenerator} onOpenChange={setShowAiGenerator}>
-          <DialogContent className="max-w-2xl">
-            <AiWorkflowGenerator onGenerated={handleAiWorkflowGenerated} />
-          </DialogContent>
-        </Dialog>
+        <AiWorkflowGenerator onGenerated={handleAiWorkflowGenerated} />
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
@@ -11,8 +11,12 @@ class Node(BaseModel):
 
 # Represents the connection between two nodes
 class Edge(BaseModel):
-    from_node: str
-    to_node: str
+    from_: str = Field(..., alias="from")
+    to: str
+
+    model_config = {
+        "populate_by_name": True
+    }
 
 # Full workflow definition
 class Workflow(BaseModel):
@@ -23,5 +27,5 @@ class Workflow(BaseModel):
     edges: List[Edge] = []
     is_template: bool = False  # mark common workflows as templates
     created_by: Optional[str] = None
-    created_at: datetime = datetime.now()
-    updated_at: datetime = datetime.now()
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
