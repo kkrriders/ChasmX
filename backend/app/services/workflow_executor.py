@@ -645,20 +645,27 @@ Use these functions when you need to coordinate with other nodes in the workflow
         """Execute data source node - fetches data from databases/APIs"""
         try:
             source_type = node.config.get("source_type", "api")
-            endpoint = node.config.get("endpoint", "")
 
             logger.info(f"Data Source Node: Fetching from {source_type}")
 
-            # TODO: Implement actual data fetching
-            # For now, return mock data
-            await asyncio.sleep(0.3)
+            # MongoDB data source
+            if source_type == "mongodb":
+                return await self._fetch_from_mongodb(node, context)
 
-            return {
-                "status": "completed",
-                "output": {"data": "mock_data", "count": 10},
-                "source_type": source_type,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            # API data source (future implementation)
+            elif source_type == "api":
+                endpoint = node.config.get("endpoint", "")
+                # TODO: Implement API fetching
+                await asyncio.sleep(0.3)
+                return {
+                    "status": "completed",
+                    "output": {"data": "mock_api_data", "count": 0},
+                    "source_type": source_type,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+            else:
+                raise ValueError(f"Unsupported source type: {source_type}")
 
         except Exception as e:
             logger.error(f"Data source node execution failed: {str(e)}")
@@ -667,6 +674,62 @@ Use these functions when you need to coordinate with other nodes in the workflow
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }
+
+    async def _fetch_from_mongodb(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fetch data from MongoDB Atlas"""
+        try:
+            from ..core.database import get_database
+
+            # Get MongoDB configuration from node
+            collection_name = node.config.get("collection", "users")
+            query_filter = node.config.get("query", {})
+            projection = node.config.get("projection", None)
+            limit = node.config.get("limit", 100)
+            sort_field = node.config.get("sort_field", None)
+            sort_order = node.config.get("sort_order", 1)  # 1 for ascending, -1 for descending
+
+            # Interpolate variables in query filter
+            if isinstance(query_filter, dict):
+                query_filter = self._interpolate_dict_values(query_filter, context)
+
+            logger.info(f"Fetching from MongoDB collection: {collection_name}, limit: {limit}")
+
+            # Get database connection
+            db = await get_database()
+            collection = db[collection_name]
+
+            # Build query
+            cursor = collection.find(query_filter, projection)
+
+            # Apply sorting if specified
+            if sort_field:
+                cursor = cursor.sort(sort_field, sort_order)
+
+            # Apply limit
+            cursor = cursor.limit(limit)
+
+            # Fetch results
+            results = []
+            async for doc in cursor:
+                # Convert ObjectId to string for JSON serialization
+                if "_id" in doc:
+                    doc["_id"] = str(doc["_id"])
+                results.append(doc)
+
+            logger.info(f"Fetched {len(results)} documents from MongoDB")
+
+            return {
+                "status": "completed",
+                "output": results,
+                "count": len(results),
+                "collection": collection_name,
+                "source_type": "mongodb",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"MongoDB fetch failed: {str(e)}")
+            raise
 
     async def _execute_webhook_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute webhook node - makes HTTP request"""

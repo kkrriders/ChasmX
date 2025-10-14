@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from bson import ObjectId
 import uuid
+import json
+import os
+from pathlib import Path
 
 from ..models.workflow import (
     Workflow,
@@ -338,4 +341,94 @@ async def get_execution_status(execution_id: str) -> ExecutionStatusResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get execution status: {str(e)}"
+        )
+
+
+# Template Management Endpoints
+
+@router.get("/templates/list", response_model=List[str])
+async def list_workflow_templates() -> List[str]:
+    """
+    List all available workflow templates.
+
+    Returns a list of template names that can be loaded.
+    """
+    try:
+        templates_dir = Path(__file__).parent.parent / "templates"
+        if not templates_dir.exists():
+            return []
+
+        templates = [
+            f.stem for f in templates_dir.glob("*.json")
+            if f.is_file()
+        ]
+        return templates
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list templates: {str(e)}"
+        )
+
+
+@router.post("/templates/{template_name}/load", response_model=Workflow, status_code=status.HTTP_201_CREATED)
+async def load_workflow_template(template_name: str) -> Workflow:
+    """
+    Load a workflow template and create a new workflow from it.
+
+    This endpoint loads a pre-defined workflow template (like email automation)
+    and creates a new workflow instance in the database.
+
+    Args:
+        template_name: Name of the template to load (e.g., "email_automation_template")
+
+    Returns:
+        The created workflow
+
+    Example:
+        POST /workflows/templates/email_automation_template/load
+    """
+    try:
+        # Find template file
+        templates_dir = Path(__file__).parent.parent / "templates"
+        template_path = templates_dir / f"{template_name}.json"
+
+        if not template_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Template '{template_name}' not found"
+            )
+
+        # Load template JSON
+        with open(template_path, 'r') as f:
+            template_data = json.load(f)
+
+        # Parse template data into workflow model
+        nodes = [Node(**node) for node in template_data.get("nodes", [])]
+        edges = [Edge(**edge) for edge in template_data.get("edges", [])]
+        variables = [WorkflowVariable(**var) for var in template_data.get("variables", [])]
+        metadata = Metadata(**template_data.get("metadata", {}))
+
+        # Create workflow from template
+        workflow = Workflow(
+            name=template_data.get("name", template_name),
+            nodes=nodes,
+            edges=edges,
+            variables=variables,
+            status=WorkflowStatus.DRAFT,
+            metadata=metadata,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+
+        # Save to database
+        await workflow.insert()
+
+        return workflow
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load template: {str(e)}"
         )
