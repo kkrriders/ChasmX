@@ -17,8 +17,114 @@ import {
   Lightbulb,
   Star,
 } from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { useCallback, useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 export default function TemplatesPage() {
+  const router = useRouter()
+
+  // Small set of template payloads that the builder understands (nodes/edges)
+  const templatePayloads: Record<string, any> = {
+    'email-automation': {
+      name: 'Email Triage',
+      nodes: [
+        { id: 'n1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'Intake', category: 'Data' } },
+        { id: 'n2', type: 'custom', position: { x: 300, y: 0 }, data: { label: 'Classify', category: 'Processing' } },
+        { id: 'n3', type: 'custom', position: { x: 600, y: 0 }, data: { label: 'AI Summarize', category: 'Processing' } },
+        { id: 'n4', type: 'custom', position: { x: 900, y: 0 }, data: { label: 'Route', category: 'Logic' } },
+        { id: 'n5', type: 'custom', position: { x: 1200, y: 0 }, data: { label: 'Notify', category: 'Output' } },
+      ],
+      edges: [
+        { id: 'e1', source: 'n1', target: 'n2', animated: true, type: 'custom' },
+        { id: 'e2', source: 'n2', target: 'n3', animated: true, type: 'custom' },
+        { id: 'e3', source: 'n3', target: 'n4', animated: true, type: 'custom' },
+        { id: 'e4', source: 'n4', target: 'n5', animated: true, type: 'custom' },
+      ],
+    },
+    'chat-assistant': {
+      name: 'Chat Assistant',
+      nodes: [
+        { id: 'c1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'User Input', category: 'Data' } },
+        { id: 'c2', type: 'custom', position: { x: 300, y: 0 }, data: { label: 'Retrieval', category: 'Processing' } },
+        { id: 'c3', type: 'custom', position: { x: 600, y: 0 }, data: { label: 'RAG + Redaction', category: 'Processing' } },
+        { id: 'c4', type: 'custom', position: { x: 900, y: 0 }, data: { label: 'Assistant', category: 'Actions' } },
+      ],
+      edges: [
+        { id: 'ce1', source: 'c1', target: 'c2', animated: true, type: 'custom' },
+        { id: 'ce2', source: 'c2', target: 'c3', animated: true, type: 'custom' },
+        { id: 'ce3', source: 'c3', target: 'c4', animated: true, type: 'custom' },
+      ],
+    },
+    'document-processing': {
+      name: 'Document Processing',
+      nodes: [
+        { id: 'd1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'Data Source', category: 'Data' } },
+        { id: 'd2', type: 'custom', position: { x: 300, y: 0 }, data: { label: 'Filter', category: 'Processing' } },
+        { id: 'd3', type: 'custom', position: { x: 600, y: 0 }, data: { label: 'Transformer', category: 'Processing' } },
+        { id: 'd4', type: 'custom', position: { x: 900, y: 0 }, data: { label: 'AI Processor', category: 'Processing' } },
+        { id: 'd5', type: 'custom', position: { x: 1200, y: 0 }, data: { label: 'File Writer', category: 'Output' } },
+      ],
+      edges: [
+        { id: 'de1', source: 'd1', target: 'd2', animated: true, type: 'custom' },
+        { id: 'de2', source: 'd2', target: 'd3', animated: true, type: 'custom' },
+        { id: 'de3', source: 'd3', target: 'd4', animated: true, type: 'custom' },
+        { id: 'de4', source: 'd4', target: 'd5', animated: true, type: 'custom' },
+      ],
+    },
+    'agent-handoff': {
+      name: 'Agent Handoff',
+      nodes: [
+        { id: 'a1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'Trigger', category: 'Data' } },
+        { id: 'a2', type: 'custom', position: { x: 300, y: 0 }, data: { label: 'AI Assist', category: 'Processing' } },
+        { id: 'a3', type: 'custom', position: { x: 600, y: 0 }, data: { label: 'Human Approval', category: 'Actions' } },
+      ],
+      edges: [
+        { id: 'ae1', source: 'a1', target: 'a2', animated: true, type: 'custom' },
+        { id: 'ae2', source: 'a2', target: 'a3', animated: true, type: 'custom' },
+      ],
+    },
+    'lead-scoring': {
+      name: 'Lead Scoring',
+      nodes: [
+        { id: 'l1', type: 'custom', position: { x: 0, y: 0 }, data: { label: 'Lead Intake', category: 'Data' } },
+        { id: 'l2', type: 'custom', position: { x: 300, y: 0 }, data: { label: 'Score', category: 'Processing' } },
+        { id: 'l3', type: 'custom', position: { x: 600, y: 0 }, data: { label: 'Route', category: 'Logic' } },
+      ],
+      edges: [
+        { id: 'le1', source: 'l1', target: 'l2', animated: true, type: 'custom' },
+        { id: 'le2', source: 'l2', target: 'l3', animated: true, type: 'custom' },
+      ],
+    },
+  }
+
+  // UI state
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
+  const [previewKey, setPreviewKey] = useState<string | null>(null)
+
+  // Open the builder in a new tab and persist the template payload so the builder can load it
+  const navigateWithTemplate = useCallback((key: string) => {
+    const payload = templatePayloads[key]
+    if (payload) {
+      try {
+        localStorage.setItem('pending-template', JSON.stringify(payload))
+      } catch (err) {
+        // ignore localStorage errors
+      }
+    } else {
+      try {
+        localStorage.removeItem('pending-template')
+      } catch (err) {}
+    }
+
+    // Open in a new tab/window
+    if (typeof window !== 'undefined') {
+      window.open('/workflows/new', '_blank', 'noopener,noreferrer')
+    } else {
+      router.push('/workflows/new')
+    }
+  }, [router])
   return (
     <MainLayout title="Browse Templates" searchPlaceholder="Search workflows, policies, help...">
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -26,7 +132,7 @@ export default function TemplatesPage() {
         <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                     Browse Templates
@@ -38,7 +144,7 @@ export default function TemplatesPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium">
+                <button onClick={() => { try { localStorage.removeItem('pending-template') } catch (e){}; if (typeof window !== 'undefined') { window.open('/workflows/new', '_blank', 'noopener,noreferrer') } else { router.push('/workflows/new') } }} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium">
                   <Plus className="w-4 h-4" />
                   Create Custom
                 </button>
@@ -66,22 +172,17 @@ export default function TemplatesPage() {
           {/* Category Tabs */}
           <div className="mb-8">
             <div className="flex flex-wrap gap-2">
-              {[
-                { label: "All", active: true },
-                { label: "Operations", active: false },
-                { label: "Support", active: false },
-                { label: "Marketing", active: false },
-                { label: "Compliance", active: false },
-              ].map((tab) => (
+              {['All', 'Operations', 'Support', 'Marketing', 'Compliance'].map((label) => (
                 <button
-                  key={tab.label}
+                  key={label}
+                  onClick={() => setSelectedCategory(label)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    tab.active
-                      ? "bg-blue-600 text-white"
-                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    selectedCategory === label
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
-                  {tab.label}
+                  {label}
                 </button>
               ))}
             </div>
@@ -93,6 +194,7 @@ export default function TemplatesPage() {
               {/* Template Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Email Triage Template */}
+                { (selectedCategory === 'All' || selectedCategory === 'Operations') && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -128,19 +230,21 @@ export default function TemplatesPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <button onClick={() => setPreviewKey('email-automation')} className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Eye className="w-4 h-4 inline mr-2" />
                         Preview
                       </button>
-                      <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                      <button onClick={() => navigateWithTemplate('email-automation')} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                         <Play className="w-4 h-4 inline mr-2" />
                         Use Template
                       </button>
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Chat Assistant Template */}
+                { (selectedCategory === 'All' || selectedCategory === 'Support') && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -173,19 +277,21 @@ export default function TemplatesPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <button onClick={() => setPreviewKey('chat-assistant')} className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Eye className="w-4 h-4 inline mr-2" />
                         Preview
                       </button>
-                      <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                      <button onClick={() => navigateWithTemplate('chat-assistant')} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                         <Play className="w-4 h-4 inline mr-2" />
                         Use Template
                       </button>
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Document Processing Template */}
+                { (selectedCategory === 'All' || selectedCategory === 'Operations') && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -221,19 +327,21 @@ export default function TemplatesPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <button onClick={() => setPreviewKey('document-processing')} className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Eye className="w-4 h-4 inline mr-2" />
                         Preview
                       </button>
-                      <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                      <button onClick={() => navigateWithTemplate('document-processing')} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                         <Play className="w-4 h-4 inline mr-2" />
                         Use Template
                       </button>
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Agent Handoff Template */}
+                { (selectedCategory === 'All' || selectedCategory === 'Support') && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -269,19 +377,21 @@ export default function TemplatesPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <button onClick={() => setPreviewKey('agent-handoff')} className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Eye className="w-4 h-4 inline mr-2" />
                         Preview
                       </button>
-                      <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                      <button onClick={() => navigateWithTemplate('agent-handoff')} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                         <Play className="w-4 h-4 inline mr-2" />
                         Use Template
                       </button>
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Lead Scoring Template */}
+                { (selectedCategory === 'All' || selectedCategory === 'Marketing') && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -317,19 +427,21 @@ export default function TemplatesPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <button className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
+                      <button onClick={() => setPreviewKey('lead-scoring')} className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
                         <Eye className="w-4 h-4 inline mr-2" />
                         Preview
                       </button>
-                      <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                      <button onClick={() => navigateWithTemplate('lead-scoring')} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                         <Play className="w-4 h-4 inline mr-2" />
                         Use Template
                       </button>
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Blank Canvas */}
+                { selectedCategory === 'All' && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -355,12 +467,13 @@ export default function TemplatesPage() {
                       <span className="text-sm text-slate-500 dark:text-slate-400">Drag & drop builder</span>
                     </div>
 
-                    <button className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                    <button onClick={() => { try { localStorage.removeItem('pending-template') } catch(e){}; if (typeof window !== 'undefined') { window.open('/workflows/new', '_blank', 'noopener,noreferrer') } else { router.push('/workflows/new') } }} className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                       <Play className="w-4 h-4 inline mr-2" />
                       Start Building
                     </button>
                   </div>
                 </div>
+                )}
               </div>
             </div>
 
@@ -388,11 +501,11 @@ export default function TemplatesPage() {
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <button className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <button onClick={() => setPreviewKey('email-automation')} className="flex-1 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300">
                       <Eye className="w-4 h-4 inline mr-2" />
                       Preview
                     </button>
-                    <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
+                    <button onClick={() => navigateWithTemplate('email-automation')} className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
                       <Play className="w-4 h-4 inline mr-2" />
                       Use Template
                     </button>
@@ -458,6 +571,36 @@ export default function TemplatesPage() {
           </div>
         </main>
       </div>
+      {/* Preview Dialog */}
+      {previewKey && (
+        <Dialog open={true} onOpenChange={(open) => { if (!open) setPreviewKey(null) }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{templatePayloads[previewKey]?.name ?? 'Template Preview'}</DialogTitle>
+              <DialogDescription>{templatePayloads[previewKey]?.description ?? ''}</DialogDescription>
+            </DialogHeader>
+
+            <div className="mt-4">
+              <div className="text-sm text-slate-700 dark:text-slate-300">Nodes: <strong>{templatePayloads[previewKey]?.nodes?.length ?? 0}</strong></div>
+              <div className="mt-3 grid gap-2">
+                {(templatePayloads[previewKey]?.nodes ?? []).map((n: any) => (
+                  <div key={n.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
+                    <div className="font-medium">{n.data?.label ?? n.id}</div>
+                    <div className="text-xs text-slate-500">Category: {n.data?.category ?? '—'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <DialogClose>
+                <Button variant="ghost" onClick={() => setPreviewKey(null)}>Close</Button>
+              </DialogClose>
+              <Button onClick={() => { navigateWithTemplate(previewKey); setPreviewKey(null) }} className="bg-blue-600 text-white">Use Template</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </MainLayout>
   )
 }

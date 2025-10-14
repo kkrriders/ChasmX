@@ -24,7 +24,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { toast } from '@/hooks/use-toast'
 import { useState, useEffect } from 'react'
-import { Settings, Save, X, Database, Filter, Brain, FileText, Webhook, Split, Mail } from 'lucide-react'
+import { Settings, Save, X, Database, Filter, Brain, FileText, Webhook, Split, Mail, Play, RotateCw, DownloadCloud, UploadCloud, Eye } from 'lucide-react'
 
 // Icon mapping for string-based icons from templates
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -57,6 +57,19 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
   const [bearerToken, setBearerToken] = useState('')
   const [headers, setHeaders] = useState<Array<{ key: string; value: string }>>([])
   const [enabled, setEnabled] = useState(true)
+  // Additional configuration
+  const [inputs, setInputs] = useState<Array<{ name: string; type: string }>>([])
+  const [outputs, setOutputs] = useState<Array<{ name: string; type: string }>>([])
+  const [retries, setRetries] = useState<number>(0)
+  const [retryBackoffMs, setRetryBackoffMs] = useState<number>(1000)
+  const [backoffStrategy, setBackoffStrategy] = useState<'fixed'|'exponential'>('exponential')
+  const [timeoutMs, setTimeoutMs] = useState<number | undefined>(undefined)
+  const [concurrency, setConcurrency] = useState<number | undefined>(1)
+  const [schedule, setSchedule] = useState<string | null>(null)
+  const [tags, setTags] = useState<string[]>([])
+  const [metadata, setMetadata] = useState<Array<{ key: string; value: string }>>([])
+  const [showJsonEditor, setShowJsonEditor] = useState(false)
+  const [rawJson, setRawJson] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [testing, setTesting] = useState(false)
   const [lastTestResult, setLastTestResult] = useState<string | null>(null)
@@ -67,6 +80,18 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
       setLabel(String(node.data.label || ''))
       setDescription(String(node.data.description || ''))
       setNotes(String(node.data.notes || ''))
+      // IO, execution, tags, metadata
+      setInputs(Array.isArray(node.data.inputs) ? node.data.inputs : [])
+      setOutputs(Array.isArray(node.data.outputs) ? node.data.outputs : [])
+      setRetries(typeof node.data.retries === 'number' ? node.data.retries : 0)
+      setRetryBackoffMs(typeof node.data.retryBackoffMs === 'number' ? node.data.retryBackoffMs : 1000)
+      setBackoffStrategy((node.data.backoffStrategy as any) || 'exponential')
+      setTimeoutMs(typeof node.data.timeoutMs === 'number' ? node.data.timeoutMs : undefined)
+      setConcurrency(typeof node.data.concurrency === 'number' ? node.data.concurrency : 1)
+      setSchedule(node.data.schedule || null)
+      setTags(Array.isArray(node.data.tags) ? node.data.tags : [])
+      setMetadata(Array.isArray(node.data.metadata) ? node.data.metadata : [])
+      setRawJson(JSON.stringify(node.data, null, 2))
       // load saved webhook config if present
       setEndpoint(String(node.data.endpoint || ''))
       setMethod((node.data.method as any) || 'POST')
@@ -92,11 +117,33 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
         return
       }
 
+      // if JSON editor is open, validate JSON before saving
+      let parsedRaw: any = null
+      if (showJsonEditor && rawJson.trim()) {
+        try {
+          parsedRaw = JSON.parse(rawJson)
+        } catch (err:any) {
+          setErrors('Invalid JSON in editor')
+          return
+        }
+      }
+
       const data = {
         ...node.data,
         label,
         description,
         notes,
+        // IO/execution
+        inputs: inputs.length > 0 ? inputs : undefined,
+        outputs: outputs.length > 0 ? outputs : undefined,
+        retries: retries || undefined,
+        retryBackoffMs: retryBackoffMs || undefined,
+        backoffStrategy,
+        timeoutMs: timeoutMs || undefined,
+        concurrency: concurrency || undefined,
+        schedule: schedule || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        metadata: metadata.length > 0 ? metadata : undefined,
         // webhook-specific
         endpoint: endpoint || undefined,
         method,
@@ -107,16 +154,25 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
         enabled,
       }
 
-      onSave(node.id, data)
+      // if parsedRaw exists, merge its top-level properties (explicit wins)
+      const finalData = parsedRaw ? { ...data, ...parsedRaw } : data
+
+      onSave(node.id, finalData)
       onOpenChange(false)
     }
   }
+
+  // derived validity for JSON editor
+  const isRawJsonValid = (() => {
+    if (!showJsonEditor || !rawJson.trim()) return true
+    try { JSON.parse(rawJson); return true } catch { return false }
+  })()
 
   if (!node) return null
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex flex-col overflow-hidden pb-32">
+  <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex flex-col overflow-hidden pb-20">
         <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center gap-3 text-lg">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -476,6 +532,241 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
             </div>
           )}
 
+          {/* Inputs / Outputs */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-indigo-500 rounded-full"></div>
+              Inputs & Outputs
+            </h3>
+
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium">Inputs</Label>
+                <div className="space-y-2 mt-2">
+                  {inputs.map((it, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input value={it.name} onChange={(e) => { const copy = [...inputs]; copy[idx] = { ...copy[idx], name: e.target.value }; setInputs(copy) }} placeholder="name" className="h-9" />
+                      <Select value={it.type} onValueChange={(v) => { const copy = [...inputs]; copy[idx] = { ...copy[idx], type: v }; setInputs(copy) }}>
+                        <SelectTrigger className="h-9 w-36">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="string">string</SelectItem>
+                          <SelectItem value="number">number</SelectItem>
+                          <SelectItem value="boolean">boolean</SelectItem>
+                          <SelectItem value="object">object</SelectItem>
+                          <SelectItem value="array">array</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="sm" onClick={() => setInputs(inputs.filter((_, i) => i !== idx))} className="h-9 px-2">Remove</Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setInputs([...inputs, { name: '', type: 'string' }])} className="h-9">Add Input</Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Outputs</Label>
+                <div className="space-y-2 mt-2">
+                  {outputs.map((it, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input value={it.name} onChange={(e) => { const copy = [...outputs]; copy[idx] = { ...copy[idx], name: e.target.value }; setOutputs(copy) }} placeholder="name" className="h-9" />
+                      <Select value={it.type} onValueChange={(v) => { const copy = [...outputs]; copy[idx] = { ...copy[idx], type: v }; setOutputs(copy) }}>
+                        <SelectTrigger className="h-9 w-36">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="string">string</SelectItem>
+                          <SelectItem value="number">number</SelectItem>
+                          <SelectItem value="boolean">boolean</SelectItem>
+                          <SelectItem value="object">object</SelectItem>
+                          <SelectItem value="array">array</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="sm" onClick={() => setOutputs(outputs.filter((_, i) => i !== idx))} className="h-9 px-2">Remove</Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setOutputs([...outputs, { name: '', type: 'string' }])} className="h-9">Add Output</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Execution & Retry Settings */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-yellow-500 rounded-full"></div>
+              Execution & Retries
+            </h3>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-sm">Retries</Label>
+                <Input type="number" value={String(retries)} onChange={(e) => setRetries(Math.max(0, Number(e.target.value) || 0))} className="h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Backoff (ms)</Label>
+                <Input type="number" value={String(retryBackoffMs)} onChange={(e) => setRetryBackoffMs(Math.max(0, Number(e.target.value) || 0))} className="h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Strategy</Label>
+                <Select value={backoffStrategy} onValueChange={(v) => setBackoffStrategy(v as any)}>
+                  <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Fixed</SelectItem>
+                    <SelectItem value="exponential">Exponential</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Timeout (ms)</Label>
+                <Input type="number" value={timeoutMs ?? ''} onChange={(e) => setTimeoutMs(e.target.value ? Number(e.target.value) : undefined)} className="h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Concurrency</Label>
+                <Input type="number" value={String(concurrency ?? '')} onChange={(e) => setConcurrency(e.target.value ? Number(e.target.value) : undefined)} className="h-10" />
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Scheduling */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-teal-500 rounded-full"></div>
+              Scheduling
+            </h3>
+            <div className="space-y-3">
+              <Label className="text-sm">Cron / Schedule</Label>
+              <Input placeholder="e.g. 0 0 * * *" value={schedule ?? ''} onChange={(e) => setSchedule(e.target.value)} className="h-10" />
+              <div className="text-xs text-muted-foreground">Leave empty for on-demand execution. Provide cron expression for scheduled runs.</div>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Tags & Metadata */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <div className="w-1 h-4 bg-pink-500 rounded-full"></div>
+              Tags & Metadata
+            </h3>
+
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm">Tags</Label>
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {tags.map((t, i) => (
+                    <Badge key={i} className="px-2 py-1">
+                      {t}
+                      <button onClick={() => setTags(tags.filter((_, idx) => idx !== i))} className="ml-2">×</button>
+                    </Badge>
+                  ))}
+                  <Input placeholder="Add tag and press Enter" className="h-9 w-40" onKeyDown={(e) => {
+                    if (e.key === 'Enter') { const val = (e.target as HTMLInputElement).value.trim(); if (val) { setTags([...tags, val]); (e.target as HTMLInputElement).value = '' } }
+                  }} />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm">Metadata</Label>
+                <div className="space-y-2 mt-2">
+                  {metadata.map((m, idx) => (
+                    <div key={idx} className="flex gap-2 items-center">
+                      <Input value={m.key} onChange={(e) => { const copy = [...metadata]; copy[idx] = { ...copy[idx], key: e.target.value }; setMetadata(copy) }} placeholder="key" className="h-9" />
+                      <Input value={m.value} onChange={(e) => { const copy = [...metadata]; copy[idx] = { ...copy[idx], value: e.target.value }; setMetadata(copy) }} placeholder="value" className="h-9" />
+                      <Button variant="outline" size="sm" onClick={() => setMetadata(metadata.filter((_, i) => i !== idx))} className="h-9 px-2">Remove</Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setMetadata([...metadata, { key: '', value: '' }])} className="h-9">Add Metadata</Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* JSON Editor & Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-gray-500 rounded-full"></div>
+                    <span className="truncate">Raw JSON & Actions</span>
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => setShowJsonEditor(s => !s)} className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition ${showJsonEditor ? 'bg-blue-100 text-blue-700' : 'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+                    <Eye className="w-4 h-4" />
+                    <span className="whitespace-nowrap">{showJsonEditor ? 'Hide JSON' : 'Show JSON'}</span>
+                  </button>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button variant="outline" size="sm" onClick={() => { navigator.clipboard?.writeText(JSON.stringify(node.data || {}, null, 2)); toast({ title: 'Copied', description: 'Node data copied to clipboard' }) }} className="whitespace-nowrap">
+                      <DownloadCloud className="w-4 h-4 mr-2" />Export
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { try { const parsed = JSON.parse(rawJson || '{}'); setRawJson(JSON.stringify(parsed, null, 2)); toast({ title: 'Imported', description: 'Raw JSON imported' }) } catch (err:any) { toast({ title: 'Invalid JSON', description: String(err), variant: 'destructive' }) } }} className="whitespace-nowrap">
+                      <UploadCloud className="w-4 h-4 mr-2" />Import
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {showJsonEditor && (
+                <div>
+                  <Textarea value={rawJson} onChange={(e) => setRawJson(e.target.value)} className="font-mono text-sm h-48 w-full" />
+                  <div className="text-xs text-muted-foreground mt-2">Edit the raw node data and press Save to apply. Invalid JSON will be rejected.</div>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="text-sm text-muted-foreground">Quick actions for this node</div>
+                  <div className="flex items-center gap-3">
+                    <Button onClick={async () => {
+                      try {
+                        toast({ title: 'Running node', description: 'Simulation started' })
+                        await new Promise((r) => setTimeout(r, 700))
+                        toast({ title: 'Run complete', description: 'Simulated execution finished' })
+                      } catch (err:any) {
+                        toast({ title: 'Run failed', description: String(err), variant: 'destructive' })
+                      }
+                    }} className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white flex items-center">
+                      <Play className="w-4 h-4 mr-2" />
+                      <span className="whitespace-nowrap">Run Node</span>
+                    </Button>
+
+                    <Button variant="outline" onClick={() => {
+                      try {
+                        setRawJson(JSON.stringify(node.data || {}, null, 2))
+                        setInputs(Array.isArray(node.data.inputs) ? node.data.inputs : [])
+                        setOutputs(Array.isArray(node.data.outputs) ? node.data.outputs : [])
+                        setRetries(typeof node.data.retries === 'number' ? node.data.retries : 0)
+                        setRetryBackoffMs(typeof node.data.retryBackoffMs === 'number' ? node.data.retryBackoffMs : 1000)
+                        setBackoffStrategy((node.data.backoffStrategy as any) || 'exponential')
+                        setTimeoutMs(typeof node.data.timeoutMs === 'number' ? node.data.timeoutMs : undefined)
+                        setConcurrency(typeof node.data.concurrency === 'number' ? node.data.concurrency : 1)
+                        setSchedule(node.data.schedule || null)
+                        setTags(Array.isArray(node.data.tags) ? node.data.tags : [])
+                        setMetadata(Array.isArray(node.data.metadata) ? node.data.metadata : [])
+                        toast({ title: 'Restored', description: 'All settings restored from saved node data' })
+                      } catch (err:any) {
+                        toast({ title: 'Restore failed', description: String(err), variant: 'destructive' })
+                      }
+                    }} className="h-9 px-4">
+                      <RotateCw className="w-4 h-4 mr-2" />
+                      <span className="whitespace-nowrap">Restore</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <Separator className="my-6" />
 
           {/* Advanced Settings */}
@@ -528,7 +819,7 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
           <Button
             onClick={handleSave}
             className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
-            disabled={!!labelError || testing}
+            disabled={!!labelError || testing || !isRawJsonValid}
           >
             <Save className="h-4 w-4 mr-2" />
             {testing ? 'Testing...' : 'Save Changes'}
