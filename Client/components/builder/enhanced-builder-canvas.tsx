@@ -215,35 +215,50 @@ function EnhancedBuilderCanvasInner() {
 
   // Load workflow from localStorage on mount (check for pending template first)
   useEffect(() => {
-    // Check if there's a pending template to load
-    const pendingTemplateId = localStorage.getItem('pending-template-id')
-    if (pendingTemplateId) {
-      // Clear the pending template flag
-      localStorage.removeItem('pending-template-id')
+    // If a pending template payload is present (set by the templates page), load it
+    try {
+      const pending = localStorage.getItem('pending-template')
+      if (pending) {
+        const parsed = JSON.parse(pending)
+        if (parsed && (parsed.nodes || parsed.edges)) {
+          // Map incoming nodes to have unique ids (avoid collisions)
+          const timestamp = Date.now()
+          const idMap: Record<string, string> = {}
+          const mappedNodes = (parsed.nodes || []).map((n: any, idx: number) => {
+            const newId = `${n.id}-${timestamp}-${idx}`
+            idMap[n.id] = newId
+            return {
+              ...n,
+              id: newId,
+              position: n.position || { x: (idx + 1) * 200, y: 0 },
+              type: n.type || 'custom',
+            }
+          })
 
-      // Import template library to access templates
-      import('@/components/builder/template-library').then((module) => {
-        // Find the template by ID (map simple IDs to actual template IDs)
-        const templateIdMap: Record<string, string> = {
-          'data-pipeline': 'data-processing',
-          'email-automation': 'email-automation',
-          'ai-content': 'ai-content-generator',
+          const mappedEdges = (parsed.edges || []).map((e: any, idx: number) => ({
+            ...e,
+            id: e.id ? `${e.id}-${timestamp}-${idx}` : `edge-${idx}-${timestamp}`,
+            source: idMap[e.source] || e.source,
+            target: idMap[e.target] || e.target,
+            type: e.type || 'custom',
+            animated: typeof e.animated === 'boolean' ? e.animated : true,
+          }))
+
+          setNodes(mappedNodes)
+          setEdges(mappedEdges)
+          setWorkflowName(parsed.name || 'Imported Template')
+          setShowTemplates(false)
+          // Clear the pending template so it doesn't reload on refresh
+          localStorage.removeItem('pending-template')
+          toast({ title: 'Template Loaded', description: `Loaded template: ${parsed.name || 'Template'}` })
+          return
         }
-        const actualTemplateId = templateIdMap[pendingTemplateId] || pendingTemplateId
-
-        // Note: We can't easily access the templates array from here since it's not exported
-        // So we'll trigger the templates dialog instead
-        setShowTemplates(true)
-        toast({
-          title: "Template Ready",
-          description: "Please select your template from the library",
-          duration: 3000,
-        })
-      })
-      return
+      }
+    } catch (err) {
+      console.error('Failed to parse pending template:', err)
     }
 
-    // Otherwise load autosaved workflow
+  // Otherwise load autosaved workflow
     const saved = localStorage.getItem('autosave-workflow')
     if (saved) {
       try {
