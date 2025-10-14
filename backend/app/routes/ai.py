@@ -466,7 +466,7 @@ async def generate_workflow(request: WorkflowGenerationRequest):
 
         # Create a system prompt for workflow generation
         system_message = LLMMessage(
-            role=ModelRole.SYSTEM,
+            role="system",
             content="""You are an expert workflow designer. Given a user's description, generate a workflow structure with nodes and edges.
 
 The workflow should have this structure:
@@ -503,7 +503,7 @@ Return ONLY valid JSON. After the JSON, add a line break and provide a brief sum
         )
 
         user_message = LLMMessage(
-            role=ModelRole.USER,
+            role="user",
             content=f"Create a workflow for: {request.prompt}"
         )
 
