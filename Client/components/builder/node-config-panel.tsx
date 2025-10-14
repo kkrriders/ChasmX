@@ -172,7 +172,7 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-  <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex flex-col overflow-hidden pb-20">
+  <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex flex-col overflow-hidden pb-4">
         <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center gap-3 text-lg">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">

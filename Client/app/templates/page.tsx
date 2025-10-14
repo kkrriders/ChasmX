@@ -17,6 +17,7 @@ import {
   Lightbulb,
   Star,
 } from "lucide-react"
+import React from 'react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
@@ -574,30 +575,67 @@ export default function TemplatesPage() {
       {/* Preview Dialog */}
       {previewKey && (
         <Dialog open={true} onOpenChange={(open) => { if (!open) setPreviewKey(null) }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{templatePayloads[previewKey]?.name ?? 'Template Preview'}</DialogTitle>
-              <DialogDescription>{templatePayloads[previewKey]?.description ?? ''}</DialogDescription>
-            </DialogHeader>
-
-            <div className="mt-4">
-              <div className="text-sm text-slate-700 dark:text-slate-300">Nodes: <strong>{templatePayloads[previewKey]?.nodes?.length ?? 0}</strong></div>
-              <div className="mt-3 grid gap-2">
-                {(templatePayloads[previewKey]?.nodes ?? []).map((n: any) => (
-                  <div key={n.id} className="p-3 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
-                    <div className="font-medium">{n.data?.label ?? n.id}</div>
-                    <div className="text-xs text-slate-500">Category: {n.data?.category ?? '—'}</div>
+          <DialogContent className="max-w-3xl p-0 overflow-hidden">
+            <DialogTitle className="sr-only">
+              {templatePayloads[previewKey]?.name ?? 'Template Preview'}
+            </DialogTitle>
+            {/* Template Info */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 px-8 pt-7 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                  <svg width="32" height="32" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#3B82F6" fillOpacity=".15"/><path d="M12 7.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9Zm0 1.5a3 3 0 1 0 0 6a3 3 0 0 0 0-6Zm0-5.25a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-1.5 0V4.5A.75.75 0 0 1 12 3.75Zm0 15a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-1.5 0v-.75a.75.75 0 0 1 .75-.75Zm8.25-6.75a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-1.5 0v-.75a.75.75 0 0 1 .75-.75Zm-16.5 0a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-1.5 0v-.75a.75.75 0 0 1 .75-.75Zm13.19-4.44a.75.75 0 0 1 1.06 0l.53.53a.75.75 0 0 1-1.06 1.06l-.53-.53a.75.75 0 0 1 0-1.06Zm-12.02 0a.75.75 0 0 1 1.06 0l.53.53a.75.75 0 0 1-1.06 1.06l-.53-.53a.75.75 0 0 1 0-1.06Zm12.02 12.02a.75.75 0 0 1 1.06 0l.53.53a.75.75 0 0 1-1.06 1.06l-.53-.53a.75.75 0 0 1 0-1.06Zm-12.02 0a.75.75 0 0 1 1.06 0l.53.53a.75.75 0 0 1-1.06 1.06l-.53-.53a.75.75 0 0 1 0-1.06Z" fill="#3B82F6"/></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">{templatePayloads[previewKey]?.name ?? 'Template Preview'}</h2>
+                    <span className="ml-2 px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-xs font-semibold text-blue-700 dark:text-blue-300">{templatePayloads[previewKey]?.nodes?.length ?? 0} Nodes</span>
                   </div>
-                ))}
+                  <div className="text-sm text-slate-600 dark:text-slate-300 mt-1 truncate">{templatePayloads[previewKey]?.description ?? ''}</div>
+                  <div className="flex gap-6 mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1"><svg width="16" height="16" fill="none" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" stroke="#3B82F6" strokeWidth="2"/><path d="M8 4v4l2.5 2.5" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round"/></svg> Last updated: 1 hour ago</div>
+                    <div className="flex items-center gap-1"><svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M8 2a6 6 0 1 1 0 12A6 6 0 0 1 8 2Zm0 2.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V5.25A.75.75 0 0 1 8 4.5Zm0 5.25a.75.75 0 1 1 0 1.5a.75.75 0 0 1 0-1.5Z" fill="#3B82F6"/></svg> 1.2k installs</div>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <DialogFooter>
-              <DialogClose>
-                <Button variant="ghost" onClick={() => setPreviewKey(null)}>Close</Button>
-              </DialogClose>
-              <Button onClick={() => { navigateWithTemplate(previewKey); setPreviewKey(null) }} className="bg-blue-600 text-white">Use Template</Button>
-            </DialogFooter>
+            {/* How it works */}
+            <div className="px-8 pt-6 pb-2">
+              <div className="mb-4">
+                <div className="text-base font-semibold text-slate-900 dark:text-white mb-1">How this template works</div>
+                <div className="text-sm text-slate-600 dark:text-slate-300">This template automates a multi-step workflow. Each node represents a step in the process, such as data intake, classification, AI summarization, routing, and notification. You can customize each node after importing the template.</div>
+              </div>
+            </div>
+            {/* Node Flow - compact, small node cards */}
+            <div className="px-8 pb-8">
+              <div className="mb-2 text-base font-semibold text-slate-900 dark:text-white">Node Flow</div>
+              <div className="w-full flex flex-col items-center">
+                <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-4 w-full max-w-full">
+                  {(templatePayloads[previewKey]?.nodes ?? []).map((n: any, idx: number, arr: any[]) => (
+                    <React.Fragment key={n.id}>
+                      <div className="flex flex-col items-center">
+                        <div className="w-28 h-14 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-700 rounded-md shadow-sm flex flex-col justify-center items-start px-1.5 py-0.5 relative">
+                          <div className="flex items-center gap-0.5 mb-0.5">
+                            <svg width="12" height="12" fill="none" viewBox="0 0 12 12"><rect width="12" height="12" rx="3" fill="#3B82F6" fillOpacity=".12"/><circle cx="6" cy="6" r="3.5" fill="#3B82F6"/></svg>
+                            <span className="text-[9px] font-semibold text-blue-700 dark:text-blue-300">{n.data?.category ?? '—'}</span>
+                          </div>
+                          <div className="font-semibold text-slate-900 dark:text-white text-xs truncate w-full leading-tight">{n.data?.label ?? n.id}</div>
+                          <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 w-full truncate">Node {idx + 1}</div>
+                        </div>
+                      </div>
+                      {idx < arr.length - 1 && (
+                        <svg width="28" height="16" viewBox="0 0 28 16" fill="none" className="mx-1"><path d="M4 8h20m0 0l-3-3m3 3l-3 3" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <DialogClose asChild>
+                  <Button variant="ghost" onClick={() => setPreviewKey(null)}>Close</Button>
+                </DialogClose>
+                <Button onClick={() => { navigateWithTemplate(previewKey); setPreviewKey(null) }} className="bg-blue-600 text-white">Use Template</Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       )}

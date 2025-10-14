@@ -236,7 +236,23 @@ export const Sidebar = memo(function Sidebar() {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+      <nav
+        className="flex-1 p-4 space-y-6 overflow-y-auto"
+        id="sidebar-scrollable"
+        onScroll={e => {
+          try {
+            localStorage.setItem('sidebar-scroll', String(e.currentTarget.scrollTop))
+          } catch {}
+        }}
+        ref={el => {
+          if (el) {
+            try {
+              const y = Number(localStorage.getItem('sidebar-scroll'))
+              if (!isNaN(y)) el.scrollTop = y
+            } catch {}
+          }
+        }}
+      >
         <NavSection title="Main" items={mainNavigation} />
         <NavSection title="Governance" items={governanceNavigation} />
         <NavSection title="Administration" items={adminNavigation} />

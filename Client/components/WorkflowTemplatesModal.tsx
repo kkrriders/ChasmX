@@ -77,21 +77,10 @@ export function WorkflowTemplatesModal() {
           </div>
         </DialogHeader>
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-[1fr,320px] gap-6">
-          <section className="preview rounded-md border p-6 bg-white">
-            <h3 className="text-2xl font-semibold">{selected.title}</h3>
-            <p className="text-muted-foreground mt-2">{selected.description}</p>
-
-            <div className="mt-6 flex items-center gap-3">
-              <Button variant="default" onClick={handleUseTemplate}>Use Template</Button>
-              <Button variant="outline" onClick={() => setSelectedId('')}>Clear selection</Button>
-            </div>
-
-            <pre className="mt-6 rounded bg-slate-50 p-4 text-sm text-slate-700">Data Source → Filter → Transform → AI Process → Output</pre>
-          </section>
-
-          <aside className="overflow-y-auto max-h-[52vh]">
-            <div className="flex flex-col">
+  <div className="mt-4 grid grid-cols-1 sm:grid-cols-[380px_1fr] gap-8 min-w-[800px] max-w-full">
+          {/* Template List */}
+          <aside className="overflow-y-auto max-h-[60vh] pr-2 min-w-[340px] max-w-[380px]">
+            <div className="flex flex-col gap-4">
               {TEMPLATES.map((t) => {
                 const active = t.id === selectedId
                 return (
@@ -99,26 +88,70 @@ export function WorkflowTemplatesModal() {
                     key={t.id}
                     onClick={() => setSelectedId(t.id)}
                     className={cn(
-                      'text-left p-4 mb-3 rounded-lg border w-full transition-shadow',
+                      'text-left group p-5 rounded-2xl border-2 w-full transition-all duration-200 shadow-sm flex flex-col gap-2 bg-white hover:shadow-lg',
                       active
-                        ? 'border-indigo-400 shadow-md bg-white'
-                        : 'border-transparent bg-white/40 hover:bg-white',
+                        ? 'border-indigo-500 ring-2 ring-indigo-100'
+                        : 'border-slate-200 hover:border-indigo-300',
                     )}
                     aria-pressed={active}
                     aria-label={`Select ${t.title}`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-semibold">{t.title}</div>
-                        <div className="text-sm text-muted-foreground">{t.description}</div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-base shadow">
+                        {t.title[0]}
                       </div>
-                      <div className="ml-4 text-sm text-indigo-600">{t.difficulty}</div>
+                      <div className="font-semibold text-lg text-slate-900 group-hover:text-indigo-700">{t.title}</div>
+                      {t.difficulty && (
+                        <span className={cn(
+                          'ml-2 px-2 py-0.5 rounded text-xs font-semibold',
+                          t.difficulty === 'beginner' && 'bg-green-100 text-green-700',
+                          t.difficulty === 'intermediate' && 'bg-yellow-100 text-yellow-700',
+                          t.difficulty === 'advanced' && 'bg-red-100 text-red-700',
+                        )}>{t.difficulty}</span>
+                      )}
                     </div>
+                    <div className="text-sm text-slate-600 line-clamp-2">{t.description}</div>
                   </button>
                 )
               })}
             </div>
           </aside>
+
+          {/* Template Preview */}
+          <section className="rounded-2xl border-2 border-slate-100 bg-white shadow-lg p-8 flex flex-col gap-6 min-h-[340px] min-w-[340px] max-w-full">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl shadow">
+                {selected.title[0]}
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-1">{selected.title}</h3>
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span className="inline-flex items-center gap-1"><svg width='16' height='16' fill='none' viewBox='0 0 16 16'><path d='M8 2a6 6 0 1 1 0 12A6 6 0 0 1 8 2Zm0 2.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-1.5 0V5.25A.75.75 0 0 1 8 4.5Zm0 5.25a.75.75 0 1 1 0 1.5a.75.75 0 0 1 0-1.5Z' fill='#6366f1'/></svg> 4 nodes</span>
+                  {selected.difficulty && (
+                    <span className={cn(
+                      'px-2 py-0.5 rounded font-semibold',
+                      selected.difficulty === 'beginner' && 'bg-green-100 text-green-700',
+                      selected.difficulty === 'intermediate' && 'bg-yellow-100 text-yellow-700',
+                      selected.difficulty === 'advanced' && 'bg-red-100 text-red-700',
+                    )}>{selected.difficulty}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="text-base text-slate-700 mb-2">{selected.description}</div>
+              <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 text-sm text-slate-700 font-mono whitespace-pre-wrap">
+                Trigger → Condition → Send Email → Log
+              </div>
+              <div className="mt-2 text-xs text-slate-500">This template includes 4 pre-configured nodes ready to use.</div>
+            </div>
+            <div className="flex gap-3 mt-auto">
+              <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow" onClick={handleUseTemplate}>
+                <svg width='18' height='18' fill='none' viewBox='0 0 24 24' className='mr-2'><path d='M5 12h14M12 5l7 7-7 7' stroke='white' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/></svg> Use This Template
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => setSelectedId('')}>Clear Selection</Button>
+            </div>
+          </section>
         </div>
 
         <DialogFooter className="mt-4">
