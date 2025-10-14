@@ -25,10 +25,6 @@ export default function HomePage() {
       {/* Hero Section with Interactive Node Demo */}
       <HeroSection />
 
-      {/* Demo trigger for Workflow Templates modal (dev/demo only) */}
-      <div className="px-6 mt-6">
-        <WorkflowTemplatesModal />
-      </div>
 
       {/* Features & Pricing Cards Section */}
       <FeaturesCardSection />
