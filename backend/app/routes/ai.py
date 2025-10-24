@@ -1,6 +1,4 @@
-"""
-API routes for AI and Agent services.
-"""
+
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any

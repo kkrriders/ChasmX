@@ -15,7 +15,8 @@
       "Bash(timeout 3 node dev_tools/mock-run-server.js)",
       "Bash(docker-compose config:*)",
       "Bash(ls:*)",
-      "Bash(docker-compose down:*)"
+      "Bash(docker-compose down:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []
