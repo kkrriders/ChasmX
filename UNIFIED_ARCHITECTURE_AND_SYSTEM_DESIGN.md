@@ -68,50 +68,50 @@ Layer 13: Infrastructure  🟡 Docker   →  🟢 Kubernetes + Service Mesh
                         │       (CloudFlare + WAF)            │
                         └────────────┬────────────────────────┘
                                      │
-                        ┌────────────▼────────────────────────┐
-                        │   API Gateway + Service Mesh        │
-                        │   (Kong + Istio)                    │
-                        │   - Rate Limiting                   │
-                        │   - Authentication                  │
-                        │   - Request Signing                 │
-                        │   - Circuit Breaking                │
-                        └────┬──────────┬──────────┬──────────┘
-                             │          │          │
+                        ┌────────────▼───────────────────────┐
+                        │   API Gateway + Service Mesh       │
+                        │   (Kong + Istio)                   │
+                        │   - Rate Limiting                  │
+                        │   - Authentication                 │
+                        │   - Request Signing                │
+                        │   - Circuit Breaking               │
+                        └────┬─────────┬──────────┬──────────┘
+                             │         │          │
               ┌──────────────▼──┐   ┌──▼───────┐  │
               │  Frontend       │   │  Backend │  │
               │  Cluster        │   │  Services│  │
               │  (Next.js SSR)  │   │  (µ-svc) │  │
               └─────────────────┘   └──────────┘  │
-                                                   │
-              ┌────────────────────────────────────▼─────────────┐
-              │         Workflow Orchestration Layer              │
-              │         (Temporal.io Cluster)                     │
-              │  ┌────────────┐  ┌────────────┐  ┌────────────┐ │
-              │  │ Workflow   │  │ Activity   │  │   Event    │ │
-              │  │ Scheduler  │  │  Workers   │  │  Handlers  │ │
-              │  └────────────┘  └────────────┘  └────────────┘ │
-              └────┬─────────────────┬─────────────────┬─────────┘
-                   │                 │                 │
-       ┌───────────▼──────┐  ┌──────▼──────┐  ┌──────▼──────────┐
-       │  State Store     │  │  Message     │  │  Cache Layer    │
-       │  (MongoDB        │  │  Broker      │  │  (Redis         │
-       │   Sharded)       │  │  (RabbitMQ)  │  │   Cluster)      │
-       └──────────────────┘  └──────────────┘  └─────────────────┘
+                                                  │
+              ┌───────────────────────────────────▼────────────┐
+              │         Workflow Orchestration Layer           │
+              │         (Temporal.io Cluster)                  │
+              │  ┌────────────┐  ┌────────────┐  ┌────────────┐│
+              │  │ Workflow   │  │ Activity   │  │   Event    ││
+              │  │ Scheduler  │  │  Workers   │  │  Handlers  ││
+              │  └────────────┘  └────────────┘  └────────────┘│
+              └────┬────────────────┬─────────────────┬────────┘
+                   │                │                 │
+       ┌───────────▼──────┐  ┌──────▼──────┐   ┌──────▼──────────┐
+       │  State Store     │  │  Message    │   │  Cache Layer    │
+       │  (MongoDB        │  │  Broker     │   │  (Redis         │
+       │   Sharded)       │  │  (RabbitMQ) │   │   Cluster)      │
+       └──────────────────┘  └─────────────┘   └─────────────────┘
                    │                 │                 │
        ┌───────────▼─────────────────▼─────────────────▼─────────┐
-       │              Data Persistence Layer                       │
-       │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-       │  │ MongoDB  │  │PostgreSQL│  │TimescaleDB│  │   S3    │ │
-       │  │ (NoSQL)  │  │  (SQL)   │  │(TimeSeries)│ │(Objects)│ │
-       │  └──────────┘  └──────────┘  └──────────┘  └─────────┘ │
-       └──────────────────────────────────────────────────────────┘
+       │              Data Persistence Layer                     │
+       │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐  │
+       │  │ MongoDB  │  │PostgreSQL│  │TimescaleDB│ │   S3    │  │
+       │  │ (NoSQL)  │  │  (SQL)   │  │(TimeSeries)││(Objects)│  │
+       │  └──────────┘  └──────────┘  └──────────┘  └─────────┘  │
+       └─────────────────────────────────────────────────────────┘
                                   │
        ┌──────────────────────────▼───────────────────────────────┐
-       │         Observability & Security Layer                    │
-       │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-       │  │Prometheus│  │  Jaeger  │  │   ELK    │  │  SIEM   │ │
-       │  │(Metrics) │  │ (Traces) │  │  (Logs)  │  │(Security)│ │
-       │  └──────────┘  └──────────┘  └──────────┘  └─────────┘ │
+       │         Observability & Security Layer                   │
+       │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐   │
+       │  │Prometheus│  │  Jaeger  │  │   ELK    │  │  SIEM   │   │
+       │  │(Metrics) │  │ (Traces) │  │  (Logs)  │  │(Security)│  │
+       │  └──────────┘  └──────────┘  └──────────┘  └─────────┘   │
        └──────────────────────────────────────────────────────────┘
 ```
 
