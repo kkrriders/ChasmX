@@ -16,7 +16,8 @@
       "Bash(docker-compose config:*)",
       "Bash(ls:*)",
       "Bash(docker-compose down:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
