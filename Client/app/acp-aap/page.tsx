@@ -34,12 +34,12 @@ export default function ACPAAPPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {/* <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                       ACP-AAP
-                    </h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    </h1> */}
+                    {/* <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                       Monitor and control your AI infrastructure
-                    </p>
+                    </p> */}
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -180,6 +180,7 @@ export function NodeDemo() {
   }
   const [animationStep, setAnimationStep] = useState(0)
   const [cycleCount, setCycleCount] = useState(0)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const animationSequence = [
@@ -313,8 +314,39 @@ export function NodeDemo() {
     return () => clearInterval(interval)
   }, [cycleCount])
 
+  // Prevent page scrolling when the pointer is over the demo container
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const prevent = (e: Event) => {
+      // Prevent default scrolling behavior while interacting with the demo
+      e.preventDefault()
+    }
+
+    // Use non-passive listeners so we can call preventDefault()
+    el.addEventListener('wheel', prevent as EventListener, { passive: false })
+    el.addEventListener('touchmove', prevent as EventListener, { passive: false })
+
+    return () => {
+      el.removeEventListener('wheel', prevent as EventListener)
+      el.removeEventListener('touchmove', prevent as EventListener)
+    }
+  }, [])
+
   return (
-    <div className="relative w-full h-[450px] lg:h-[500px] rounded-2xl overflow-hidden bg-[#0f172a] border-2 border-slate-800/60 shadow-2xl">
+    <div
+      className="relative w-full h-[450px] lg:h-[500px] rounded-2xl overflow-hidden bg-[#0f172a] border-2 border-slate-800/60 shadow-2xl"
+      onWheelCapture={(e: React.WheelEvent) => {
+        // When the user scrolls over the demo area, scroll the page instead
+        // of letting the canvas capture the wheel (enables page scrolling)
+        if (Math.abs(e.deltaY) > 0) {
+          // Scroll the window by the same delta (invert sign if desired)
+          window.scrollBy({ top: e.deltaY, left: 0, behavior: 'auto' })
+          e.preventDefault()
+        }
+      }}
+    >
       {/* Removed Live Demo badge to reduce visual noise; nodes are interactive now */}
 
       {/* Cycle Counter */}
@@ -333,12 +365,13 @@ export function NodeDemo() {
         fitViewOptions={{ padding: 0.2, maxZoom: 1.2 }}
         className="bg-[#0f172a]"
         proOptions={{ hideAttribution: true }}
-        nodesDraggable={true}
-        nodesConnectable={true}
-        elementsSelectable={true}
-        zoomOnScroll={true}
-        panOnScroll={true}
-        panOnDrag={true}
+  nodesDraggable={false}
+  nodesConnectable={true}
+  elementsSelectable={true}
+  zoomOnScroll={false}
+  panOnScroll={false}
+  panOnDrag={false}
+  zoomOnPinch={false}
         minZoom={0.5}
         maxZoom={1.5}
         connectOnClick={false}
@@ -349,7 +382,7 @@ export function NodeDemo() {
           gap={16}
           size={1}
           className="opacity-50"
-        />
+      />
         <Controls 
           className="!bottom-3 !left-3 bg-slate-800/90 border border-slate-700/60 backdrop-blur-sm rounded-lg overflow-hidden [&>button]:bg-transparent [&>button]:border-slate-700/50 [&>button]:text-slate-400 [&>button:hover]:bg-slate-700/50 [&>button:hover]:text-white" 
           showInteractive={false}

@@ -18,9 +18,9 @@
 7. [AI/LLM Service Layer](#aillm-service-layer)
 8. [High-Availability & Fault Tolerance](#high-availability--fault-tolerance)
 9. [Scalability & Performance](#scalability--performance)
-10. [Observability & Incident Response](#observability--incident-response)
-11. [Compliance & Governance](#compliance--governance)
-12. [Disaster Recovery & Business Continuity](#disaster-recovery--business-continuity)
+10.[Observability & Incident Response](#observability--incident-response)
+11.[Compliance & Governance](#compliance--governance)
+12.[Disaster Recovery & Business Continuity](#disaster-recovery--business-continuity)
 
 ---
 
@@ -63,10 +63,10 @@ Layer 13: Infrastructure  🟡 Docker   →  🟢 Kubernetes + Service Mesh
 ### Hybrid Cloud-Native Architecture (Production)
 
 ```
-                        ┌─────────────────────────────────────┐
-                        │    Global CDN + DDoS Protection     │
-                        │       (CloudFlare + WAF)            │
-                        └────────────┬────────────────────────┘
+                        ┌────────────────────────────────────┐
+                        │    Global CDN + DDoS Protection    │
+                        │       (CloudFlare + WAF)           │
+                        └────────────┬───────────────────────┘
                                      │
                         ┌────────────▼───────────────────────┐
                         │   API Gateway + Service Mesh       │
