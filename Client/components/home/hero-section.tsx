@@ -85,7 +85,7 @@ export function HeroSection() {
               className="text-xl sm:text-2xl text-slate-300 leading-relaxed font-light"
             >
               Connect nodes, build AI-powered pipelines, and automate complex processes with ChasmX. 
-              No coding required—just drag, drop, and deploy.
+              No coding required-just drag, drop, and deploy.
             </motion.p>
 
             <motion.div

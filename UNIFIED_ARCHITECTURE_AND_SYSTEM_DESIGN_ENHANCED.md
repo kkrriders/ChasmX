@@ -9,15 +9,15 @@
 
 ## 📋 TABLE OF CONTENTS
 
-1. [Executive Overview](#executive-overview)
-2. [Market Differentiation Strategy](#market-differentiation-strategy)
-3. [Enhanced Core Architecture](#enhanced-core-architecture)
-4. [Multi-Agent AI Orchestration Layer](#multi-agent-ai-orchestration-layer)
-5. [Real-Time Collaboration Infrastructure](#real-time-collaboration-infrastructure)
-6. [Developer Experience & Git-Native Architecture](#developer-experience--git-native-architecture)
-7. [Intelligent Execution Engine](#intelligent-execution-engine)
-8. [Visual Analytics & Observability Dashboard](#visual-analytics--observability-dashboard)
-9. [Mobile-First Architecture](#mobile-first-architecture)
+1.  [Executive Overview](#executive-overview)
+2.  [Market Differentiation Strategy](#market-differentiation-strategy)
+3.  [Enhanced Core Architecture](#enhanced-core-architecture)
+4.  [Multi-Agent AI Orchestration Layer](#multi-agent-ai-orchestration-layer)
+5.  [Real-Time Collaboration Infrastructure](#real-time-collaboration-infrastructure)
+6.  [Developer Experience & Git-Native Architecture](#developer-experience--git-native-architecture)
+7.  [Intelligent Execution Engine](#intelligent-execution-engine)
+8.  [Visual Analytics & Observability Dashboard](#visual-analytics--observability-dashboard)
+9.  [Mobile-First Architecture](#mobile-first-architecture)
 10. [Integration Marketplace Ecosystem](#integration-marketplace-ecosystem)
 11. [Zero-Trust Security Architecture (Enhanced)](#zero-trust-security-architecture-enhanced)
 12. [Enterprise Features & Multi-Tenancy](#enterprise-features--multi-tenancy)
@@ -54,21 +54,21 @@
 
 ### Competitive Positioning Matrix
 
-```
+``` 
 ╔════════════════════════════════════════════════════════════════╗
-║                    MARKET DIFFERENTIATION                       ║
+║                    MARKET DIFFERENTIATION                      ║
 ╠════════════════╦═════════╦════════╦═══════╦═════════╦══════════╣
-║ Feature        ║   n8n   ║ Zapier ║  Make ║ Tray.io ║ ChasmX  ║
+║ Feature        ║   n8n   ║ Zapier ║  Make ║ Tray.io ║ ChasmX   ║
 ╠════════════════╬═════════╬════════╬═══════╬═════════╬══════════╣
-║ Multi-Agent AI ║    ❌   ║   ⚠️   ║  ❌   ║   ❌    ║   ✅✅   ║
-║ Live Collab    ║    ❌   ║   ❌   ║  ❌   ║   ❌    ║   ✅✅   ║
-║ Git-Native     ║    ⚠️   ║   ❌   ║  ❌   ║   ⚠️    ║   ✅✅   ║
-║ Mobile Builder ║    ❌   ║   ❌   ║  ❌   ║   ❌    ║   ✅✅   ║
-║ Code+No-Code   ║    ⚠️   ║   ❌   ║  ⚠️   ║   ⚠️    ║   ✅✅   ║
-║ Self-Hosted    ║    ✅   ║   ❌   ║  ❌   ║   ❌    ║   ✅    ║
-║ Testing Frame  ║    ❌   ║   ❌   ║  ❌   ║   ⚠️    ║   ✅✅   ║
-║ AI Debugger    ║    ❌   ║   ❌   ║  ❌   ║   ❌    ║   ✅✅   ║
-║ Price/Month    ║   $20   ║  $20   ║  $9   ║  $695   ║   $15   ║
+║ Multi-Agent AI ║    ❌   ║   ⚠️   ║  ❌   ║   ❌  ║   ✅✅  ║
+║ Live Collab    ║    ❌   ║   ❌   ║  ❌   ║   ❌  ║   ✅✅  ║
+║ Git-Native     ║    ⚠️   ║   ❌   ║  ❌   ║   ⚠️  ║   ✅✅  ║
+║ Mobile Builder ║    ❌   ║   ❌   ║  ❌   ║   ❌  ║   ✅✅  ║
+║ Code+No-Code   ║    ⚠️   ║   ❌   ║  ⚠️   ║   ⚠️  ║   ✅✅  ║
+║ Self-Hosted    ║    ✅   ║   ❌   ║  ❌   ║   ❌  ║   ✅✅  ║
+║ Testing Frame  ║    ❌   ║   ❌   ║  ❌   ║   ⚠️  ║   ✅✅  ║
+║ AI Debugger    ║    ❌   ║   ❌   ║  ❌   ║   ❌  ║   ✅✅  ║
+║ Price/Month    ║   $20   ║  $20   ║  $9   ║  $695   ║   $15    ║
 ╚════════════════╩═════════╩════════╩═══════╩═════════╩══════════╝
 ```
 
@@ -122,7 +122,7 @@
                      │    • Circuit Breaking (Intelligent)      │
                      └───┬──────────────┬──────────────┬────────┘
                          │              │              │
-           ┌─────────────▼──┐   ┌──────▼─────┐   ┌───▼──────────┐
+           ┌─────────────▼──┐    ┌──────▼─────┐   ┌───▼──────────┐
            │  Frontend       │   │  Backend   │   │  WebSocket   │
            │  Multi-Region   │   │  Services  │   │  Cluster     │
            │  (Next.js Edge) │   │  (µ-svc)   │   │(Collab/Live) │
@@ -132,7 +132,7 @@
            │        🤖 MULTI-AGENT AI ORCHESTRATION LAYER 🤖      │
            │  ┌──────────┐  ┌──────────┐  ┌───────────────────┐ │
            │  │  Agent   │  │  Agent   │  │   Agent Manager   │ │
-           │  │Coordinator│  │ Workers  │  │   (Supervisor)    │ │
+           │  │Coordinator│ │ Workers  │  │   (Supervisor)    │ │
            │  └────┬─────┘  └────┬─────┘  └─────────┬─────────┘ │
            └───────┼─────────────┼─────────────────┬─┼───────────┘
                    │             │                 │ │
@@ -216,7 +216,7 @@ The Multi-Agent AI Layer is the crown jewel of ChasmX, enabling autonomous AI ag
                               │
         ┌─────────────────────▼─────────────────────┐
         │      Shared Context & Memory Layer        │
-        │  • Vector embeddings (Pinecone/Weaviate) │
+        │  • Vector embeddings (Pinecone/Weaviate)  │
         │  • Conversation history (Redis)           │
         │  • Tool calling registry                  │
         │  • Agent coordination protocols           │
@@ -349,7 +349,7 @@ Agent Process:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    LLM Request Router                         │
+│                    LLM Request Router                        │
 │  • Intelligent model selection (cost vs quality)             │
 │  • Semantic caching (embedding-based deduplication)          │
 │  • Rate limiting per user/org                                │
@@ -565,8 +565,8 @@ User B: Changes node timeout to 30s
 CRDT Merge:
 ┌────────────────────────────────────────┐
 │  Node Configuration (Merged)           │
-│  ├─ Name: "Process Data"    (User A)  │
-│  ├─ Timeout: 30s            (User B)  │
+│  ├─ Name: "Process Data"    (User A)   │
+│  ├─ Timeout: 30s            (User B)   │
 │  └─ Last Modified: Both                │
 └────────────────────────────────────────┘
 
@@ -780,8 +780,8 @@ describe('Customer Onboarding Workflow', () => {
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│            SMART EXECUTION OPTIMIZATION ENGINE                │
-│                                                               │
+│            SMART EXECUTION OPTIMIZATION ENGINE               │
+│                                                              │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  1. PRE-EXECUTION ANALYSIS                             │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
@@ -792,8 +792,8 @@ describe('Customer Onboarding Workflow', () => {
 │  │  │  • Check resource requirements                   │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  └────────────────────────────────────────────────────────┘  │
-│                          │                                    │
-│                          ▼                                    │
+│                          │                                   │
+│                          ▼                                   │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  2. DYNAMIC OPTIMIZATION (AI-Powered)                  │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
@@ -801,8 +801,8 @@ describe('Customer Onboarding Workflow', () => {
 │  │  │  • Historical execution patterns                 │  │  │
 │  │  │  • Similar workflow performance                  │  │  │
 │  │  │  • Resource utilization trends                   │  │  │
-│  │  │                                                   │  │  │
-│  │  │  Optimization Decisions:                          │  │  │
+│  │  │                                                  │  │  │
+│  │  │  Optimization Decisions:                         │  │  │
 │  │  │  ├─ Reorder nodes for better parallelism         │  │  │
 │  │  │  ├─ Add caching for repeated operations          │  │  │
 │  │  │  ├─ Batch similar API calls                      │  │  │
@@ -810,8 +810,8 @@ describe('Customer Onboarding Workflow', () => {
 │  │  │  └─ Adjust timeout and retry settings            │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  └────────────────────────────────────────────────────────┘  │
-│                          │                                    │
-│                          ▼                                    │
+│                          │                                   │
+│                          ▼                                   │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  3. EXECUTION WITH REAL-TIME ADAPTATION                │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
@@ -820,23 +820,23 @@ describe('Customer Onboarding Workflow', () => {
 │  │  │  • External API response times                   │  │  │
 │  │  │  • Error rates                                   │  │  │
 │  │  │  • Resource consumption                          │  │  │
-│  │  │                                                   │  │  │
+│  │  │                                                  │  │  │
 │  │  │  Adaptive Actions:                               │  │  │
-│  │  │  ├─ Switch to faster API provider               │  │  │
-│  │  │  ├─ Increase timeout if needed                  │  │  │
-│  │  │  ├─ Activate circuit breaker                    │  │  │
-│  │  │  └─ Trigger auto-healing                        │  │  │
+│  │  │  ├─ Switch to faster API provider                │  │  │
+│  │  │  ├─ Increase timeout if needed                   │  │  │
+│  │  │  ├─ Activate circuit breaker                     │  │  │
+│  │  │  └─ Trigger auto-healing                         │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  └────────────────────────────────────────────────────────┘  │
-│                          │                                    │
-│                          ▼                                    │
+│                          │                                   │
+│                          ▼                                   │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  4. POST-EXECUTION LEARNING                            │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
 │  │  │  • Store execution metrics                       │  │  │
-│  │  │  • Update ML model with new data                │  │  │
-│  │  │  • Identify optimization opportunities          │  │  │
-│  │  │  • Generate recommendations for user            │  │  │
+│  │  │  • Update ML model with new data                 │  │  │
+│  │  │  • Identify optimization opportunities           │  │  │
+│  │  │  • Generate recommendations for user             │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
@@ -881,7 +881,7 @@ Before Execution:
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  Timeline Scrubber                                     │  │
 │  │  ┌────────────────────────────────────────────────────┐│  │
-│  │  │  [Start] ────●─────────●─────────●──────── [End]  ││  │
+│  │  │  [Start] ────●─────────●─────────●──────── [End]   ││  │
 │  │  │         Node1    Node2    Node3               ││  │
 │  │  │         2.3s     1.1s     0.8s                ││  │
 │  │  └────────────────────────────────────────────────────┘│  │
@@ -959,9 +959,9 @@ Before Execution:
 │  └────────────────────────────────────────────────────────┘  │
 │                                                               │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │  AI-Powered Insights                                    │  │
+│  │  AI-Powered Insights                                   │  │
 │  │  ──────────────────────────────────────────────────────│  │
-│  │  🤖 Analysis by AI:                                     │  │
+│  │  🤖 Analysis by AI:                                   │  │
 │  │                                                         │  │
 │  │  "Your workflow experiences performance degradation    │  │
 │  │   during peak hours (12-16 UTC). I recommend:          │  │
@@ -1085,10 +1085,10 @@ Before Execution:
 │  │  • Push notifications (FCM / APNs)                     │  │
 │  │  • Biometric auth (FaceID / TouchID / Fingerprint)     │  │
 │  └────────────────────────┬───────────────────────────────┘  │
-│                           │                                   │
-│                           ▼                                   │
+│                           │                                  │
+│                           ▼                                  │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │         Backend API (Mobile-Optimized Endpoints)        │  │
+│  │         Backend API (Mobile-Optimized Endpoints)       │  │
 │  │  • Paginated responses (reduce data transfer)          │  │
 │  │  • GraphQL for flexible queries                        │  │
 │  │  • Image optimization (WebP, thumbnails)               │  │
@@ -1108,7 +1108,7 @@ Tablet Interface (iPad / Galaxy Tab):
 │  ┌─────────────────┐                                      │
 │  │  Node Palette   │    Workflow Canvas (Touch-Optimized) │
 │  │  ───────────────│                                      │
-│  │  Data Sources   │    [Node 1] ───gesture──► [Node 2]  │
+│  │  Data Sources   │    [Node 1] ───gesture──► [Node 2]   │
 │  │  • HTTP Request │         │                     │      │
 │  │  • Database     │         │ pinch to zoom       │      │
 │  │  • File Upload  │         ▼                     ▼      │
@@ -1123,9 +1123,9 @@ Tablet Interface (iPad / Galaxy Tab):
 │  │  • Slack        │    • Two-finger tap: Undo            │
 │  │  • Webhook      │                                      │
 │  └─────────────────┘                                      │
-│                                                            │
+│                                                           │
 │  [<] [Undo] [Redo] [Run] [Save] [Share]                   │
-└────────────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────────┘
 ```
 
 ### Mobile Monitoring & Control
@@ -1133,7 +1133,7 @@ Tablet Interface (iPad / Galaxy Tab):
 ```
 Phone Interface (iPhone / Android):
 ┌──────────────────────────────────┐
-│  ChasmX        🔔3    ☰    👤    │
+│  ChasmX        🔔3    ☰    👤   │
 ├──────────────────────────────────┤
 │  Dashboard                       │
 │  ────────────────────────────────│
@@ -1185,7 +1185,7 @@ Voice Interface:
 │           Onboarding workflow... │
 │           Started at 2:45 PM"    │
 │                                  │
-│  [🔵 Listening...]               │
+│  [🔵 Listening...]                │
 │                                  │
 │  User: "What's the status?"      │
 │                                  │
@@ -1214,7 +1214,7 @@ Voice Interface:
 │  │  • Ratings & reviews                                    │  │
 │  │  • One-click install                                    │  │
 │  │  • Purchase premium integrations                        │  │
-│  └────────────────────┬───────────────────────────────────┘  │
+│  └────────────────────┬───────────────────────────────────┘   │
 │                       │                                       │
 │                       ▼                                       │
 │  ┌────────────────────────────────────────────────────────┐  │
@@ -1492,11 +1492,11 @@ The original 13-layer security is enhanced with 2 additional layers:
 ### Advanced RBAC + ABAC
 
 ```
-┌──────────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────── ────────────┐
 │            ROLE & ATTRIBUTE-BASED ACCESS CONTROL              │
 │                                                               │
 │  Roles (RBAC):                                                │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌─────────────────────────────────────────────── ─────────┐  │
 │  │  Admin                                                  │  │
 │  │  ├─ Manage users and roles                              │  │
 │  │  ├─ Configure billing                                   │  │
@@ -1513,10 +1513,10 @@ The original 13-layer security is enhanced with 2 additional layers:
 │  │  ├─ View workflows (read-only)                          │  │
 │  │  ├─ View execution history                              │  │
 │  │  └─ Cannot edit or execute                              │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  └─────────────────────────────────────────────── ─────────┘  │
 │                                                               │
 │  Attributes (ABAC):                                           │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌─────────────────────────────────────────────── ─────────┐  │
 │  │  Policy: "Allow workflow execution"                     │  │
 │  │  Conditions:                                            │  │
 │  │  • User role = "Developer" OR "Admin"                   │  │
@@ -1526,7 +1526,7 @@ The original 13-layer security is enhanced with 2 additional layers:
 │  │  • Workflow environment = "production"                  │  │
 │  │  • Time = business hours (9 AM - 6 PM)                  │  │
 │  │  • Approval from manager = true                         │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  └─────────────────────────────────────────────── ─────────┘  │
 │                                                               │
 │  Policy Engine (Open Policy Agent):                           │
 │  ```rego                                                      │
@@ -1538,16 +1538,16 @@ The original 13-layer security is enhanced with 2 additional layers:
 │    input.resource.environment == "staging"                    │
 │  }                                                            │
 │  ```                                                          │
-└──────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────── ────────────┘
 ```
 
 ### Compliance Automation
 
 ```
-┌──────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────── ──────┐
 │               COMPLIANCE AUTOMATION ENGINE                    │
 │                                                               │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌───────────────────────────────────────────────────── ───┐  │
 │  │  Compliance Profiles                                    │  │
 │  │  ┌──────────────┬──────────────┬─────────────────────┐ │  │
 │  │  │   GDPR       │   SOC 2      │   HIPAA             │ │  │
@@ -1561,7 +1561,7 @@ The original 13-layer security is enhanced with 2 additional layers:
 │  └────────────────────────────────────────────────────────┘  │
 │                           │                                   │
 │                           ▼                                   │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌──────────────────────────────────────────────────── ────┐  │
 │  │  Automated Compliance Checks (Continuous)               │  │
 │  │  • Scan workflows for sensitive data                    │  │
 │  │  • Verify encryption at rest/transit                    │  │
@@ -1706,7 +1706,7 @@ The original 13-layer security is enhanced with 2 additional layers:
 │  │  Security             ████████████░░ 80/100             │  │
 │  │  Maintainability      ███████████░░░ 78/100             │  │
 │  │  Cost Efficiency      ██████████████ 92/100             │  │
-│  │  Test Coverage        ████████░░░░░ 68/100              │  │
+│  │  Test Coverage        ████████░░░░░░ 68/100              │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                                                               │
 │  ⚠️  Issues Detected (5):                                     │
@@ -1887,7 +1887,7 @@ The original 13-layer security is enhanced with 2 additional layers:
 │  │     Popular with 340 teams in your industry             │  │
 │  │     ROI: 2 hours saved daily                            │  │
 │  │     [Preview] [Use Template] [See Examples]             │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  └─────────────────────────────────────────────────────── ─┘  │
 │                                                               │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  🔥 Trending in Your Industry (E-commerce)              │  │
@@ -1959,15 +1959,15 @@ The original 13-layer security is enhanced with 2 additional layers:
 │  │                                    ├─ [Alert Team] ← New│  │
 │  │                                    └─ [Rollback]        │  │
 │  └────────────────────────────────────────────────────────┘  │
-│                                                               │
+│                                                               │ 
 │  💬 Review Comments (3):                                      │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  @bob • 2 hours ago                              ✅     │  │
 │  │  "Great improvement! One suggestion on the Alert node:" │  │
-│  │  → Line 23: Consider adding severity levels            │  │
+│  │  → Line 23: Consider adding severity levels             │  │
 │  │                                                         │  │
 │  │  @alice replied • 1 hour ago                            │  │
-│  │  "Good idea! I've added severity: 'high' for payment   │  │
+│  │  "Good idea! I've added severity: 'high' for payment    │  │
 │  │   failures and 'medium' for validation errors."         │  │
 │  │  [✓ Resolved]                                           │  │
 │  │                                                         │  │
@@ -2303,55 +2303,55 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  Data Field: "customer_email"                                 │
 │  Classification: 🔒 PII (Personally Identifiable Information) │
 │                                                               │
-│  ┌────────────────────────────────────────────────────────┐  │
-│  │  Complete Data Journey (Column-Level Lineage)           │  │
-│  │  ────────────────────────────────────────────────────── │  │
-│  │                                                         │  │
-│  │  Origin:                                                │  │
+│  ┌────────────────────────────────────────────────────────┐   │
+│  │  Complete Data Journey (Column-Level Lineage)               │  │
+│  │  ──────────────────────────────────────────────────────    │  │
+│  │                                                           │  │
+│  │  Origin:                                                 │  │
 │  │  📊 Salesforce CRM                                      │  │
-│  │  └─ Table: contacts                                     │  │
-│  │     └─ Column: email_address                            │  │
-│  │        Created: 2024-01-15                              │  │
-│  │        Owner: @sales-team                               │  │
+│  │  └─ Table: contacts                                    │  │
+│  │     └─ Column: email_address                          │  │
+│  │        Created: 2024-01-15                           │  │
+│  │        Owner: @sales-team                            │  │
+│  │                                                       │  │
+│  │         ↓ [Workflow: "CRM Sync" - Extract]             │  │
 │  │                                                         │  │
-│  │         ↓ [Workflow: "CRM Sync" - Extract]              │  │
+│  │  Transformation 1:                                       │  │
+│  │  🔄 Node: "Email Normalizer"                              │  │
+│  │  └─ Action: Lowercase, trim whitespace                     │  │
+│  │     └─ Output: customer_email_normalized                   │  │
+│  │                                                           │  │
+│  │         ↓ [Workflow: "Data Enrichment"]                  │  │
 │  │                                                         │  │
-│  │  Transformation 1:                                      │  │
-│  │  🔄 Node: "Email Normalizer"                            │  │
-│  │  └─ Action: Lowercase, trim whitespace                  │  │
-│  │     └─ Output: customer_email_normalized                │  │
-│  │                                                         │  │
-│  │         ↓ [Workflow: "Data Enrichment"]                 │  │
-│  │                                                         │  │
-│  │  Transformation 2:                                      │  │
-│  │  🔄 Node: "Email Validator"                             │  │
-│  │  └─ Action: Validate format, check MX records           │  │
-│  │     └─ Output: is_valid_email (boolean)                 │  │
-│  │                                                         │  │
-│  │         ↓ [Workflow: "Customer Segmentation"]           │  │
-│  │                                                         │  │
+│  │  Transformation 2:                                     │  │
+│  │  🔄 Node: "Email Validator"                           │  │
+│  │  └─ Action: Validate format, check MX records         │  │
+│  │     └─ Output: is_valid_email (boolean)              │  │
+│  │                                                      │  │
+│  │         ↓ [Workflow: "Customer Segmentation"]         │  │
+│  │                                                        │  │
 │  │  Usage 1:                                               │  │
 │  │  📧 Mailchimp API                                       │  │
-│  │  └─ Purpose: Email marketing campaigns                  │  │
-│  │     └─ Last used: 2 hours ago                           │  │
-│  │                                                         │  │
-│  │         ↓ [Workflow: "GDPR Compliance"]                 │  │
-│  │                                                         │  │
-│  │  Storage:                                               │  │
-│  │  💾 MongoDB: customers_production                       │  │
-│  │  └─ Collection: customers                               │  │
-│  │     └─ Field: email                                     │  │
+│  │  └─ Purpose: Email marketing campaigns                   │  │
+│  │     └─ Last used: 2 hours ago                             │  │
+│  │                                                            │  │
+│  │         ↓ [Workflow: "GDPR Compliance"]                     │  │
+│  │                                                             │  │
+│  │  Storage:                                                  │  │
+│  │  💾 MongoDB: customers_production                         │  │
+│  │  └─ Collection: customers                                 │  │
+│  │     └─ Field: email                                      │  │
 │  │        └─ Encrypted: ✅ AES-256                         │  │
 │  │           Retention: 7 years                            │  │
-│  │           Access controls: Role-based                   │  │
-│  │                                                         │  │
-│  │  Destinations (3):                                      │  │
-│  │  1. 📊 Analytics Warehouse (Snowflake)                  │  │
-│  │     └─ Hashed for privacy                               │  │
-│  │  2. 📧 Email Service (SendGrid)                         │  │
-│  │     └─ Encrypted in transit (TLS 1.3)                   │  │
-│  │  3. 📈 BI Dashboard (Tableau)                           │  │
-│  │     └─ Masked (show@***.com)                            │  │
+│  │           Access controls: Role-based                  │  │
+│  │                                                       │  │
+│  │  Destinations (3):                                   │  │
+│  │  1. 📊 Analytics Warehouse (Snowflake)              │  │
+│  │     └─ Hashed for privacy                           │  │
+│  │  2. 📧 Email Service (SendGrid)                     │  │
+│  │     └─ Encrypted in transit (TLS 1.3)                │  │
+│  │  3. 📈 BI Dashboard (Tableau)                        │  │
+│  │     └─ Masked (show@***.com)                          │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                                                               │
 │  🔍 Impact Analysis:                                          │
@@ -2399,7 +2399,7 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  └────────────────────────────────────────────────────────┘  │
 │                                                               │
 │  ⚠️  Quality Issues Detected (4):                             │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌──────────────────────────────────────────────────────── ┐  │
 │  │  1. Missing Values (Completeness)                       │  │
 │  │     Field: phone_number                                 │  │
 │  │     Missing: 12% (2,847 records)                        │  │
@@ -2428,9 +2428,9 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │     Detected: ML anomaly detection                      │  │
 │  │     Possible Cause: Refund processing bug               │  │
 │  │     [Investigate] [Flag for Review]                     │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  └──────────────────────────────────────────────────────── ┘  │
 │                                                               │
-│  📊 Quality Trend (Last 30 Days):                             │
+│  📊 Quality Trend (Last 30 Days):                            │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  100%│                                  ╱─╲            │  │
 │  │   95%│                        ╱─────────╯  ╲           │  │
@@ -2439,9 +2439,9 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │   80%│────╯                                         ╲  │  │
 │  │      └─────────────────────────────────────────────────│  │
 │  │       Day1    Day10    Day20    Day30                  │  │
-│  │                                                         │  │
+│  │                                                        │  │
 │  │  Insight: Quality improved by 7% after implementing    │  │
-│  │  automated validation rules on Day 15                   │  │
+│  │  automated validation rules on Day 15                  │  │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -2533,7 +2533,7 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  Organization: Acme Corp                                      │
 │  Period: Last 30 Days                                         │
 │                                                               │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌──────────────────────────────────────────────────────── ┐  │
 │  │  💸 Cost Breakdown                                      │  │
 │  │  ────────────────────────────────────────────────────── │  │
 │  │  Total Spent:         $1,247.50                         │  │
@@ -2665,7 +2665,7 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │            BUDGET & QUOTA MANAGEMENT SYSTEM                   │
 │                                                               │
 │  ⚙️  Budget Configuration                                     │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌────────────────────────────────────────────────────────┐   │ 
 │  │  Organization Budget                                    │  │
 │  │  Monthly Limit: $1,500.00                               │  │
 │  │  Current Spend: $1,247.50 (83%) ████████████░░░         │  │
@@ -2742,8 +2742,8 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│         MULTI-CLOUD ORCHESTRATION PLATFORM                    │
-│                                                               │
+│         MULTI-CLOUD ORCHESTRATION PLATFORM                   │
+│                                                              │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │         Application Layer (Cloud-Agnostic)              │  │
 │  │  ┌──────────────────────────────────────────────────┐   │  │
@@ -2753,7 +2753,7 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │  │  • Cost optimization engine                      │   │  │
 │  │  │  • Multi-cloud deployment manager                │   │  │
 │  │  └──────────────────────────────────────────────────┘   │  │
-│  └────────────────────────────────────────────────────────┘  │
+│  └──────────────────────────────────────────────────────── ┘  │
 │                            │                                  │
 │           ┌────────────────┼────────────────┐                │
 │           │                │                │                │
@@ -2771,13 +2771,13 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │ Storage:       │ │ Storage:       │ │ Storage:       │   │
 │  │ • RDS          │ │ • Cloud SQL    │ │ • Cosmos DB    │   │
 │  │ • S3           │ │ • GCS          │ │ • Blob Storage │   │
-│  │ • ElastiCache │ │ • Memorystore  │ │ • Redis Cache  │   │
+│  │ • ElastiCache  │ │ • Memorystore  │ │ • Redis Cache  │   │
 │  │                │ │                │ │                │   │
 │  │ Cost: $2,450/mo│ │ Cost: $1,890/mo│ │ Cost: $980/mo  │   │
 │  │ Workload: 55%  │ │ Workload: 30%  │ │ Workload: 15%  │   │
 │  └────────────────┘ └────────────────┘ └────────────────┘   │
-│                                                               │
-│  ┌────────────────────────────────────────────────────────┐  │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────── ┐  │
 │  │         On-Premise / Hybrid Component                   │  │
 │  │  ┌──────────────────────────────────────────────────┐   │  │
 │  │  │  Customer Data Center (Optional)                 │   │  │
@@ -2786,26 +2786,26 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │  │  • Air-gapped deployment option                  │   │  │
 │  │  │  • Secure tunnel to ChasmX Cloud                 │   │  │
 │  │  └──────────────────────────────────────────────────┘   │  │
-│  └────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────┘
+│  └──────────────────────────────────────────────────────── ┘  │
+└────────────────────────────────────────────────────────────── ┘
 ```
 
 ### Intelligent Workload Distribution
 
 ```
-┌──────────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────────── ┐
 │      AI-POWERED CLOUD WORKLOAD OPTIMIZER                      │
 │                                                               │
 │  Decision Engine: Running optimization analysis...            │
 │                                                               │
-│  ┌────────────────────────────────────────────────────────┐  │
+│  ┌──────────────────────────────────────────────────────── ┐  │
 │  │  Workflow: "Video Transcoding Pipeline"                 │  │
 │  │  ────────────────────────────────────────────────────── │  │
 │  │  Current Deployment: 100% AWS                           │  │
 │  │  Monthly Cost: $1,247                                   │  │
 │  │  Performance: 4.2 min avg processing time               │  │
 │  │                                                         │  │
-│  │  🤖 AI Recommendation:                                  │  │
+│  │  🤖 AI Recommendation:                                 │  │
 │  │  Deploy across multiple clouds for cost optimization    │  │
 │  │                                                         │  │
 │  │  Optimal Strategy:                                      │  │
@@ -2814,7 +2814,7 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │  │   └─ Estimated cost: $498/month                      │  │
 │  │  │                                                      │  │
 │  │  ├─ GCP (35%): Batch processing                         │  │
-│  │  │   └─ Reason: 23% cheaper compute for large jobs     │  │
+│  │  │   └─ Reason: 23% cheaper compute for large jobs      │  │
 │  │  │   └─ Estimated cost: $387/month                      │  │
 │  │  │                                                      │  │
 │  │  └─ Azure (25%): Predictable workloads                  │  │
@@ -3939,8 +3939,8 @@ describe('Customer Onboarding Workflow - Node 3: Email Validation', () => {
 │  │     Potential CO₂ reduction: 39 kg/month (-16%)         │  │
 │  │     [Enable Caching]                                    │  │
 │  │                                                         │  │
-│  │  Total Potential Reduction: 96 kg/month (-39%) 🎉       │  │
-│  │  [Apply All Recommendations]                            │  │
+│  │  Total Potential Reduction: 96 kg/month (-39%) 🎉      │  │
+│  │  [Apply All Recommendations]                           │  │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
 ```
