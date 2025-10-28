@@ -12,7 +12,15 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Switch } from '@/components/ui/switch'
 import { toast } from '@/hooks/use-toast'
 import { useState, useEffect } from 'react'
-import { Settings, Save, X, Plus } from 'lucide-react'
+import { Settings, Save, X, Plus, Maximize } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface NodeConfigPanelProps {
@@ -56,6 +64,11 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
   const [method, setMethod] = useState<'POST' | 'GET'>('POST')
   const [enabled, setEnabled] = useState(true)
 
+  // code executor
+  const [script, setScript] = useState('')
+  const [scriptLanguage, setScriptLanguage] = useState<'javascript' | 'python' | 'custom'>('javascript')
+  const [isFullEditorOpen, setIsFullEditorOpen] = useState(false)
+
   useEffect(() => {
     if (!node) return
     setLabel(String(node.data?.label || ''))
@@ -75,6 +88,8 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
     setEndpoint(node.data?.endpoint || '')
     setMethod(node.data?.method || 'POST')
     setEnabled(node.data?.enabled ?? true)
+    setScript(node.data?.script || '')
+    setScriptLanguage(node.data?.scriptLanguage || 'javascript')
     setRawJson(node.data ? JSON.stringify(node.data, null, 2) : '')
   }, [node])
 
@@ -118,6 +133,8 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
       endpoint,
       method,
       enabled,
+      script,
+      scriptLanguage,
     }
 
     if (showJsonEditor && rawJson.trim()) {
@@ -211,6 +228,54 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
           <Textarea value={aiPrompt} onChange={(e) => setAiPrompt(e.target.value)} rows={3} />
           <Label className="mt-2">Temperature ({aiTemperature})</Label>
           <input type="range" min="0" max="2" step="0.1" value={aiTemperature} onChange={(e) => setAiTemperature(parseFloat(e.target.value))} />
+        </div>
+      )
+    }
+
+    // Code Executor specific panel
+    if (nodeLabel.includes('code') || nodeLabel.includes('executor') || (String(node.data?.name || '').toLowerCase().includes('code'))) {
+      return (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border p-4 space-y-3">
+          <Label>Language</Label>
+          <Select value={scriptLanguage} onValueChange={(v) => setScriptLanguage(v as any)}>
+            <SelectTrigger className="h-9 w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="javascript">JavaScript</SelectItem>
+              <SelectItem value="python">Python</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center justify-between">
+            <Label className="mt-2">Script</Label>
+            <div>
+              <Button variant="outline" size="sm" onClick={() => setIsFullEditorOpen(true)} className="h-8">
+                <Maximize className="h-4 w-4 mr-2" /> Full Window
+              </Button>
+            </div>
+          </div>
+          <Textarea value={script} onChange={(e) => setScript(e.target.value)} rows={12} className="font-mono" />
+          <div className="text-sm text-muted-foreground">Write the code to run for this node. Use {`{{inputs}}`} to reference workflow inputs.</div>
+
+          {/* Full window editor dialog */}
+          <Dialog open={isFullEditorOpen} onOpenChange={setIsFullEditorOpen}>
+            <DialogContent className="max-w-full w-full h-[90vh]">
+              <DialogHeader>
+                <DialogTitle>Edit Script</DialogTitle>
+              </DialogHeader>
+
+              <div className="mt-4 h-[70vh]">
+                <Textarea value={script} onChange={(e) => setScript(e.target.value)} className="h-full font-mono" />
+              </div>
+
+              <DialogFooter>
+                <div className="flex gap-2 ml-auto">
+                  <Button variant="outline" onClick={() => { setScript(node?.data?.script || ''); setIsFullEditorOpen(false) }}>Cancel</Button>
+                  <Button onClick={() => setIsFullEditorOpen(false)} className="bg-blue-600 text-white">Done</Button>
+                </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )
     }
