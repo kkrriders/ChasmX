@@ -63,15 +63,36 @@ export function HydrationErrorSuppressor() {
         }
       }
 
-      // Call original error for legitimate errors (apply to keep console context)
-      if (typeof originalError === 'function') {
+      // Call original error for legitimate errors (defensive to avoid throwing)
+      const callOriginalError = (orig: any, callArgs: any[]) => {
         try {
-          originalError.apply(console, args)
+          if (typeof orig === 'function') {
+            // Prefer Reflect.apply when available for safety
+            if (typeof Reflect !== 'undefined' && typeof Reflect.apply === 'function') {
+              Reflect.apply(orig, console, callArgs)
+            } else if (orig && typeof orig.apply === 'function') {
+              orig.apply(console, callArgs)
+            } else {
+              // Last resort: try calling directly
+              orig(...callArgs)
+            }
+            return
+          }
+
+          // If orig isn't callable, fall back to the current console.error if available
+          if (console && typeof console.error === 'function') {
+            try {
+              console.error(...callArgs)
+            } catch {
+              // swallow to avoid any console-side exceptions
+            }
+          }
         } catch {
-          // If the original throws for some reason, fall back to the default implementation
-          Function.prototype.apply.call(console.error, console, args)
+          // Swallow any errors when attempting to call the original to avoid breaking the app
         }
       }
+
+      callOriginalError(originalError, args)
     }
 
     console.warn = (...args) => {
@@ -88,13 +109,32 @@ export function HydrationErrorSuppressor() {
         }
       }
 
-      if (typeof originalWarn === 'function') {
+      const callOriginalWarn = (orig: any, callArgs: any[]) => {
         try {
-          originalWarn.apply(console, args)
+          if (typeof orig === 'function') {
+            if (typeof Reflect !== 'undefined' && typeof Reflect.apply === 'function') {
+              Reflect.apply(orig, console, callArgs)
+            } else if (orig && typeof orig.apply === 'function') {
+              orig.apply(console, callArgs)
+            } else {
+              orig(...callArgs)
+            }
+            return
+          }
+
+          if (console && typeof console.warn === 'function') {
+            try {
+              console.warn(...callArgs)
+            } catch {
+              // swallow
+            }
+          }
         } catch {
-          Function.prototype.apply.call(console.warn, console, args)
+          // swallow
         }
       }
+
+      callOriginalWarn(originalWarn, args)
     }
 
     return () => {

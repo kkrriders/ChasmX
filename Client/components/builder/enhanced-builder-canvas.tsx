@@ -153,7 +153,7 @@ function EnhancedBuilderCanvasInner() {
 
         const newNode: Node = {
           id: `${component.id}-${Date.now()}`,
-          type: 'custom',
+          type: component.id === 'data-source' ? 'dataSourceNode' : 'custom',
           position,
           data: {
             label: component.name,

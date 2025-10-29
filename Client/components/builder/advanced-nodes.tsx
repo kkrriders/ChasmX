@@ -14,7 +14,8 @@ import {
   Mail,
   Play,
   FileJson,
-  LucideIcon
+  LucideIcon,
+  CloudDownload
 } from 'lucide-react'
 
 interface AdvancedNodeData {
@@ -275,6 +276,21 @@ export const LoggerNode = memo((props: NodeProps) => {
 })
 LoggerNode.displayName = 'LoggerNode'
 
+// 11. Data Source Node (Multi-source)
+export const DataSourceNode = memo((props: NodeProps) => {
+  return (
+    <AdvancedNodeBase 
+      data={props.data}
+      selected={props.selected}
+      id={props.id}
+      icon={CloudDownload} 
+      color="bg-emerald-500"
+      handles={{ left: false, right: true, top: true, bottom: true }}
+    />
+  )
+})
+DataSourceNode.displayName = 'DataSourceNode'
+
 // Export all node types
 export const advancedNodeTypes = {
   conditionalNode: ConditionalNode,
@@ -287,4 +303,5 @@ export const advancedNodeTypes = {
   emailSendNode: EmailSendNode,
   codeExecutorNode: CodeExecutorNode,
   loggerNode: LoggerNode,
+  dataSourceNode: DataSourceNode,
 }
