@@ -14,6 +14,8 @@ import { WorkflowListPanel } from "@/components/workflows/workflow-list-panel"
 import { WorkflowMetrics } from "@/components/workflows/workflow-metrics"
 import { WorkflowToolbar } from "@/components/workflows/workflow-toolbar"
 import { AiWorkflowGenerator } from "@/components/workflows/ai-workflow-generator"
+import ExecutionPanelV2 from "@/components/ExecutionPanelV2"
+import { executeWorkflow } from "@/lib/workflows"
 import {
   useExecutionStream,
   useWorkflowDetails,
@@ -33,6 +35,10 @@ export default function WorkflowsClient() {
     refresh: refreshWorkflowDetails,
   } = useWorkflowDetails(selectedWorkflowId)
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null)
+  const [liveExecutionId, setLiveExecutionId] = useState<string | null>(null)
+  const [isExecuting, setIsExecuting] = useState(false)
+  const [executionError, setExecutionError] = useState<string | null>(null)
+  const [showExecutionPanel, setShowExecutionPanel] = useState(false)
 
   useEffect(() => {
     if (workflows.length === 0) {
@@ -94,10 +100,51 @@ export default function WorkflowsClient() {
     router.push('/workbench/new')
   }, [router])
 
+  const handleExecuteWorkflow = useCallback(async () => {
+    if (!selectedWorkflowId) return
+
+    setIsExecuting(true)
+    setExecutionError(null)
+    setShowExecutionPanel(true)
+
+    try {
+      const response = await executeWorkflow(selectedWorkflowId, {
+        inputs: {},
+        async_execution: true,
+      })
+
+      setLiveExecutionId(response.execution_id)
+      console.log('Workflow execution started:', response)
+
+      // Refresh executions list after a short delay
+      setTimeout(() => {
+        refreshWorkflowDetails()
+      }, 1000)
+    } catch (err) {
+      console.error('Execution error:', err)
+      setExecutionError(err instanceof Error ? err.message : 'Failed to execute workflow')
+    } finally {
+      setIsExecuting(false)
+    }
+  }, [selectedWorkflowId, refreshWorkflowDetails])
+
+  const handleCloseExecutionPanel = useCallback(() => {
+    setShowExecutionPanel(false)
+  }, [])
+
   const allExecutions = useMemo(() => executions, [executions])
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="relative space-y-6 pb-8">
+      {/* Live Execution Panel - Slides in from right */}
+      {showExecutionPanel && (
+        <div className="fixed right-0 top-0 bottom-0 w-[500px] z-50 shadow-2xl">
+          <ExecutionPanelV2
+            executionId={liveExecutionId}
+            onClose={handleCloseExecutionPanel}
+          />
+        </div>
+      )}
       {/* Header */}
       <header className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-2">
@@ -125,9 +172,7 @@ export default function WorkflowsClient() {
       <WorkflowToolbar
         onCreate={handleCreateWorkflow}
         onRefresh={handleRefreshAll}
-        onExecute={selectedWorkflowId ? () => {
-          console.log('Execute workflow:', selectedWorkflowId)
-        } : undefined}
+        onExecute={selectedWorkflowId ? handleExecuteWorkflow : undefined}
         onExport={selectedWorkflowId ? () => {
           console.log('Export workflow:', selectedWorkflowId)
         } : undefined}
@@ -138,16 +183,19 @@ export default function WorkflowsClient() {
           console.log('Import workflow')
         }}
         isRefreshing={isWorkflowsLoading}
+        isExecuting={isExecuting}
         disabled={isWorkflowsLoading}
       />
 
       {/* Error Alert */}
-      {(workflowsError || workflowDetailsError) && (
+      {(workflowsError || workflowDetailsError || executionError) && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Unable to load workflows</AlertTitle>
+          <AlertTitle>
+            {executionError ? 'Execution Failed' : 'Unable to load workflows'}
+          </AlertTitle>
           <AlertDescription>
-            {workflowDetailsError ?? workflowsError ?? "Something went wrong while loading workflows."}
+            {executionError ?? workflowDetailsError ?? workflowsError ?? "Something went wrong while loading workflows."}
           </AlertDescription>
         </Alert>
       )}
