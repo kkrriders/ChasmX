@@ -1,5 +1,7 @@
 "use client"
 
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

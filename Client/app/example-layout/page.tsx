@@ -1,5 +1,7 @@
 "use client"
 
+"use client"
+
 import { MainLayout } from "@/components/layout/main-layout"
 import { PageContainer, PageHeader, PageSection } from "@/components/layout/page-container"
 import { EnhancedCard, EnhancedCardHeader, EnhancedCardTitle, EnhancedCardDescription } from "@/components/ui/enhanced-card"

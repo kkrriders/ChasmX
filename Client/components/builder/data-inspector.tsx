@@ -239,9 +239,9 @@ export function DataInspector({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[600px] sm:w-[700px] p-0">
-        <SheetHeader className="relative p-8 pb-6 border-b border-[#514eec]/10 bg-gradient-to-br from-[#514eec]/5 via-purple-50/50 to-white dark:from-[#514eec]/10 dark:via-purple-950/20 dark:to-slate-950 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(81,78,236,0.08),transparent_50%)]" />
+  <SheetContent side="right" className="w-[420px] sm:w-[520px] md:w-[600px] p-0">
+        <SheetHeader className="relative p-8 pb-6 border-b border-[rgba(var(--brand-500),0.08)] bg-gradient-to-br from-[rgba(var(--brand-500),0.05)] via-purple-50/50 to-white dark:from-[rgba(var(--brand-500),0.08)] dark:via-purple-950/20 dark:to-slate-950 overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(var(--brand-500),0.08),transparent_50%)]" />
           <SheetTitle className="relative flex items-center gap-3 text-2xl">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#514eec] to-purple-600 flex items-center justify-center shadow-lg shadow-[#514eec]/20">
               <Eye className="h-5 w-5 text-white" />

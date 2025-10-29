@@ -1,7 +1,4 @@
-"""
-CRUD operations for user management with MongoDB using Motor and bcrypt password hashing.
-Implements user creation, retrieval, password verification, and login tracking.
-"""
+
 
 from datetime import datetime
 from typing import Optional
@@ -69,18 +66,7 @@ async def create_user(user_in: UserCreate) -> User:
 
 
 async def get_user_by_email(email: EmailStr) -> Optional[User]:
-    """
-    Retrieve a user by email address.
     
-    Args:
-        email (EmailStr): Email address to search for
-        
-    Returns:
-        Optional[User]: User object if found, None otherwise
-        
-    Raises:
-        PyMongoError: For database operation failures
-    """
     try:
         collection = get_users_collection()
         doc = await collection.find_one({"email": email})
@@ -95,16 +81,7 @@ async def get_user_by_email(email: EmailStr) -> Optional[User]:
 
 
 async def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verify a plain password against a hashed password.
-    
-    Args:
-        plain_password (str): Plain text password to verify
-        hashed_password (str): Hashed password to compare against
-        
-    Returns:
-        bool: True if password matches, False otherwise
-    """
+    """Verify a plain password against a hashed password."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -113,7 +90,7 @@ async def update_last_login(email: EmailStr) -> bool:
     Update the last login timestamp for a user.
     
     Args:
-        email (EmailStr): Email of the user to update
+        email (EmailStr): Email of the user
         
     Returns:
         bool: True if update successful, False if user not found

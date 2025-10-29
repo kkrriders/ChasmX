@@ -8,14 +8,39 @@ import { useEffect } from 'react'
  */
 export function HydrationErrorSuppressor() {
   useEffect(() => {
+    // Prevent double-wrapping if this effect runs multiple times
+    const anyConsole = console as any
+    if (anyConsole.__hydrationSuppressorInstalled) return
+
     // Suppress hydration warnings caused by browser extensions
     const originalError = console.error
     const originalWarn = console.warn
-    
+    anyConsole.__hydrationSuppressorInstalled = true
+
+    const safeArgsToString = (args: any[]) => {
+      try {
+        return args
+          .map((a) => {
+            if (typeof a === 'string') return a
+            if (a && typeof a === 'object') {
+              if ('message' in a && typeof a.message === 'string') return a.message
+              try {
+                return JSON.stringify(a)
+              } catch {
+                return String(a)
+              }
+            }
+            return String(a)
+          })
+          .join(' ')
+      } catch {
+        return args.map((a) => String(a)).join(' ')
+      }
+    }
+
     console.error = (...args) => {
-      // Convert args to string for checking
-      const errorStr = JSON.stringify(args)
-      
+      const errorStr = safeArgsToString(args)
+
       // Check if it's a hydration error
       if (
         typeof args[0] === 'string' &&
@@ -37,19 +62,23 @@ export function HydrationErrorSuppressor() {
           return
         }
       }
-      
-      // Call original error for legitimate errors
-      originalError.call(console, ...args)
+
+      // Call original error for legitimate errors (apply to keep console context)
+      if (typeof originalError === 'function') {
+        try {
+          originalError.apply(console, args)
+        } catch {
+          // If the original throws for some reason, fall back to the default implementation
+          Function.prototype.apply.call(console.error, console, args)
+        }
+      }
     }
-    
+
     console.warn = (...args) => {
-      const warnStr = JSON.stringify(args)
-      
+      const warnStr = safeArgsToString(args)
+
       // Suppress hydration warnings
-      if (
-        typeof args[0] === 'string' &&
-        args[0].includes('hydration')
-      ) {
+      if (typeof args[0] === 'string' && args[0].includes('hydration')) {
         if (
           warnStr.includes('fdprocessedid') ||
           warnStr.includes('autocomplete') ||
@@ -58,13 +87,23 @@ export function HydrationErrorSuppressor() {
           return
         }
       }
-      
-      originalWarn.call(console, ...args)
+
+      if (typeof originalWarn === 'function') {
+        try {
+          originalWarn.apply(console, args)
+        } catch {
+          Function.prototype.apply.call(console.warn, console, args)
+        }
+      }
     }
 
     return () => {
-      console.error = originalError
-      console.warn = originalWarn
+      // Restore only if we installed the wrapper
+      if (anyConsole.__hydrationSuppressorInstalled) {
+        console.error = originalError
+        console.warn = originalWarn
+        delete anyConsole.__hydrationSuppressorInstalled
+      }
     }
   }, [])
 

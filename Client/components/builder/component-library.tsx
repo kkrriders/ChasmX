@@ -310,7 +310,7 @@ export function ComponentLibrary({ onAddComponent }: ComponentLibraryProps) {
   }
 
   return (
-    <div className="w-80 h-full flex flex-col bg-gradient-to-b from-white to-gray-50/30 dark:from-gray-800 dark:to-gray-850 border-r border-gray-200 dark:border-gray-700">
+    <div data-tour-id="component-library" className="w-80 h-full flex flex-col bg-gradient-to-b from-white to-gray-50/30 dark:from-gray-800 dark:to-gray-850 border-r border-gray-200 dark:border-gray-700">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3.5 flex-shrink-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-lg bg-gradient-to-r from-gray-900 to-gray-600 dark:from-gray-50 dark:to-gray-300 bg-clip-text text-transparent">Component Library</h3>
@@ -372,9 +372,19 @@ export function ComponentLibrary({ onAddComponent }: ComponentLibraryProps) {
             <button
               key={component.id}
               type="button"
-              className="w-full text-left focus:outline-none focus-visible:outline-none active:outline-none group"
+              role="button"
+              aria-pressed="false"
+              aria-label={`Add ${component.name} component`}
+              className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:outline-none group"
               onClick={() => onAddComponent(component)}
               draggable
+              onKeyDown={(e) => {
+                // Allow Enter/Space to activate the add action for keyboard users
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onAddComponent(component)
+                }
+              }}
               onDragStart={(e) => {
                 e.dataTransfer.setData('application/reactflow', JSON.stringify(component))
                 e.dataTransfer.effectAllowed = 'move'

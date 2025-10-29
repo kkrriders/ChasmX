@@ -1,6 +1,6 @@
 // Application configuration
 export const config = {
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'ChasmX',
 } as const
@@ -18,16 +18,22 @@ export const API_ENDPOINTS = {
   },
   // Workflow endpoints
   WORKFLOWS: {
-    LIST: '/workflows',
-    CREATE: '/workflows',
+    LIST: '/workflows/',
+    CREATE: '/workflows/',
     GET: (id: string) => `/workflows/${id}`,
     UPDATE: (id: string) => `/workflows/${id}`,
     DELETE: (id: string) => `/workflows/${id}`,
     EXECUTE: (id: string) => `/workflows/${id}/execute`,
+    EXECUTIONS: (id: string) => `/workflows/${id}/executions`,
+    EXECUTION: (executionId: string) => `/workflows/executions/${executionId}`,
+    EXECUTION_STREAM: (executionId: string) => `/ws/executions/${executionId}`,
   },
   // User endpoints
   USER: {
     PROFILE: '/user/profile',
     UPDATE: '/user/update',
+  },
+  AI: {
+    GENERATE_WORKFLOW: '/ai/workflows/generate',
   },
 } as const

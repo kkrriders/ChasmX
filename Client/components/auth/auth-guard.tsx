@@ -30,22 +30,17 @@ export function AuthGuard({
   }, [isAuthenticated, isLoading, requireAuth, redirectTo, router])
 
   // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-      </div>
-    )
-  }
-
-  // Show children only if authentication requirements are met
-  if (requireAuth && !isAuthenticated) {
-    return null // Will redirect via useEffect
-  }
-
-  if (!requireAuth && isAuthenticated) {
-    return null // Will redirect via useEffect
-  }
+  // Don't conditionally render different markup on first render.
+  // Redirects are performed in useEffect; render children so server and client HTML match.
+  useEffect(() => {
+    if (!isLoading) {
+      if (requireAuth && !isAuthenticated) {
+        router.push(redirectTo)
+      } else if (!requireAuth && isAuthenticated) {
+        router.push("/acp-aap")
+      }
+    }
+  }, [isAuthenticated, isLoading, requireAuth, redirectTo, router])
 
   return <>{children}</>
 }

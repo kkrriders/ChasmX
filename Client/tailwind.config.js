@@ -141,6 +141,10 @@ module.exports = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "gradient": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -153,6 +157,7 @@ module.exports = {
         "slide-in-right": "slide-in-from-right 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         "shimmer": "shimmer 1.5s ease-in-out infinite",
+        "gradient": "gradient 3s ease infinite",
       },
       backdropBlur: {
         xs: '2px',

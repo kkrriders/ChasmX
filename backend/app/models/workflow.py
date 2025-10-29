@@ -41,9 +41,9 @@ class Edge(BaseModel):
     from_: str = Field(..., alias="from")
     to: str
 
-    class Config:
-        populate_by_name = True
-        allow_population_by_field_name = True
+    model_config = {
+        "populate_by_name": True
+    }
 
 class WorkflowVariable(BaseModel):
     id: str
@@ -87,6 +87,7 @@ class WorkflowRun(Document):
     node_states: Dict[str, Any]
     errors: Optional[List[Dict[str, Any]]] = []
     logs: Optional[List[Dict[str, Any]]] = []
+    communication_log: Optional[List[Dict[str, Any]]] = []
 
     class Settings:
         name = "workflow_runs"
@@ -94,3 +95,7 @@ class WorkflowRun(Document):
             "workflow_id",
             "execution_id"
         ]
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }

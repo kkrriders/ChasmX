@@ -1,0 +1,148 @@
+{
+  "name": "Email Automation - Welcome & Meeting Scheduler",
+  "description": "Automated email workflow that fetches user data from MongoDB and sends personalized welcome emails and meeting invitations",
+  "nodes": [
+    {
+      "id": "start-1",
+      "type": "start",
+      "position": {"x": 100, "y": 100},
+      "config": {
+        "name": "Start Workflow"
+      }
+    },
+    {
+      "id": "mongodb-fetch-1",
+      "type": "data-source",
+      "position": {"x": 100, "y": 200},
+      "config": {
+        "name": "Fetch New Users from MongoDB",
+        "source_type": "mongodb",
+        "collection": "users",
+        "query": {
+          "email_sent": {"$exists": false},
+          "status": "active"
+        },
+        "limit": 50,
+        "sort_field": "created_at",
+        "sort_order": -1,
+        "projection": {
+          "email": 1,
+          "name": 1,
+          "company": 1,
+          "created_at": 1
+        }
+      }
+    },
+    {
+      "id": "ai-personalize-1",
+      "type": "ai-processor",
+      "position": {"x": 100, "y": 300},
+      "config": {
+        "name": "AI Personalization Engine",
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.7,
+        "max_tokens": 500,
+        "system_prompt": "You are an email personalization assistant. Generate warm, professional, and personalized email content based on user data.",
+        "prompt": "Based on the user data from MongoDB: {{outputs.mongodb-fetch-1}}\n\nGenerate a personalized welcome email for each user. Include:\n1. Warm greeting using their name\n2. Brief introduction to our platform\n3. Key benefits they'll receive\n4. Call-to-action to schedule an onboarding meeting\n\nFormat as JSON array with fields: email, subject, body",
+        "can_communicate": false
+      }
+    },
+    {
+      "id": "email-welcome-1",
+      "type": "email",
+      "position": {"x": 100, "y": 400},
+      "config": {
+        "name": "Send Welcome Email",
+        "to": "{{outputs.mongodb-fetch-1.email}}",
+        "subject": "Welcome to ChasmX - Let's Get Started!",
+        "body": "Hi {{outputs.mongodb-fetch-1.name}},\n\nWelcome to ChasmX! We're thrilled to have {{outputs.mongodb-fetch-1.company}} on board.\n\n{{outputs.ai-personalize-1}}\n\nBest regards,\nThe ChasmX Team",
+        "format": "html",
+        "from": "welcome@chasmx.ai",
+        "retries": 3,
+        "retry_delay": 2
+      }
+    },
+    {
+      "id": "delay-1",
+      "type": "delay",
+      "position": {"x": 100, "y": 500},
+      "config": {
+        "name": "Wait Before Meeting Invite",
+        "delay_seconds": 5
+      }
+    },
+    {
+      "id": "ai-meeting-1",
+      "type": "ai-processor",
+      "position": {"x": 100, "y": 600},
+      "config": {
+        "name": "Generate Meeting Invite",
+        "model": "google/gemini-2.0-flash-exp:free",
+        "temperature": 0.5,
+        "max_tokens": 400,
+        "system_prompt": "You are a professional meeting scheduler. Generate compelling meeting invitation emails.",
+        "prompt": "User: {{outputs.mongodb-fetch-1.name}} from {{outputs.mongodb-fetch-1.company}}\n\nCreate a professional meeting invitation email for a 30-minute onboarding call. Include:\n1. Purpose: Product walkthrough and custom setup\n2. Duration: 30 minutes\n3. Suggested times: Next week, flexible\n4. Calendar link placeholder\n5. Brief agenda\n\nKeep it concise and action-oriented.",
+        "can_communicate": false
+      }
+    },
+    {
+      "id": "email-meeting-1",
+      "type": "email",
+      "position": {"x": 100, "y": 700},
+      "config": {
+        "name": "Send Meeting Invitation",
+        "to": "{{outputs.mongodb-fetch-1.email}}",
+        "subject": "Let's Schedule Your ChasmX Onboarding Call",
+        "body": "{{outputs.ai-meeting-1}}\n\n---\nSchedule here: https://calendly.com/chasmx/onboarding\n\nLooking forward to speaking with you!\n\nBest regards,\nChasmX Onboarding Team",
+        "format": "html",
+        "from": "onboarding@chasmx.ai",
+        "retries": 3,
+        "retry_delay": 2
+      }
+    },
+    {
+      "id": "end-1",
+      "type": "end",
+      "position": {"x": 100, "y": 800},
+      "config": {
+        "name": "Complete Workflow"
+      }
+    }
+  ],
+  "edges": [
+    {"from": "start-1", "to": "mongodb-fetch-1"},
+    {"from": "mongodb-fetch-1", "to": "ai-personalize-1"},
+    {"from": "ai-personalize-1", "to": "email-welcome-1"},
+    {"from": "email-welcome-1", "to": "delay-1"},
+    {"from": "delay-1", "to": "ai-meeting-1"},
+    {"from": "ai-meeting-1", "to": "email-meeting-1"},
+    {"from": "email-meeting-1", "to": "end-1"}
+  ],
+  "variables": [
+    {
+      "id": "var-1",
+      "name": "batch_size",
+      "value": 50,
+      "type": "number",
+      "description": "Number of users to process per run",
+      "secret": false,
+      "scope": "workflow"
+    },
+    {
+      "id": "var-2",
+      "name": "from_email",
+      "value": "noreply@chasmx.ai",
+      "type": "string",
+      "description": "Default sender email address",
+      "secret": false,
+      "scope": "workflow"
+    }
+  ],
+  "metadata": {
+    "description": "Automated email workflow for welcome messages and meeting scheduling using MongoDB data",
+    "tags": ["email", "automation", "mongodb", "onboarding"],
+    "author": "ChasmX",
+    "version": "1.0.0",
+    "communication_mode": "simple"
+  }
+}

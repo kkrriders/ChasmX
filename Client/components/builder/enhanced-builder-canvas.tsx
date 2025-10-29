@@ -35,11 +35,14 @@ import { CustomNode } from '@/components/builder/custom-node'
 import { CustomEdge } from '@/components/builder/custom-edge'
 import { KeyboardShortcutsDialog } from '@/components/builder/keyboard-shortcuts-dialog'
 import { NodeConfigPanel } from '@/components/builder/node-config-panel'
+import { MultiNodeConfigPanel } from '@/components/builder/multi-node-config-panel'
 import { ExecutionPanel } from '@/components/builder/execution-panel'
 import { CommandPalette } from '@/components/builder/command-palette'
 import { DataInspector } from '@/components/builder/data-inspector'
 import { VariablesPanel } from '@/components/builder/variables-panel'
 import { advancedNodeTypes } from '@/components/builder/advanced-nodes'
+import { AiWorkflowGenerator } from '@/components/workflows/ai-workflow-generator'
+import GuidedTour from '@/components/guided-tour'
 import { WorkflowExecutionEngine, ExecutionContext } from '@/lib/workflow-execution-engine'
 import {
   Sheet,
@@ -53,7 +56,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2 } from 'lucide-react'
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden'
+import { GitBranch, Play, Layers, CheckCircle, Keyboard, Clock, AlertCircle, Eye, Variable, Wand2, Sparkles } from 'lucide-react'
+import { api } from '@/lib/api'
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode as any,
@@ -78,16 +83,23 @@ function EnhancedBuilderCanvasInner() {
   const [showNodeConfig, setShowNodeConfig] = useState(false)
   const [showCommandPalette, setShowCommandPalette] = useState(false)
   const [showExecution, setShowExecution] = useState(false)
+  const [showAiGenerator, setShowAiGenerator] = useState(false)
   const [selectedNode, setSelectedNode] = useState<Node | null>(null)
   const [zoomLevel, setZoomLevel] = useState(100)
   const [copiedNodes, setCopiedNodes] = useState<Node[]>([])
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [executionContext, setExecutionContext] = useState<ExecutionContext | null>(null)
   const [executionEngine, setExecutionEngine] = useState<WorkflowExecutionEngine | null>(null)
   const [showDataInspector, setShowDataInspector] = useState(false)
   const [showVariablesPanel, setShowVariablesPanel] = useState(false)
   const [workflowVariables, setWorkflowVariables] = useState<any[]>([])
+  const [multiSelectNodes, setMultiSelectNodes] = useState<Node[]>([])
+  const [showMultiNodeConfig, setShowMultiNodeConfig] = useState(false)
+  const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null)
+  const [isExecuting, setIsExecuting] = useState(false)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { 
@@ -101,6 +113,20 @@ function EnhancedBuilderCanvasInner() {
   } = useReactFlow()
 
   const history = useWorkflowHistory()
+
+  // Helper to detect typing fields so global keyboard handlers don't intercept user input
+  const isTypingField = (target: EventTarget | null) => {
+    if (!target) return false
+    const t = target as HTMLElement
+    const tag = t.tagName?.toUpperCase()
+    if (!tag) return false
+    return (
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      (t as HTMLElement).isContentEditable
+    )
+  }
 
   // Handle drag over
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -187,8 +213,52 @@ function EnhancedBuilderCanvasInner() {
     });
   }, [nodes, edges, setNodes, fitView]);
 
-  // Load workflow from localStorage on mount
+  // Load workflow from localStorage on mount (check for pending template first)
   useEffect(() => {
+    // If a pending template payload is present (set by the templates page), load it
+    try {
+      const pending = localStorage.getItem('pending-template')
+      if (pending) {
+        const parsed = JSON.parse(pending)
+        if (parsed && (parsed.nodes || parsed.edges)) {
+          // Map incoming nodes to have unique ids (avoid collisions)
+          const timestamp = Date.now()
+          const idMap: Record<string, string> = {}
+          const mappedNodes = (parsed.nodes || []).map((n: any, idx: number) => {
+            const newId = `${n.id}-${timestamp}-${idx}`
+            idMap[n.id] = newId
+            return {
+              ...n,
+              id: newId,
+              position: n.position || { x: (idx + 1) * 200, y: 0 },
+              type: n.type || 'custom',
+            }
+          })
+
+          const mappedEdges = (parsed.edges || []).map((e: any, idx: number) => ({
+            ...e,
+            id: e.id ? `${e.id}-${timestamp}-${idx}` : `edge-${idx}-${timestamp}`,
+            source: idMap[e.source] || e.source,
+            target: idMap[e.target] || e.target,
+            type: e.type || 'custom',
+            animated: typeof e.animated === 'boolean' ? e.animated : true,
+          }))
+
+          setNodes(mappedNodes)
+          setEdges(mappedEdges)
+          setWorkflowName(parsed.name || 'Imported Template')
+          setShowTemplates(false)
+          // Clear the pending template so it doesn't reload on refresh
+          localStorage.removeItem('pending-template')
+          toast({ title: 'Template Loaded', description: `Loaded template: ${parsed.name || 'Template'}` })
+          return
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse pending template:', err)
+    }
+
+  // Otherwise load autosaved workflow
     const saved = localStorage.getItem('autosave-workflow')
     if (saved) {
       try {
@@ -215,15 +285,21 @@ function EnhancedBuilderCanvasInner() {
     if (nodes.length === 0 && edges.length === 0) return
 
     const autoSaveInterval = setInterval(() => {
-      const workflow = {
-        name: workflowName,
-        nodes,
-        edges,
-        savedAt: new Date().toISOString(),
+      try {
+        setIsSaving(true)
+        const workflow = {
+          name: workflowName,
+          nodes,
+          edges,
+          savedAt: new Date().toISOString(),
+        }
+        localStorage.setItem('autosave-workflow', JSON.stringify(workflow))
+        setLastSaved(new Date())
+        setHasUnsavedChanges(false)
+      } finally {
+        // small delay for UX so the saving indicator is visible briefly
+        setTimeout(() => setIsSaving(false), 300)
       }
-      localStorage.setItem('autosave-workflow', JSON.stringify(workflow))
-      setLastSaved(new Date())
-      setHasUnsavedChanges(false)
     }, 30000) // Auto-save every 30 seconds
 
     return () => clearInterval(autoSaveInterval)
@@ -236,6 +312,16 @@ function EnhancedBuilderCanvasInner() {
     }
   }, [nodes, edges])
 
+  // Cleanup polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [])
+
   // Update history when nodes or edges change
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
@@ -246,6 +332,50 @@ function EnhancedBuilderCanvasInner() {
       return () => clearTimeout(timeoutId)
     }
   }, [nodes, edges])
+
+  // Listen for global custom events dispatched from nodes (duplicate / configure)
+  useEffect(() => {
+    const onDuplicate = (e: any) => {
+      const nodeId = e.detail?.nodeId
+      if (!nodeId) return
+      const node = nodes.find(n => n.id === nodeId)
+      if (!node) return
+      const newNode = {
+        ...node,
+        id: `${node.id}-copy-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+        position: { x: node.position.x + 40, y: node.position.y + 40 },
+        selected: false,
+      }
+      setNodes(nds => [...nds, newNode])
+      toast({ title: 'Duplicated', description: `${node.data?.label || 'Node'} duplicated` })
+    }
+
+    const onConfigure = (e: any) => {
+      const nodeId = e.detail?.nodeId
+      if (!nodeId) return
+      const node = nodes.find(n => n.id === nodeId)
+      if (!node) return
+      setSelectedNode(node)
+      setShowNodeConfig(true)
+    }
+
+    const onDelete = (e: any) => {
+      const nodeId = e.detail?.nodeId
+      if (!nodeId) return
+      setNodes(nds => nds.filter(n => n.id !== nodeId))
+      setEdges(eds => eds.filter(ed => ed.source !== nodeId && ed.target !== nodeId))
+      toast({ title: 'Deleted', description: 'Node removed' })
+    }
+
+    window.addEventListener('node-duplicate', onDuplicate as any)
+    window.addEventListener('node-configure', onConfigure as any)
+    window.addEventListener('node-delete', onDelete as any)
+    return () => {
+      window.removeEventListener('node-duplicate', onDuplicate as any)
+      window.removeEventListener('node-configure', onConfigure as any)
+      window.removeEventListener('node-delete', onDelete as any)
+    }
+  }, [nodes])
 
   // Update zoom level display
   useEffect(() => {
@@ -384,6 +514,8 @@ function EnhancedBuilderCanvasInner() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when the user is typing in an input/textarea/select or contentEditable
+      if (isTypingField(e.target)) return
       // Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
@@ -594,73 +726,187 @@ function EnhancedBuilderCanvasInner() {
   }
 
   // Handle save
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    setIsSaving(true)
     const workflow = {
       name: workflowName,
-      nodes,
-      edges,
-      createdAt: new Date().toISOString(),
-      version: '1.0',
+      nodes: nodes.map(node => ({
+        id: node.id,
+        type: node.type || 'custom',
+        config: node.data || {},
+        position: node.position
+      })),
+      edges: edges.map(edge => ({
+        from: edge.source,
+        to: edge.target
+      })),
+      variables: workflowVariables,
+      status: "active",
+      metadata: {
+        description: "Created from visual builder",
+        author: "user",
+        version: "1.0"
+      }
     }
 
-    // Save to localStorage
-    localStorage.setItem(`workflow-${Date.now()}`, JSON.stringify(workflow))
-    localStorage.setItem('latest-workflow', JSON.stringify(workflow))
-    
-    toast({ 
-      title: "Success", 
-      description: "Workflow saved successfully",
-      duration: 3000,
-    })
-  }, [workflowName, nodes, edges])
+    try {
+      // Save to backend
+      const response = await api.post<any>('/workflows/', workflow)
+      setCurrentWorkflowId(response.id)
+      setLastSaved(new Date())
+      setHasUnsavedChanges(false)
+
+      // Also save to localStorage as backup
+      localStorage.setItem('latest-workflow', JSON.stringify(workflow))
+
+      toast({
+        title: "Success",
+        description: `Workflow saved to server (ID: ${response.id})`,
+        duration: 3000,
+      })
+
+      return response.id
+    } catch (error: any) {
+      console.error('Failed to save workflow:', error)
+      toast({
+        title: "Error",
+        description: `Failed to save workflow: ${error.message}`,
+        variant: "destructive",
+        duration: 5000,
+      })
+      return null
+    } finally {
+      // ensure saving indicator is turned off
+      setIsSaving(false)
+    }
+  }, [workflowName, nodes, edges, workflowVariables])
+
+  // Poll execution status
+  const pollExecutionStatus = useCallback(async (executionId: string) => {
+    try {
+      const status = await api.get<any>(`/workflows/executions/${executionId}`)
+
+      setExecutionContext({
+        executionId: status.execution_id,
+        workflowId: status.workflow_id,
+        status: status.status,
+        nodeStates: status.node_states || {},
+        logs: status.logs || [],
+        errors: status.errors || [],
+        startTime: status.start_time,
+        endTime: status.end_time
+      } as any)
+
+      // Stop polling if execution is complete
+      if (status.status === 'success' || status.status === 'error') {
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+        setIsExecuting(false)
+
+        toast({
+          title: status.status === 'success' ? "Execution Complete" : "Execution Failed",
+          description: status.status === 'success'
+            ? "Workflow executed successfully"
+            : `Error: ${status.errors?.[0]?.message || 'Unknown error'}`,
+          variant: status.status === 'success' ? "default" : "destructive",
+          duration: 3000,
+        })
+      }
+    } catch (error: any) {
+      console.error('Failed to poll execution status:', error)
+    }
+  }, [])
 
   // Handle run workflow execution
   const handleRun = useCallback(async () => {
+    console.debug('[enhanced-builder] handleRun called, nodes.length=', nodes.length)
     if (nodes.length === 0) {
-      toast({ 
-        title: "Error", 
-        description: "Add nodes to your workflow first", 
-        variant: "destructive" 
+      toast({
+        title: "Error",
+        description: "Add nodes to your workflow first",
+        variant: "destructive"
       })
       return
     }
 
     try {
-      // Create execution engine
-      const engine = new WorkflowExecutionEngine(
-        nodes,
-        edges,
-        (context) => {
-          setExecutionContext(context)
+      setIsExecuting(true)
+
+      // Save workflow first (or use existing ID)
+      let workflowId = currentWorkflowId
+      if (!workflowId) {
+        workflowId = await handleSave()
+        if (!workflowId) {
+          setIsExecuting(false)
+          return
+        }
+      }
+
+      // Prepare input variables
+      const inputs = workflowVariables.reduce((acc: any, v: any) => {
+        acc[v.name] = v.value || v.defaultValue
+        return acc
+      }, {})
+
+      // Execute workflow via backend API
+      const response = await api.post<any>(
+        `/workflows/${workflowId}/execute`,
+        {
+          inputs: inputs,
+          async_execution: true
         }
       )
-      
-      setExecutionEngine(engine)
+
       setShowExecution(true)
-      
+
       toast({
-        title: "Starting Execution",
-        description: "Workflow execution started",
+        title: "Execution Started",
+        description: `Workflow execution started (ID: ${response.execution_id})`,
         duration: 2000,
       })
 
-      // Start execution
-      await engine.start()
-      
-      toast({
-        title: "Execution Complete",
-        description: "Workflow executed successfully",
-        duration: 3000,
-      })
+      // Start polling for status updates
+      pollIntervalRef.current = setInterval(() => {
+        pollExecutionStatus(response.execution_id)
+      }, 1000) // Poll every second
+
+      // Initial poll
+      pollExecutionStatus(response.execution_id)
+
     } catch (error: any) {
+      console.error('Failed to execute workflow:', error)
+      setIsExecuting(false)
       toast({
         title: "Execution Failed",
-        description: error.message,
+        description: `Failed to start execution: ${error.message}`,
         variant: "destructive",
         duration: 5000,
       })
     }
-  }, [nodes, edges])
+  }, [nodes, edges, workflowVariables, currentWorkflowId, handleSave, pollExecutionStatus])
+
+  // Listen for global run events (fallback if some toolbar instance doesn't pass handler prop)
+  useEffect(() => {
+    const onGlobalRun = () => {
+      try {
+        handleRun()
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('workflow-run', onGlobalRun as any)
+    return () => window.removeEventListener('workflow-run', onGlobalRun as any)
+  }, [handleRun])
+
+  // Open execution panel immediately when requested by toolbar for quick UI feedback
+  useEffect(() => {
+    const onOpenExecution = () => setShowExecution(true)
+    window.addEventListener('workflow-open-execution-panel', onOpenExecution as any)
+    return () => window.removeEventListener('workflow-open-execution-panel', onOpenExecution as any)
+  }, [setShowExecution])
 
   // Handle pause execution
   const handlePauseExecution = useCallback(() => {
@@ -778,6 +1024,55 @@ function EnhancedBuilderCanvasInner() {
     })
   }, [setNodes, setEdges])
 
+  // Handle AI workflow generation
+  const handleAiWorkflowGenerated = useCallback((workflow: any, response: any) => {
+    if (workflow && workflow.nodes && workflow.edges) {
+      setNodes(workflow.nodes)
+      setEdges(workflow.edges)
+      setWorkflowName(workflow.name || "AI Generated Workflow")
+      setShowAiGenerator(false)
+      toast({
+        title: "Workflow Generated",
+        description: response.summary || "AI workflow has been loaded into the canvas"
+      })
+    }
+  }, [setNodes, setEdges])
+
+  // Handle node click from React Flow canvas
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    // Open the node config panel for the clicked node
+    setSelectedNode(node)
+    setShowNodeConfig(true)
+  }, [])
+
+  const handleSaveMultiple = useCallback((nodesToUpdate: Node[], data: any) => {
+    setNodes(nds => nds.map(n => {
+      if (nodesToUpdate.some(u => u.id === n.id)) {
+        return { ...n, data: { ...n.data, ...data } }
+      }
+      return n
+    }))
+    toast({ title: 'Saved', description: `Updated ${nodesToUpdate.length} node(s)` })
+  }, [setNodes])
+
+  // Keep selectedNode state in sync when selection changes (multi-select support)
+  const onSelectionChange = useCallback((selection: { nodes: Node[] | null; edges: Edge[] | null }) => {
+    try {
+      const selectedNodes = (selection && (selection as any).nodes) || []
+      if (selectedNodes.length > 0) {
+        setSelectedNode(selectedNodes[0])
+        setMultiSelectNodes(selectedNodes)
+        if (selectedNodes.length > 1) setShowMultiNodeConfig(true)
+      } else {
+        setSelectedNode(null)
+        setMultiSelectNodes([])
+        setShowMultiNodeConfig(false)
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [])
+
   return (
     <div className="h-full w-full flex flex-col">
       {/* Toolbar */}
@@ -796,13 +1091,17 @@ function EnhancedBuilderCanvasInner() {
         onExport={handleExport}
         onImport={handleImport}
         onShare={handleShare}
+        onAiGenerate={() => setShowAiGenerator(true)}
         canUndo={history.canUndo()}
         canRedo={history.canRedo()}
         zoomLevel={zoomLevel}
+        isSaving={isSaving}
       />
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Guided tour for first-time users */}
+        <GuidedTour />
         {/* Component Library Sidebar */}
         {showLibrary && (
           <div className="w-80 border-r overflow-hidden">
@@ -816,6 +1115,8 @@ function EnhancedBuilderCanvasInner() {
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
+            onNodeClick={onNodeClick}
+            onSelectionChange={onSelectionChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onDragOver={onDragOver}
@@ -878,6 +1179,16 @@ function EnhancedBuilderCanvasInner() {
                 <GitBranch className="h-4 w-4 mr-1" />
                 Templates
               </Button>
+              {/* <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowAiGenerator(true)}
+                title="Generate workflow with AI"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+              >
+                <Sparkles className="h-4 w-4 mr-1" />
+                AI Generate
+              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
@@ -905,14 +1216,14 @@ function EnhancedBuilderCanvasInner() {
                 <Variable className="h-4 w-4 mr-1" />
                 Variables
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowValidation(true)}
               >
                 <CheckCircle className="h-4 w-4 mr-1" />
                 Validate
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
@@ -953,15 +1264,24 @@ function EnhancedBuilderCanvasInner() {
                   </div>
                   <h3 className="text-lg font-semibold mb-2 text-center">Build Your Workflow</h3>
                   <p className="text-muted-foreground mb-4 text-center">
-                    Choose components from the library or start with a template
+                    Choose components from the library, start with a template, or let AI generate one for you
                   </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setShowLibrary(true)} className="flex-1">
-                      Browse Components
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={() => setShowAiGenerator(true)} 
+                      className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generate with AI
                     </Button>
-                    <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
-                      Use Template
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setShowLibrary(true)} variant="outline" className="flex-1">
+                        Browse Components
+                      </Button>
+                      <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
+                        Use Template
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -990,14 +1310,17 @@ function EnhancedBuilderCanvasInner() {
 
       {/* Templates Dialog */}
       <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
-        <DialogContent className="max-w-4xl max-h-[80vh] bg-white dark:bg-gray-900 opacity-100">
-          <DialogHeader>
-            <DialogTitle>Choose a Template</DialogTitle>
-          </DialogHeader>
-          <TemplateLibrary 
-            onSelectTemplate={handleSelectTemplate}
-            onClose={() => setShowTemplates(false)}
-          />
+        {/* Allow dialog content to be much wider so TemplateLibrary can render without clipping */}
+        <DialogContent showCloseButton={false} className="top-[0%] left-[20%] translate-x-0 translate-y-0 w-[90vw] max-w-[1100px] max-h-[85vh] p-0 bg-transparent dark:bg-transparent border-0 rounded-none shadow-none">
+          <VisuallyHidden.Root>
+            <DialogTitle>Workflow Templates</DialogTitle>
+          </VisuallyHidden.Root>
+          <div className="w-full p-4 md:p-6">
+            <TemplateLibrary 
+              onSelectTemplate={handleSelectTemplate}
+              onClose={() => setShowTemplates(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1013,6 +1336,14 @@ function EnhancedBuilderCanvasInner() {
         open={showNodeConfig}
         onOpenChange={setShowNodeConfig}
         onSave={handleSaveNodeConfig}
+      />
+
+      {/* Multi-node Config Panel */}
+      <MultiNodeConfigPanel
+        nodes={multiSelectNodes}
+        open={showMultiNodeConfig}
+        onOpenChange={setShowMultiNodeConfig}
+        onSaveMultiple={handleSaveMultiple}
       />
 
       {/* Command Palette */}
@@ -1048,6 +1379,8 @@ function EnhancedBuilderCanvasInner() {
         onPause={handlePauseExecution}
         onResume={handleResumeExecution}
         onStop={handleStopExecution}
+        onRun={handleRun}
+        isExecuting={isExecuting}
       />
 
       {/* Data Inspector Panel */}
@@ -1066,6 +1399,11 @@ function EnhancedBuilderCanvasInner() {
         variables={workflowVariables}
         onVariablesChange={setWorkflowVariables}
       />
+
+      {/* AI Workflow Generator */}
+      {showAiGenerator && (
+        <AiWorkflowGenerator onGenerated={handleAiWorkflowGenerated} />
+      )}
     </div>
   )
 }
