@@ -7,6 +7,7 @@ and managing execution state. It integrates with:
 - MongoDB for state persistence
 - External services (email, webhooks, etc.)
 - Inter-node communication system (Simple & Redis Pub/Sub modes)
+- WebSocket for real-time execution updates
 """
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
@@ -74,6 +75,20 @@ class WorkflowExecutor:
         self.active_agents: Dict[str, Dict[str, str]] = {}  # execution_id -> {node_id -> agent_id}
         self.pending_responses: Dict[str, asyncio.Future] = {}  # message_id -> Future
 
+    async def _broadcast_websocket_event(self, execution_id: str, event_type: str, data: dict):
+        """Broadcast execution events to WebSocket clients."""
+        try:
+            # Import here to avoid circular dependency
+            from ..routes.websocket import manager
+
+            # Add timestamp
+            data["timestamp"] = datetime.utcnow().isoformat()
+
+            await manager.send_to_execution(execution_id, event_type, data)
+        except Exception as e:
+            # Don't fail execution if WebSocket broadcast fails
+            logger.warning(f"Failed to broadcast WebSocket event: {e}")
+
     async def execute(self, workflow: Workflow, run: WorkflowRun) -> WorkflowRun:
         """
         Execute a complete workflow.
@@ -93,11 +108,22 @@ class WorkflowExecutor:
             run.start_time = datetime.utcnow()
             await run.save()
 
-            # Build node execution batches for parallel execution
+            # Broadcast execution started
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_started",
+                {
+                    "status": run.status.value,
+                    "workflow_id": str(workflow.id),
+                    "workflow_name": workflow.name,
+                    "start_time": run.start_time.isoformat()
+                }
+            )
+
+            # Build node execution order (returns batches, flatten for sequential execution)
             execution_batches = self._build_execution_order(workflow.nodes, workflow.edges)
-            logger.info(f"Built {len(execution_batches)} execution batches")
-            for i, batch in enumerate(execution_batches):
-                logger.info(f"Batch {i+1}: {[node.id for node in batch]}")
+            execution_order = [node for batch in execution_batches for node in batch]
+            logger.info(f"Execution order: {[node.id for node in execution_order]}")
 
             # Determine communication mode from workflow metadata
             comm_mode = CommunicationMode.SIMPLE  # default
@@ -155,62 +181,81 @@ class WorkflowExecutor:
                     if node.type == "ai-processor" and node.config.get("can_communicate"):
                         await self._register_node_agent(node, run.execution_id)
 
-            # Execute nodes in parallel batches
-            for batch_index, batch in enumerate(execution_batches):
-                logger.info(f"Executing batch {batch_index + 1}/{len(execution_batches)} with {len(batch)} nodes")
-                
-                # Execute all nodes in the current batch in parallel
-                batch_tasks = []
-                for node in batch:
-                    logger.info(f"Preparing node for parallel execution: {node.id} (type: {node.type})")
-                    
-                    # Create async task for each node in the batch
-                    task = asyncio.create_task(
-                        self._execute_node_with_logging(node, context, run),
-                        name=f"node_{node.id}"
+            # Execute nodes in order
+            for node in execution_order:
+                try:
+                    logger.info(f"Executing node: {node.id} (type: {node.type})")
+
+                    # Broadcast node started
+                    await self._broadcast_websocket_event(
+                        run.execution_id,
+                        "node_started",
+                        {
+                            "node_id": node.id,
+                            "node_type": node.type,
+                            "node_label": node.id
+                        }
                     )
-                    batch_tasks.append((node, task))
-                
-                # Wait for all nodes in the batch to complete
-                batch_results = []
-                for node, task in batch_tasks:
-                    try:
-                        # Execute with timeout
-                        result = await asyncio.wait_for(task, timeout=self.node_timeout)
-                        batch_results.append((node, result))
-                        
-                        # Store result immediately for dependent nodes
-                        run.node_states[node.id] = result
-                        context["outputs"][node.id] = result.get("output")
-                        
-                    except asyncio.TimeoutError:
-                        error_msg = f"Node {node.id} execution timeout after {self.node_timeout}s"
-                        logger.error(error_msg)
-                        await self._add_error(run, node.id, error_msg)
-                        # Cancel remaining tasks in batch
-                        for _, remaining_task in batch_tasks:
-                            if not remaining_task.done():
-                                remaining_task.cancel()
-                        raise WorkflowExecutionError(error_msg)
-                        
-                    except Exception as e:
-                        error_msg = f"Node {node.id} execution failed: {str(e)}"
-                        logger.error(error_msg)
-                        await self._add_error(run, node.id, error_msg)
-                        # Cancel remaining tasks in batch
-                        for _, remaining_task in batch_tasks:
-                            if not remaining_task.done():
-                                remaining_task.cancel()
-                        raise WorkflowExecutionError(error_msg)
-                
-                # Save state after each batch
-                await run.save()
-                logger.info(f"Completed batch {batch_index + 1}: {[node.id for node, _ in batch_results]}")
+
+                    # Add log entry
+                    await self._add_log(run, node.id, f"Starting execution of {node.type} node")
+
+                    # Execute node with timeout
+                    result = await asyncio.wait_for(
+                        self._execute_node_with_logging(node, context, run),
+                        timeout=self.node_timeout
+                    )
+
+                    # Store result
+                    run.node_states[node.id] = result
+                    context["outputs"][node.id] = result.get("output")
+
+                    await self._add_log(
+                        run,
+                        node.id,
+                        f"Completed successfully. Cached: {result.get('cached', False)}"
+                    )
+                    await run.save()
+
+                    # Broadcast node completed
+                    await self._broadcast_websocket_event(
+                        run.execution_id,
+                        "node_completed",
+                        {
+                            "node_id": node.id,
+                            "node_type": node.type,
+                            "cached": result.get('cached', False),
+                            "output": str(result.get('output', ''))[:200]  # First 200 chars
+                        }
+                    )
+
+                except asyncio.TimeoutError:
+                    error_msg = f"Node {node.id} execution timeout after {self.node_timeout}s"
+                    logger.error(error_msg)
+                    await self._add_error(run, node.id, error_msg)
+                    raise WorkflowExecutionError(error_msg)
+
+                except Exception as e:
+                    error_msg = f"Node {node.id} execution failed: {str(e)}"
+                    logger.error(error_msg)
+                    await self._add_error(run, node.id, error_msg)
+                    raise WorkflowExecutionError(error_msg)
 
             # Mark as successful
             run.status = ExecutionStatus.SUCCESS
             run.end_time = datetime.utcnow()
             await run.save()
+
+            # Broadcast execution completed
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_completed",
+                {
+                    "status": run.status.value,
+                    "end_time": run.end_time.isoformat(),
+                    "duration_seconds": (run.end_time - run.start_time).total_seconds()
+                }
+            )
 
             # Cleanup: Unregister agents if using PUBSUB mode
             if context.get("communication_mode") == CommunicationMode.PUBSUB:
@@ -225,6 +270,17 @@ class WorkflowExecutor:
             run.end_time = datetime.utcnow()
             await self._add_error(run, "workflow", f"Workflow execution failed: {str(e)}")
             await run.save()
+
+            # Broadcast execution error
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_error",
+                {
+                    "status": run.status.value,
+                    "error": str(e),
+                    "end_time": run.end_time.isoformat() if run.end_time else None
+                }
+            )
 
             # Cleanup agents on failure too
             if self.execution_context and self.execution_context.get("communication_mode") == CommunicationMode.PUBSUB:
