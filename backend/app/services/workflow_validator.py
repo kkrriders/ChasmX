@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from loguru import logger
 
 from app.models import Workflow, Node, Edge
+from .validation_rules import ValidationRules
 
 
 class ValidationSeverity(str, Enum):
@@ -24,6 +25,9 @@ class ValidationIssue(BaseModel):
     message: str
     node_id: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
+    suggestion: Optional[str] = None  # How to fix the issue
+    affected_nodes: Optional[List[str]] = None  # Other nodes affected by this issue
+    documentation_url: Optional[str] = None  # Link to documentation
 
 
 class ValidationResult(BaseModel):
@@ -113,8 +117,11 @@ class WorkflowValidator:
         # Dead node detection (unreachable nodes)
         self._detect_dead_nodes(workflow, result)
 
-        # Validate node configurations
+        # Validate node configurations (basic)
         self._validate_node_configs(workflow, result)
+
+        # Validate node schemas (advanced)
+        self._validate_node_schemas(workflow, result)
 
         # Validate edges
         self._validate_edges(workflow, result)
@@ -133,6 +140,12 @@ class WorkflowValidator:
 
         # Validate variable references
         self._validate_variable_references(workflow, result)
+
+        # Validate resource limits
+        self._validate_resource_limits(workflow, result)
+
+        # Check for potential infinite loops
+        self._check_infinite_loops(workflow, result)
 
         # Set overall validity
         result.is_valid = not result.has_errors
@@ -477,8 +490,115 @@ class WorkflowValidator:
                     code="UNDEFINED_VARIABLE",
                     message=f"Node '{node.id}' references undefined variables: {', '.join(undefined_vars)}",
                     node_id=node.id,
-                    details={"undefined_variables": list(undefined_vars)}
+                    details={"undefined_variables": list(undefined_vars)},
+                    suggestion=f"Define these variables: {', '.join(undefined_vars)}"
                 ))
+
+    def _validate_node_schemas(self, workflow: Workflow, result: ValidationResult):
+        """Validate node configurations against their schemas"""
+        for node in workflow.nodes:
+            issues = ValidationRules.validate_node_schema(node)
+
+            for issue in issues:
+                severity_str = issue.get("severity", "error")
+                if severity_str == "error":
+                    severity = ValidationSeverity.ERROR
+                elif severity_str == "warning":
+                    severity = ValidationSeverity.WARNING
+                else:
+                    severity = ValidationSeverity.INFO
+
+                validation_issue = ValidationIssue(
+                    severity=severity,
+                    code="INVALID_NODE_SCHEMA",
+                    message=issue["message"],
+                    node_id=node.id,
+                    suggestion=issue.get("suggestion"),
+                    details=issue.get("details")
+                )
+
+                if severity == ValidationSeverity.ERROR:
+                    result.errors.append(validation_issue)
+                elif severity == ValidationSeverity.WARNING:
+                    result.warnings.append(validation_issue)
+                else:
+                    result.info.append(validation_issue)
+
+    def _validate_resource_limits(self, workflow: Workflow, result: ValidationResult):
+        """Validate that workflow doesn't exceed resource limits"""
+        limits = ValidationRules.LIMITS
+
+        # Check node count
+        node_count = len(workflow.nodes)
+        if node_count > limits["max_nodes"]:
+            result.errors.append(ValidationIssue(
+                severity=ValidationSeverity.ERROR,
+                code="RESOURCE_LIMIT_EXCEEDED",
+                message=f"Workflow has {node_count} nodes, exceeds limit of {limits['max_nodes']}",
+                suggestion=f"Reduce number of nodes to {limits['max_nodes']} or less",
+                details={"count": node_count, "limit": limits["max_nodes"]}
+            ))
+
+        # Check edge count
+        edge_count = len(workflow.edges)
+        if edge_count > limits["max_edges"]:
+            result.errors.append(ValidationIssue(
+                severity=ValidationSeverity.ERROR,
+                code="RESOURCE_LIMIT_EXCEEDED",
+                message=f"Workflow has {edge_count} edges, exceeds limit of {limits['max_edges']}",
+                suggestion=f"Reduce number of edges to {limits['max_edges']} or less",
+                details={"count": edge_count, "limit": limits["max_edges"]}
+            ))
+
+        # Check variable count
+        variable_count = len(workflow.variables)
+        if variable_count > limits["max_variables"]:
+            result.warnings.append(ValidationIssue(
+                severity=ValidationSeverity.WARNING,
+                code="RESOURCE_LIMIT_EXCEEDED",
+                message=f"Workflow has {variable_count} variables, exceeds recommended limit of {limits['max_variables']}",
+                suggestion=f"Consider reducing number of variables",
+                details={"count": variable_count, "limit": limits["max_variables"]}
+            ))
+
+        # Check graph depth
+        depth = ValidationRules.calculate_graph_depth(workflow.nodes, workflow.edges)
+        if depth > limits["max_depth"]:
+            result.warnings.append(ValidationIssue(
+                severity=ValidationSeverity.WARNING,
+                code="RESOURCE_LIMIT_EXCEEDED",
+                message=f"Workflow depth is {depth}, exceeds recommended limit of {limits['max_depth']}",
+                suggestion="Consider breaking workflow into smaller sub-workflows",
+                details={"depth": depth, "limit": limits["max_depth"]}
+            ))
+
+        # Check config sizes
+        for node in workflow.nodes:
+            if node.config:
+                import json
+                config_size = len(json.dumps(node.config))
+                if config_size > limits["max_config_size"]:
+                    result.warnings.append(ValidationIssue(
+                        severity=ValidationSeverity.WARNING,
+                        code="RESOURCE_LIMIT_EXCEEDED",
+                        message=f"Node '{node.id}' config size ({config_size} bytes) exceeds recommended limit",
+                        node_id=node.id,
+                        suggestion="Consider storing large data in variables instead of node config",
+                        details={"size": config_size, "limit": limits["max_config_size"]}
+                    ))
+
+    def _check_infinite_loops(self, workflow: Workflow, result: ValidationResult):
+        """Check for potential infinite loops"""
+        loop_issues = ValidationRules.detect_potential_infinite_loops(workflow.nodes, workflow.edges)
+
+        for issue_data in loop_issues:
+            result.warnings.append(ValidationIssue(
+                severity=ValidationSeverity.WARNING,
+                code="INFINITE_LOOP_RISK",
+                message=issue_data["issue"],
+                node_id=issue_data["node_id"],
+                suggestion=issue_data["suggestion"]
+            ))
 
 
 # Global validator instance
