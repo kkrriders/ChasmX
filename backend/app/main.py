@@ -15,6 +15,7 @@ from app.core.database import connect_to_mongo, close_mongo_connection, get_data
 from app.core.config import settings
 from app.routes import auth_router, users_router, workflow_router
 from app.routes.ai import router as ai_router
+from app.routes.websocket import router as websocket_router
 from app.services.ai_service_manager import ai_service_manager
 
 # Initialize FastAPI application
@@ -63,6 +64,7 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(users_router, prefix="/users")
 app.include_router(workflow_router)
 app.include_router(ai_router)
+app.include_router(websocket_router)
 
 @app.get("/")
 async def root():

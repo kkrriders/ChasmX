@@ -7,6 +7,7 @@ and managing execution state. It integrates with:
 - MongoDB for state persistence
 - External services (email, webhooks, etc.)
 - Inter-node communication system (Simple & Redis Pub/Sub modes)
+- WebSocket for real-time execution updates
 """
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
@@ -74,6 +75,20 @@ class WorkflowExecutor:
         self.active_agents: Dict[str, str] = {}  # execution_id -> {node_id -> agent_id}
         self.pending_responses: Dict[str, asyncio.Future] = {}  # message_id -> Future
 
+    async def _broadcast_websocket_event(self, execution_id: str, event_type: str, data: dict):
+        """Broadcast execution events to WebSocket clients."""
+        try:
+            # Import here to avoid circular dependency
+            from ..routes.websocket import manager
+
+            # Add timestamp
+            data["timestamp"] = datetime.utcnow().isoformat()
+
+            await manager.send_to_execution(execution_id, event_type, data)
+        except Exception as e:
+            # Don't fail execution if WebSocket broadcast fails
+            logger.warning(f"Failed to broadcast WebSocket event: {e}")
+
     async def execute(self, workflow: Workflow, run: WorkflowRun) -> WorkflowRun:
         """
         Execute a complete workflow.
@@ -93,16 +108,25 @@ class WorkflowExecutor:
             run.start_time = datetime.utcnow()
             await run.save()
 
+            # Broadcast execution started
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_started",
+                {
+                    "status": run.status.value,
+                    "workflow_id": str(workflow.id),
+                    "workflow_name": workflow.name,
+                    "start_time": run.start_time.isoformat()
+                }
+            )
+
             # Build node execution order
             execution_order = self._build_execution_order(workflow.nodes, workflow.edges)
             logger.info(f"Execution order: {[node.id for node in execution_order]}")
 
             # Determine communication mode from workflow metadata
-            comm_mode = CommunicationMode(
-                workflow.metadata.get("communication_mode", "simple")
-                if hasattr(workflow, 'metadata') and workflow.metadata
-                else "simple"
-            )
+            # Default to simple mode (PUBSUB mode is experimental)
+            comm_mode = CommunicationMode.SIMPLE
             logger.info(f"Using communication mode: {comm_mode}")
 
             # Initialize communication system
@@ -158,6 +182,17 @@ class WorkflowExecutor:
                 try:
                     logger.info(f"Executing node: {node.id} (type: {node.type})")
 
+                    # Broadcast node started
+                    await self._broadcast_websocket_event(
+                        run.execution_id,
+                        "node_started",
+                        {
+                            "node_id": node.id,
+                            "node_type": node.type,
+                            "node_label": node.id
+                        }
+                    )
+
                     # Add log entry
                     await self._add_log(run, node.id, f"Starting execution of {node.type} node")
 
@@ -178,6 +213,18 @@ class WorkflowExecutor:
                     )
                     await run.save()
 
+                    # Broadcast node completed
+                    await self._broadcast_websocket_event(
+                        run.execution_id,
+                        "node_completed",
+                        {
+                            "node_id": node.id,
+                            "node_type": node.type,
+                            "cached": result.get('cached', False),
+                            "output": str(result.get('output', ''))[:200]  # First 200 chars
+                        }
+                    )
+
                 except asyncio.TimeoutError:
                     error_msg = f"Node {node.id} execution timeout after {self.node_timeout}s"
                     logger.error(error_msg)
@@ -195,6 +242,17 @@ class WorkflowExecutor:
             run.end_time = datetime.utcnow()
             await run.save()
 
+            # Broadcast execution completed
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_completed",
+                {
+                    "status": run.status.value,
+                    "end_time": run.end_time.isoformat(),
+                    "duration_seconds": (run.end_time - run.start_time).total_seconds()
+                }
+            )
+
             # Cleanup: Unregister agents if using PUBSUB mode
             if context.get("communication_mode") == CommunicationMode.PUBSUB:
                 await self._cleanup_agents(run.execution_id)
@@ -208,6 +266,17 @@ class WorkflowExecutor:
             run.end_time = datetime.utcnow()
             await self._add_error(run, "workflow", f"Workflow execution failed: {str(e)}")
             await run.save()
+
+            # Broadcast execution error
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_error",
+                {
+                    "status": run.status.value,
+                    "error": str(e),
+                    "end_time": run.end_time.isoformat() if run.end_time else None
+                }
+            )
 
             # Cleanup agents on failure too
             if self.execution_context and self.execution_context.get("communication_mode") == CommunicationMode.PUBSUB:
