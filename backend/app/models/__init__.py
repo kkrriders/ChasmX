@@ -11,6 +11,22 @@ from .workflow import (
     WorkflowRun
 )
 
+from .schedule import (
+    ScheduleStatus,
+    ScheduleType,
+    WorkflowSchedule,
+    ScheduleExecutionLog
+)
+
+from .webhook import (
+    WebhookStatus,
+    WebhookAuthType,
+    WebhookMethod,
+    Webhook,
+    WebhookExecution,
+    WebhookRateLimit
+)
+
 __all__ = [
     "WorkflowStatus",
     "VariableType",
@@ -21,5 +37,15 @@ __all__ = [
     "WorkflowVariable",
     "Metadata",
     "Workflow",
-    "WorkflowRun"
+    "WorkflowRun",
+    "ScheduleStatus",
+    "ScheduleType",
+    "WorkflowSchedule",
+    "ScheduleExecutionLog",
+    "WebhookStatus",
+    "WebhookAuthType",
+    "WebhookMethod",
+    "Webhook",
+    "WebhookExecution",
+    "WebhookRateLimit"
 ]
