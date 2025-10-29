@@ -1,14 +1,4 @@
-"""
-Workflow Execution Engine
 
-This service executes workflows node by node, handling different node types
-and managing execution state. It integrates with:
-- AI/LLM services (with Redis caching)
-- MongoDB for state persistence
-- External services (email, webhooks, etc.)
-- Inter-node communication system (Simple & Redis Pub/Sub modes)
-- WebSocket for real-time execution updates
-"""
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 from loguru import logger

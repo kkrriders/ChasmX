@@ -1,8 +1,4 @@
-"""Main FastAPI application configuration.
 
-This module sets up the main FastAPI application with middleware, routes,
-and database connection lifecycle management.
-"""
 
 from datetime import datetime
 from contextlib import asynccontextmanager
@@ -16,7 +12,10 @@ from app.core.config import settings
 from app.routes import auth_router, users_router, workflow_router
 from app.routes.ai import router as ai_router
 from app.routes.websocket import router as websocket_router
+from app.routes.schedule import router as schedule_router
+from app.routes.webhook import router as webhook_router
 from app.services.ai_service_manager import ai_service_manager
+from app.services.scheduler_service import scheduler_service
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -47,8 +46,19 @@ async def lifespan(app: FastAPI):
         await ai_service_manager.initialize()
         logger.info("Startup: AI services initialized")
 
+        # Initialize scheduler service
+        await scheduler_service.initialize(
+            mongodb_uri=settings.MONGODB_URL,
+            db_name=settings.DATABASE_NAME
+        )
+        logger.info("Startup: Scheduler service initialized")
+
         yield
     finally:
+        # Shutdown scheduler service
+        await scheduler_service.shutdown()
+        logger.info("Shutdown: Scheduler service closed")
+
         # Shutdown AI services
         await ai_service_manager.shutdown()
         logger.info("Shutdown: AI services closed")
@@ -65,6 +75,8 @@ app.include_router(users_router, prefix="/users")
 app.include_router(workflow_router)
 app.include_router(ai_router)
 app.include_router(websocket_router)
+app.include_router(schedule_router)
+app.include_router(webhook_router)
 
 @app.get("/")
 async def root():
