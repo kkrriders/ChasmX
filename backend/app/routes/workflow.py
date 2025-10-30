@@ -19,6 +19,7 @@ from ..models.workflow import (
     ExecutionStatus
 )
 from ..services.workflow_executor import workflow_executor
+from ..services.workflow_validator import workflow_validator, ValidationResult
 
 router = APIRouter(
     prefix="/workflows",
@@ -83,7 +84,22 @@ async def get_workflow(workflow_id: str) -> Workflow:
     return workflow
 
 @router.put("/{workflow_id}", response_model=Workflow)
-async def update_workflow(workflow_id: str, update_data: WorkflowUpdate) -> Workflow:
+async def update_workflow(
+    workflow_id: str,
+    update_data: WorkflowUpdate,
+    validate: bool = True
+) -> Workflow:
+    """
+    Update a workflow. Optionally validate before saving.
+
+    Args:
+        workflow_id: ID of the workflow to update
+        update_data: Fields to update
+        validate: Whether to validate workflow before saving (default: True)
+
+    Raises:
+        HTTPException: If validation fails with errors
+    """
     try:
         object_id = ObjectId(workflow_id)
     except Exception:
@@ -101,14 +117,26 @@ async def update_workflow(workflow_id: str, update_data: WorkflowUpdate) -> Work
 
     # Create update dictionary with only provided fields
     update_dict = update_data.model_dump(exclude_unset=True)
-    
+
     # Update the timestamp
     update_dict["updated_at"] = datetime.utcnow()
 
     # Apply updates to the workflow
     for key, value in update_dict.items():
         setattr(workflow, key, value)
-    
+
+    # Validate if requested
+    if validate:
+        validation_result = workflow_validator.validate_workflow(workflow)
+        if validation_result.has_errors:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "message": "Workflow validation failed",
+                    "validation_result": validation_result.model_dump()
+                }
+            )
+
     await workflow.save()
     return workflow
 
@@ -432,3 +460,172 @@ async def load_workflow_template(template_name: str) -> Workflow:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load template: {str(e)}"
         )
+
+
+# Validation Endpoints
+
+@router.post("/{workflow_id}/validate", response_model=ValidationResult)
+async def validate_workflow_endpoint(workflow_id: str) -> ValidationResult:
+    """
+    Validate a workflow without saving it.
+
+    Returns comprehensive validation results including errors, warnings, and info messages.
+
+    Args:
+        workflow_id: ID of the workflow to validate
+
+    Returns:
+        ValidationResult with all validation issues
+
+    Example:
+        POST /workflows/{workflow_id}/validate
+
+        Response:
+        {
+            "is_valid": false,
+            "errors": [
+                {
+                    "severity": "error",
+                    "code": "MISSING_REQUIRED_FIELD",
+                    "message": "Node 'node-1' (http) is missing required fields: url",
+                    "node_id": "node-1",
+                    "suggestion": "Add 'url' to node configuration"
+                }
+            ],
+            "warnings": [...],
+            "info": [...]
+        }
+    """
+    try:
+        object_id = ObjectId(workflow_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid workflow ID format"
+        )
+
+    workflow = await Workflow.get(object_id)
+    if not workflow:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workflow with ID {workflow_id} not found"
+        )
+
+    # Validate workflow
+    validation_result = workflow_validator.validate_workflow(workflow)
+
+    return validation_result
+
+
+class ValidateWorkflowRequest(BaseModel):
+    """Request model for validating workflow data without saving"""
+    name: str
+    nodes: List[Node]
+    edges: List[Edge]
+    variables: List[WorkflowVariable]
+    status: WorkflowStatus = WorkflowStatus.DRAFT
+    metadata: Metadata
+
+    class Config:
+        from_attributes = True
+
+
+@router.post("/validate", response_model=ValidationResult)
+async def validate_workflow_data(request: ValidateWorkflowRequest) -> ValidationResult:
+    """
+    Validate workflow data without creating/updating a workflow.
+
+    This endpoint is useful for real-time validation in the UI before saving.
+
+    Args:
+        request: Workflow data to validate
+
+    Returns:
+        ValidationResult with all validation issues
+
+    Example:
+        POST /workflows/validate
+        {
+            "name": "My Workflow",
+            "nodes": [...],
+            "edges": [...],
+            "variables": [...],
+            "metadata": {...}
+        }
+    """
+    # Create temporary workflow object for validation
+    workflow = Workflow(
+        name=request.name,
+        nodes=request.nodes,
+        edges=request.edges,
+        variables=request.variables,
+        status=request.status,
+        metadata=request.metadata,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+
+    # Validate workflow
+    validation_result = workflow_validator.validate_workflow(workflow)
+
+    return validation_result
+
+
+class ValidationConfigResponse(BaseModel):
+    """Response model for validation configuration"""
+    limits: Dict[str, Any]
+    supported_node_types: List[str]
+    validation_rules: List[str]
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/validation/config", response_model=ValidationConfigResponse)
+async def get_validation_config() -> ValidationConfigResponse:
+    """
+    Get validation configuration including limits and supported node types.
+
+    Returns:
+        Validation configuration
+
+    Example:
+        GET /workflows/validation/config
+
+        Response:
+        {
+            "limits": {
+                "max_nodes": 100,
+                "max_edges": 500,
+                ...
+            },
+            "supported_node_types": ["http", "email", ...],
+            "validation_rules": [
+                "circular_dependency",
+                "dead_nodes",
+                ...
+            ]
+        }
+    """
+    from ..services.validation_rules import ValidationRules
+    from ..services.node_schemas import get_all_node_types
+
+    return ValidationConfigResponse(
+        limits=ValidationRules.LIMITS,
+        supported_node_types=get_all_node_types(),
+        validation_rules=[
+            "circular_dependency",
+            "dead_nodes",
+            "required_fields",
+            "node_schemas",
+            "edge_validation",
+            "start_nodes",
+            "end_nodes",
+            "node_compatibility",
+            "isolated_nodes",
+            "variable_references",
+            "resource_limits",
+            "infinite_loops",
+            "security_patterns"
+        ]
+    )

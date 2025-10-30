@@ -62,6 +62,31 @@ export async function fetchWorkflowExecution(executionId: string): Promise<Workf
   return normalizeWorkflowRun(response)
 }
 
+export interface ExecuteWorkflowRequest {
+  inputs?: Record<string, any>
+  async_execution?: boolean
+}
+
+export interface ExecuteWorkflowResponse {
+  execution_id: string
+  workflow_id: string
+  status: string
+  message: string
+  started_at: string
+}
+
+export async function executeWorkflow(
+  workflowId: string,
+  request: ExecuteWorkflowRequest = {}
+): Promise<ExecuteWorkflowResponse> {
+  const response = await api.post<ExecuteWorkflowResponse>(
+    API_ENDPOINTS.WORKFLOWS.EXECUTE(workflowId),
+    request,
+    true
+  )
+  return response
+}
+
 export async function generateWorkflowFromPrompt(prompt: string): Promise<GeneratedWorkflowResponse> {
   const response = await api.post<GeneratedWorkflowResponse>(
     API_ENDPOINTS.AI.GENERATE_WORKFLOW,

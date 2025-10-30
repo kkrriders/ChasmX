@@ -17,7 +17,11 @@
       "Bash(ls:*)",
       "Bash(docker-compose down:*)",
       "Bash(git mv:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(docker restart:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": [],
     "ask": []

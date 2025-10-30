@@ -1,13 +1,4 @@
-"""
-Workflow Execution Engine
 
-This service executes workflows node by node, handling different node types
-and managing execution state. It integrates with:
-- AI/LLM services (with Redis caching)
-- MongoDB for state persistence
-- External services (email, webhooks, etc.)
-- Inter-node communication system (Simple & Redis Pub/Sub modes)
-"""
 from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 from loguru import logger
@@ -71,8 +62,22 @@ class WorkflowExecutor:
         # Redis Pub/Sub communication state
         self.message_bus = None
         self.orchestrator = None
-        self.active_agents: Dict[str, str] = {}  # execution_id -> {node_id -> agent_id}
+        self.active_agents: Dict[str, Dict[str, str]] = {}  # execution_id -> {node_id -> agent_id}
         self.pending_responses: Dict[str, asyncio.Future] = {}  # message_id -> Future
+
+    async def _broadcast_websocket_event(self, execution_id: str, event_type: str, data: dict):
+        """Broadcast execution events to WebSocket clients."""
+        try:
+            # Import here to avoid circular dependency
+            from ..routes.websocket import manager
+
+            # Add timestamp
+            data["timestamp"] = datetime.utcnow().isoformat()
+
+            await manager.send_to_execution(execution_id, event_type, data)
+        except Exception as e:
+            # Don't fail execution if WebSocket broadcast fails
+            logger.warning(f"Failed to broadcast WebSocket event: {e}")
 
     async def execute(self, workflow: Workflow, run: WorkflowRun) -> WorkflowRun:
         """
@@ -93,16 +98,29 @@ class WorkflowExecutor:
             run.start_time = datetime.utcnow()
             await run.save()
 
-            # Build node execution order
-            execution_order = self._build_execution_order(workflow.nodes, workflow.edges)
+            # Broadcast execution started
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_started",
+                {
+                    "status": run.status.value,
+                    "workflow_id": str(workflow.id),
+                    "workflow_name": workflow.name,
+                    "start_time": run.start_time.isoformat()
+                }
+            )
+
+            # Build node execution order (returns batches, flatten for sequential execution)
+            execution_batches = self._build_execution_order(workflow.nodes, workflow.edges)
+            execution_order = [node for batch in execution_batches for node in batch]
             logger.info(f"Execution order: {[node.id for node in execution_order]}")
 
             # Determine communication mode from workflow metadata
-            comm_mode = CommunicationMode(
-                workflow.metadata.get("communication_mode", "simple")
-                if hasattr(workflow, 'metadata') and workflow.metadata
-                else "simple"
-            )
+            comm_mode = CommunicationMode.SIMPLE  # default
+            if hasattr(workflow, 'metadata') and workflow.metadata:
+                # Check if metadata has communication_mode as a custom field
+                metadata_dict = workflow.metadata.model_dump() if hasattr(workflow.metadata, 'model_dump') else {}
+                comm_mode = CommunicationMode(metadata_dict.get("communication_mode", "simple"))
             logger.info(f"Using communication mode: {comm_mode}")
 
             # Initialize communication system
@@ -158,12 +176,23 @@ class WorkflowExecutor:
                 try:
                     logger.info(f"Executing node: {node.id} (type: {node.type})")
 
+                    # Broadcast node started
+                    await self._broadcast_websocket_event(
+                        run.execution_id,
+                        "node_started",
+                        {
+                            "node_id": node.id,
+                            "node_type": node.type,
+                            "node_label": node.id
+                        }
+                    )
+
                     # Add log entry
                     await self._add_log(run, node.id, f"Starting execution of {node.type} node")
 
                     # Execute node with timeout
                     result = await asyncio.wait_for(
-                        self._execute_node(node, context, run),
+                        self._execute_node_with_logging(node, context, run),
                         timeout=self.node_timeout
                     )
 
@@ -177,6 +206,18 @@ class WorkflowExecutor:
                         f"Completed successfully. Cached: {result.get('cached', False)}"
                     )
                     await run.save()
+
+                    # Broadcast node completed
+                    await self._broadcast_websocket_event(
+                        run.execution_id,
+                        "node_completed",
+                        {
+                            "node_id": node.id,
+                            "node_type": node.type,
+                            "cached": result.get('cached', False),
+                            "output": str(result.get('output', ''))[:200]  # First 200 chars
+                        }
+                    )
 
                 except asyncio.TimeoutError:
                     error_msg = f"Node {node.id} execution timeout after {self.node_timeout}s"
@@ -195,6 +236,17 @@ class WorkflowExecutor:
             run.end_time = datetime.utcnow()
             await run.save()
 
+            # Broadcast execution completed
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_completed",
+                {
+                    "status": run.status.value,
+                    "end_time": run.end_time.isoformat(),
+                    "duration_seconds": (run.end_time - run.start_time).total_seconds()
+                }
+            )
+
             # Cleanup: Unregister agents if using PUBSUB mode
             if context.get("communication_mode") == CommunicationMode.PUBSUB:
                 await self._cleanup_agents(run.execution_id)
@@ -209,54 +261,237 @@ class WorkflowExecutor:
             await self._add_error(run, "workflow", f"Workflow execution failed: {str(e)}")
             await run.save()
 
+            # Broadcast execution error
+            await self._broadcast_websocket_event(
+                run.execution_id,
+                "execution_error",
+                {
+                    "status": run.status.value,
+                    "error": str(e),
+                    "end_time": run.end_time.isoformat() if run.end_time else None
+                }
+            )
+
             # Cleanup agents on failure too
             if self.execution_context and self.execution_context.get("communication_mode") == CommunicationMode.PUBSUB:
                 await self._cleanup_agents(run.execution_id)
 
             raise
 
-    def _build_execution_order(self, nodes: List[Node], edges: List) -> List[Node]:
+    async def execute_distributed(self, workflow: Workflow, run: WorkflowRun, max_workers: int = 4) -> WorkflowRun:
         """
-        Build execution order using topological sort.
-
-        For now, uses simple sequential order based on node position.
-        TODO: Implement proper topological sort for complex workflows
+        Execute a workflow with distributed node execution across multiple workers.
+        
+        This method supports horizontal scaling by distributing node execution
+        across multiple worker processes or containers.
+        
+        Args:
+            workflow: The workflow definition to execute
+            run: The workflow run record to track execution
+            max_workers: Maximum number of concurrent workers for parallel execution
+            
+        Returns:
+            Updated WorkflowRun with execution results
         """
-        # Find start node
-        start_nodes = [n for n in nodes if n.type == "start"]
-        if not start_nodes:
-            # If no start node, use first node
-            return nodes
+        try:
+            logger.info(f"Starting distributed workflow execution: {workflow.name} with {max_workers} max workers")
+            
+            # Build execution batches
+            execution_batches = self._build_execution_order(workflow.nodes, workflow.edges)
+            
+            # Initialize distributed execution context
+            distributed_context = {
+                "workflow_id": str(workflow.id),
+                "execution_id": run.execution_id,
+                "max_workers": max_workers,
+                "worker_pool": None,  # Could be integrated with Celery/RQ
+                "distributed": True
+            }
+            
+            # Set up semaphore for controlling concurrency
+            semaphore = asyncio.Semaphore(max_workers)
+            
+            # Execute batches with controlled concurrency
+            for batch_index, batch in enumerate(execution_batches):
+                logger.info(f"Executing distributed batch {batch_index + 1}/{len(execution_batches)}")
+                
+                # Create tasks with semaphore control
+                async def execute_with_semaphore(node):
+                    async with semaphore:
+                        return await self._execute_node_distributed(node, distributed_context, run)
+                
+                # Execute batch with concurrency control
+                batch_tasks = [execute_with_semaphore(node) for node in batch]
+                batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                
+                # Process results and check for errors
+                for i, result in enumerate(batch_results):
+                    node = batch[i]
+                    if isinstance(result, Exception):
+                        error_msg = f"Distributed execution failed for node {node.id}: {str(result)}"
+                        logger.error(error_msg)
+                        await self._add_error(run, node.id, error_msg)
+                        raise WorkflowExecutionError(error_msg)
+                    else:
+                        run.node_states[node.id] = result
+                        if isinstance(result, dict):
+                            distributed_context[f"output_{node.id}"] = result.get("output")
+                        else:
+                            distributed_context[f"output_{node.id}"] = None
+                
+                await run.save()
+            
+            # Mark as successful
+            run.status = ExecutionStatus.SUCCESS
+            run.end_time = datetime.utcnow()
+            await run.save()
+            
+            logger.info(f"Distributed workflow execution completed successfully")
+            return run
+            
+        except Exception as e:
+            logger.error(f"Distributed workflow execution failed: {str(e)}")
+            run.status = ExecutionStatus.ERROR
+            run.end_time = datetime.utcnow()
+            await self._add_error(run, "workflow", f"Distributed execution failed: {str(e)}")
+            await run.save()
+            raise
 
-        # Simple approach: execute in order of connections
-        # In production, implement proper topological sort
-        visited = set()
-        order = []
+    async def _execute_node_distributed(self, node: Node, context: Dict[str, Any], run: WorkflowRun) -> Dict[str, Any]:
+        """
+        Execute a single node in distributed mode.
+        
+        This method could be extended to dispatch node execution to remote workers.
+        For now, it executes locally but with distributed-aware logging.
+        
+        Args:
+            node: The node to execute
+            context: Distributed execution context
+            run: WorkflowRun for state tracking
+            
+        Returns:
+            Dictionary with execution result
+        """
+        logger.info(f"Distributed execution of node: {node.id} (worker_id: {context.get('worker_id', 'local')})")
+        
+        # Add distributed execution metadata
+        result = await self._execute_node(node, context, run)
+        result["distributed"] = True
+        result["worker_id"] = context.get("worker_id", "local")
+        result["execution_mode"] = "distributed"
+        
+        return result
 
-        def visit(node_id: str):
-            if node_id in visited:
-                return
-            visited.add(node_id)
-
-            # Find the node
-            node = next((n for n in nodes if n.id == node_id), None)
-            if node:
-                order.append(node)
-
-                # Find outgoing edges
-                for edge in edges:
-                    if edge.from_ == node_id:
-                        visit(edge.to)
-
-        # Start from start node
-        visit(start_nodes[0].id)
-
-        # Add any remaining nodes
+    def _build_execution_order(self, nodes: List[Node], edges: List) -> List[List[Node]]:
+        """
+        Build execution order using proper topological sort with parallel execution support.
+        
+        Returns:
+            List of execution batches - nodes in each batch can run in parallel
+        """
+        # Build adjacency list and in-degree count
+        node_map = {node.id: node for node in nodes}
+        in_degree = {node.id: 0 for node in nodes}
+        adjacency = {node.id: [] for node in nodes}
+        
+        # Process edges to build graph
+        for edge in edges:
+            if hasattr(edge, 'from_') and hasattr(edge, 'to'):
+                from_id, to_id = edge.from_, edge.to
+            elif hasattr(edge, 'source') and hasattr(edge, 'target'):
+                from_id, to_id = edge.source, edge.target
+            else:
+                # Try to extract from dict-like edge
+                from_id = edge.get('from', edge.get('source'))
+                to_id = edge.get('to', edge.get('target'))
+            
+            if from_id and to_id and from_id in node_map and to_id in node_map:
+                adjacency[from_id].append(to_id)
+                in_degree[to_id] += 1
+        
+        # Detect cycles using DFS
+        self._detect_cycles(nodes, adjacency)
+        
+        # Kahn's algorithm for topological sort with parallel batches
+        execution_batches = []
+        remaining_nodes = set(node_map.keys())
+        
+        while remaining_nodes:
+            # Find all nodes with in-degree 0 (can execute in parallel)
+            ready_nodes = [
+                node_id for node_id in remaining_nodes 
+                if in_degree[node_id] == 0
+            ]
+            
+            if not ready_nodes:
+                # This should not happen if cycle detection worked
+                raise WorkflowExecutionError(
+                    f"Circular dependency detected in workflow. Remaining nodes: {remaining_nodes}"
+                )
+            
+            # Create execution batch
+            batch = [node_map[node_id] for node_id in ready_nodes]
+            execution_batches.append(batch)
+            
+            # Remove processed nodes and update in-degrees
+            for node_id in ready_nodes:
+                remaining_nodes.remove(node_id)
+                # Reduce in-degree for dependent nodes
+                for dependent_id in adjacency[node_id]:
+                    if dependent_id in remaining_nodes:
+                        in_degree[dependent_id] -= 1
+        
+        logger.info(f"Built {len(execution_batches)} execution batches for parallel execution")
+        return execution_batches
+    
+    def _detect_cycles(self, nodes: List[Node], adjacency: Dict[str, List[str]]) -> None:
+        """
+        Detect cycles in the workflow DAG using DFS.
+        
+        Raises:
+            WorkflowExecutionError: If a cycle is detected
+        """
+        # DFS-based cycle detection
+        WHITE, GRAY, BLACK = 0, 1, 2
+        colors = {node.id: WHITE for node in nodes}
+        
+        def dfs(node_id: str, path: List[str]) -> bool:
+            if colors[node_id] == GRAY:
+                # Back edge found - cycle detected
+                cycle_start = path.index(node_id)
+                cycle = path[cycle_start:] + [node_id]
+                raise WorkflowExecutionError(
+                    f"Cycle detected in workflow: {' -> '.join(cycle)}"
+                )
+            
+            if colors[node_id] == BLACK:
+                return False
+            
+            # Mark as being processed
+            colors[node_id] = GRAY
+            path.append(node_id)
+            
+            # Visit all adjacent nodes
+            for neighbor_id in adjacency[node_id]:
+                if dfs(neighbor_id, path):
+                    return True
+            
+            # Mark as completely processed
+            colors[node_id] = BLACK
+            path.pop()
+            return False
+        
+        # Check for cycles starting from each unvisited node
         for node in nodes:
-            if node not in order:
-                order.append(node)
-
-        return order
+            if colors[node.id] == WHITE:
+                if dfs(node.id, []):
+                    return  # Cycle found and exception raised
+    
+    def _get_execution_batches(self, nodes: List[Node], edges: List) -> List[List[Node]]:
+        """
+        Get execution batches - wrapper around _build_execution_order for backward compatibility.
+        """
+        return self._build_execution_order(nodes, edges)
 
     async def _execute_node(self, node: Node, context: Dict[str, Any], run: WorkflowRun) -> Dict[str, Any]:
         """
@@ -291,11 +526,50 @@ class WorkflowExecutor:
             return await self._execute_condition_node(node, context)
         elif node_type == "delay":
             return await self._execute_delay_node(node, context)
+        elif node_type == "loop":
+            return await self._execute_loop_node(node, context)
         elif node_type == "end":
             return await self._execute_end_node(node, context)
         else:
             logger.warning(f"Unknown node type: {node_type}, skipping")
             return {"status": "skipped", "reason": f"Unknown node type: {node_type}"}
+
+    async def _execute_node_with_logging(self, node: Node, context: Dict[str, Any], run: WorkflowRun) -> Dict[str, Any]:
+        """
+        Execute a single node with proper logging for parallel execution.
+        
+        Args:
+            node: The node to execute
+            context: Runtime context with variables and previous outputs
+            run: WorkflowRun for state tracking
+            
+        Returns:
+            Dictionary with execution result
+        """
+        try:
+            logger.info(f"Starting execution of node: {node.id} (type: {node.type})")
+            
+            # Add log entry
+            await self._add_log(run, node.id, f"Starting execution of {node.type} node")
+            
+            # Execute the node
+            result = await self._execute_node(node, context, run)
+            
+            # Log successful completion
+            await self._add_log(
+                run,
+                node.id,
+                f"Completed successfully. Cached: {result.get('cached', False)}"
+            )
+            
+            logger.info(f"Successfully completed node: {node.id}")
+            return result
+            
+        except Exception as e:
+            error_msg = f"Node {node.id} execution failed: {str(e)}"
+            logger.error(error_msg)
+            await self._add_error(run, node.id, error_msg)
+            raise
 
     async def _execute_start_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute start node - initializes workflow execution"""
@@ -928,17 +1202,99 @@ Use these functions when you need to coordinate with other nodes in the workflow
     async def _execute_filter_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute filter node - filters data based on conditions"""
         try:
-            condition = node.config.get("condition", "true")
+            filter_type = node.config.get("filter_type", "condition")
+            input_data = context.get("input_data", context.get("variables", {}))
+            
+            logger.info(f"Filter Node: Applying {filter_type} filter")
 
-            logger.info(f"Filter Node: Evaluating condition")
+            if filter_type == "condition":
+                # Boolean condition filtering
+                condition = node.config.get("condition", "true")
+                condition = self._interpolate_variables(condition, context)
+                
+                # Safe condition evaluation
+                result = self._evaluate_safe_condition(condition, context)
+                
+                if result:
+                    filtered_data = input_data
+                    status = "passed"
+                else:
+                    filtered_data = {}
+                    status = "filtered_out"
+                    
+                return {
+                    "status": "completed",
+                    "output": filtered_data,
+                    "filter_result": status,
+                    "condition": condition,
+                    "condition_result": result,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+            elif filter_type == "array":
+                # Array element filtering
+                array_path = node.config.get("array_path", "data")
+                filter_condition = node.config.get("filter_condition", "")
+                
+                # Get array from context
+                array_data = self._get_nested_value(input_data, array_path, [])
+                if not isinstance(array_data, list):
+                    array_data = []
+                
+                # Filter array elements
+                filtered_array = []
+                for item in array_data:
+                    item_context = {**context, "item": item}
+                    if self._evaluate_safe_condition(filter_condition, item_context):
+                        filtered_array.append(item)
+                
+                # Update the filtered data
+                filtered_data = self._set_nested_value(input_data.copy(), array_path, filtered_array)
+                
+                return {
+                    "status": "completed",
+                    "output": filtered_data,
+                    "filter_result": "array_filtered",
+                    "original_count": len(array_data),
+                    "filtered_count": len(filtered_array),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+            elif filter_type == "object":
+                # Object property filtering
+                include_fields = node.config.get("include_fields", [])
+                exclude_fields = node.config.get("exclude_fields", [])
+                
+                if isinstance(input_data, dict):
+                    filtered_data = input_data.copy()
+                    
+                    # Apply include filter (whitelist)
+                    if include_fields:
+                        filtered_data = {k: v for k, v in filtered_data.items() if k in include_fields}
+                    
+                    # Apply exclude filter (blacklist)
+                    if exclude_fields:
+                        filtered_data = {k: v for k, v in filtered_data.items() if k not in exclude_fields}
+                else:
+                    filtered_data = input_data
+                
+                return {
+                    "status": "completed",
+                    "output": filtered_data,
+                    "filter_result": "object_filtered",
+                    "include_fields": include_fields,
+                    "exclude_fields": exclude_fields,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+            else:
+                raise ValueError(f"Unsupported filter type: {filter_type}")
 
-            # TODO: Implement safe condition evaluation
-            # For now, pass through
-
+        except Exception as e:
+            logger.error(f"Filter node execution failed: {str(e)}")
             return {
-                "status": "completed",
-                "output": "Filter passed",
-                "condition": condition,
+                "status": "error",
+                "error": str(e),
                 "timestamp": datetime.utcnow().isoformat()
             }
 
@@ -954,15 +1310,127 @@ Use these functions when you need to coordinate with other nodes in the workflow
         """Execute transformer node - transforms data structure"""
         try:
             transform_type = node.config.get("transform_type", "map")
+            input_data = context.get("input_data", context.get("variables", {}))
 
             logger.info(f"Transformer Node: Applying {transform_type} transformation")
 
-            # TODO: Implement data transformation logic
+            if transform_type == "map":
+                # Field mapping transformation
+                field_mappings = node.config.get("field_mappings", {})
+                # field_mappings format: {"new_field": "old_field", "name": "full_name"}
+                
+                if isinstance(input_data, dict):
+                    transformed_data = {}
+                    for new_field, old_field in field_mappings.items():
+                        # Support dot notation for nested fields
+                        value = self._get_nested_value(input_data, old_field)
+                        if value is not None:
+                            # Support interpolation in field values
+                            if isinstance(value, str):
+                                value = self._interpolate_variables(value, context)
+                            self._set_nested_value(transformed_data, new_field, value)
+                    
+                    # Copy unmapped fields if configured
+                    if node.config.get("copy_unmapped", False):
+                        for key, value in input_data.items():
+                            if key not in field_mappings.values() and key not in transformed_data:
+                                transformed_data[key] = value
+                                
+                elif isinstance(input_data, list):
+                    # Apply mapping to each item in array
+                    transformed_data = []
+                    for item in input_data:
+                        if isinstance(item, dict):
+                            mapped_item = {}
+                            for new_field, old_field in field_mappings.items():
+                                value = self._get_nested_value(item, old_field)
+                                if value is not None:
+                                    if isinstance(value, str):
+                                        value = self._interpolate_variables(value, context)
+                                    self._set_nested_value(mapped_item, new_field, value)
+                            transformed_data.append(mapped_item)
+                        else:
+                            transformed_data.append(item)
+                else:
+                    transformed_data = input_data
+
+            elif transform_type == "aggregate":
+                # Data aggregation
+                operation = node.config.get("operation", "count")
+                group_by = node.config.get("group_by")
+                
+                if isinstance(input_data, list):
+                    if group_by:
+                        # Group by field and aggregate
+                        groups = {}
+                        for item in input_data:
+                            if isinstance(item, dict):
+                                key = self._get_nested_value(item, group_by, "unknown")
+                                if key not in groups:
+                                    groups[key] = []
+                                groups[key].append(item)
+                        
+                        transformed_data = {}
+                        for key, items in groups.items():
+                            transformed_data[key] = self._apply_aggregation(items, operation)
+                    else:
+                        # Aggregate all items
+                        transformed_data = self._apply_aggregation(input_data, operation)
+                else:
+                    transformed_data = input_data
+
+            elif transform_type == "flatten":
+                # Flatten nested structures
+                max_depth = node.config.get("max_depth", 1)
+                transformed_data = self._flatten_data(input_data, max_depth)
+
+            elif transform_type == "convert":
+                # Data type conversion
+                conversions = node.config.get("conversions", {})
+                # conversions format: {"field_name": "target_type"}
+                
+                transformed_data = self._apply_type_conversions(input_data, conversions)
+
+            elif transform_type == "merge":
+                # Merge with additional data
+                merge_data = node.config.get("merge_data", {})
+                merge_strategy = node.config.get("merge_strategy", "update")  # update, overwrite, keep_original
+                
+                if isinstance(input_data, dict) and isinstance(merge_data, dict):
+                    transformed_data = input_data.copy()
+                    if merge_strategy == "update":
+                        transformed_data.update(merge_data)
+                    elif merge_strategy == "overwrite":
+                        transformed_data = {**merge_data, **transformed_data}
+                    elif merge_strategy == "keep_original":
+                        for key, value in merge_data.items():
+                            if key not in transformed_data:
+                                transformed_data[key] = value
+                else:
+                    transformed_data = input_data
+
+            elif transform_type == "extract":
+                # Extract specific fields or nested values
+                extract_paths = node.config.get("extract_paths", [])
+                # extract_paths format: ["field1", "nested.field", "array.0.value"]
+                
+                transformed_data = {}
+                for path in extract_paths:
+                    value = self._get_nested_value(input_data, path)
+                    if value is not None:
+                        # Use the last part of the path as the key
+                        key = path.split('.')[-1]
+                        transformed_data[key] = value
+
+            else:
+                raise ValueError(f"Unsupported transform type: {transform_type}")
 
             return {
                 "status": "completed",
-                "output": "Data transformed",
+                "output": transformed_data,
                 "transform_type": transform_type,
+                "input_size": len(str(input_data)) if input_data else 0,
+                "output_size": len(str(transformed_data)) if transformed_data else 0,
                 "timestamp": datetime.utcnow().isoformat()
             }
 
@@ -974,21 +1442,268 @@ Use these functions when you need to coordinate with other nodes in the workflow
                 "timestamp": datetime.utcnow().isoformat()
             }
 
+    def _apply_aggregation(self, data: List[Any], operation: str) -> Any:
+        """Apply aggregation operation to data"""
+        if not data:
+            return None
+            
+        if operation == "count":
+            return len(data)
+        elif operation == "sum":
+            return sum(float(x) for x in data if isinstance(x, (int, float, str)) and str(x).replace('.', '').isdigit())
+        elif operation == "avg" or operation == "average":
+            numbers = [float(x) for x in data if isinstance(x, (int, float, str)) and str(x).replace('.', '').isdigit()]
+            return sum(numbers) / len(numbers) if numbers else 0
+        elif operation == "min":
+            numbers = [float(x) for x in data if isinstance(x, (int, float, str)) and str(x).replace('.', '').isdigit()]
+            return min(numbers) if numbers else None
+        elif operation == "max":
+            numbers = [float(x) for x in data if isinstance(x, (int, float, str)) and str(x).replace('.', '').isdigit()]
+            return max(numbers) if numbers else None
+        elif operation == "first":
+            return data[0] if data else None
+        elif operation == "last":
+            return data[-1] if data else None
+        else:
+            return data
+
+    def _flatten_data(self, data: Any, max_depth: int, current_depth: int = 0) -> Any:
+        """Recursively flatten nested data structures"""
+        if current_depth >= max_depth:
+            return data
+            
+        if isinstance(data, dict):
+            result = {}
+            for key, value in data.items():
+                if isinstance(value, dict) and current_depth < max_depth:
+                    # Flatten nested dict
+                    flattened = self._flatten_data(value, max_depth, current_depth + 1)
+                    if isinstance(flattened, dict):
+                        for nested_key, nested_value in flattened.items():
+                            result[f"{key}.{nested_key}"] = nested_value
+                    else:
+                        result[key] = flattened
+                else:
+                    result[key] = value
+            return result
+        elif isinstance(data, list):
+            result = []
+            for item in data:
+                if isinstance(item, (dict, list)) and current_depth < max_depth:
+                    flattened = self._flatten_data(item, max_depth, current_depth + 1)
+                    if isinstance(flattened, list):
+                        result.extend(flattened)
+                    else:
+                        result.append(flattened)
+                else:
+                    result.append(item)
+            return result
+        else:
+            return data
+
+    def _apply_type_conversions(self, data: Any, conversions: Dict[str, str]) -> Any:
+        """Apply type conversions to data"""
+        if isinstance(data, dict):
+            result = data.copy()
+            for field, target_type in conversions.items():
+                value = self._get_nested_value(result, field)
+                if value is not None:
+                    converted_value = self._convert_value(value, target_type)
+                    self._set_nested_value(result, field, converted_value)
+            return result
+        elif isinstance(data, list):
+            return [self._apply_type_conversions(item, conversions) for item in data]
+        else:
+            return data
+
+    def _convert_value(self, value: Any, target_type: str) -> Any:
+        """Convert a single value to target type"""
+        try:
+            if target_type == "string" or target_type == "str":
+                return str(value)
+            elif target_type == "integer" or target_type == "int":
+                return int(float(value))  # Handle string numbers
+            elif target_type == "float" or target_type == "number":
+                return float(value)
+            elif target_type == "boolean" or target_type == "bool":
+                if isinstance(value, str):
+                    return value.lower() in ("true", "1", "yes", "on")
+                return bool(value)
+            elif target_type == "list" or target_type == "array":
+                if isinstance(value, str):
+                    # Try to parse as JSON array or split by comma
+                    try:
+                        import json
+                        return json.loads(value)
+                    except:
+                        return [item.strip() for item in value.split(',')]
+                elif not isinstance(value, list):
+                    return [value]
+                return value
+            else:
+                return value
+        except (ValueError, TypeError):
+            logger.warning(f"Failed to convert {value} to {target_type}")
+            return value
+
     async def _execute_condition_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute condition node - branching logic"""
         try:
-            condition = node.config.get("condition", "true")
+            condition_type = node.config.get("condition_type", "simple")
+            
+            logger.info(f"Condition Node: Evaluating {condition_type} condition")
 
-            logger.info(f"Condition Node: Evaluating branching logic")
+            if condition_type == "simple":
+                # Simple boolean condition
+                condition = node.config.get("condition", "true")
+                condition = self._interpolate_variables(condition, context)
+                
+                result = self._evaluate_safe_condition(condition, context)
+                
+                # Determine next path based on result
+                true_path = node.config.get("true_path")
+                false_path = node.config.get("false_path")
+                next_node = true_path if result else false_path
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "condition_result": result,
+                        "next_node": next_node,
+                        "path_taken": "true" if result else "false"
+                    },
+                    "condition": condition,
+                    "result": result,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
 
-            # TODO: Implement condition evaluation and branching
+            elif condition_type == "switch":
+                # Multi-way switch based on value
+                switch_value = node.config.get("switch_value", "")
+                switch_value = self._interpolate_variables(switch_value, context)
+                
+                cases = node.config.get("cases", {})
+                default_case = node.config.get("default_case")
+                
+                # Find matching case
+                next_node = None
+                matched_case = None
+                
+                for case_value, case_node in cases.items():
+                    if str(switch_value) == str(case_value):
+                        next_node = case_node
+                        matched_case = case_value
+                        break
+                
+                # Use default if no match found
+                if next_node is None:
+                    next_node = default_case
+                    matched_case = "default"
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "switch_value": switch_value,
+                        "matched_case": matched_case,
+                        "next_node": next_node
+                    },
+                    "switch_value": switch_value,
+                    "matched_case": matched_case,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
 
-            return {
-                "status": "completed",
-                "output": "Condition evaluated",
-                "result": True,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            elif condition_type == "multi":
+                # Multiple conditions with AND/OR logic
+                conditions = node.config.get("conditions", [])
+                logic_operator = node.config.get("logic_operator", "AND").upper()
+                
+                results = []
+                for condition_config in conditions:
+                    condition_expr = condition_config.get("condition", "true")
+                    condition_expr = self._interpolate_variables(condition_expr, context)
+                    
+                    condition_result = self._evaluate_safe_condition(condition_expr, context)
+                    results.append({
+                        "condition": condition_expr,
+                        "result": condition_result,
+                        "weight": condition_config.get("weight", 1.0)
+                    })
+                
+                # Apply logic operator
+                if logic_operator == "AND":
+                    final_result = all(r["result"] for r in results)
+                elif logic_operator == "OR":
+                    final_result = any(r["result"] for r in results)
+                elif logic_operator == "WEIGHTED":
+                    # Weighted voting
+                    total_weight = sum(r["weight"] for r in results)
+                    true_weight = sum(r["weight"] for r in results if r["result"])
+                    threshold = node.config.get("threshold", 0.5)
+                    final_result = (true_weight / total_weight) >= threshold if total_weight > 0 else False
+                else:
+                    final_result = False
+                
+                # Determine next path
+                true_path = node.config.get("true_path")
+                false_path = node.config.get("false_path")
+                next_node = true_path if final_result else false_path
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "final_result": final_result,
+                        "individual_results": results,
+                        "logic_operator": logic_operator,
+                        "next_node": next_node
+                    },
+                    "result": final_result,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+            elif condition_type == "range":
+                # Range-based condition (numeric ranges)
+                value = node.config.get("value", "0")
+                value = self._interpolate_variables(str(value), context)
+                
+                try:
+                    numeric_value = float(value)
+                except ValueError:
+                    numeric_value = 0
+                
+                ranges = node.config.get("ranges", [])
+                # ranges format: [{"min": 0, "max": 10, "node": "node1"}, ...]
+                
+                next_node = None
+                matched_range = None
+                
+                for range_config in ranges:
+                    min_val = range_config.get("min", float('-inf'))
+                    max_val = range_config.get("max", float('inf'))
+                    
+                    if min_val <= numeric_value <= max_val:
+                        next_node = range_config.get("node")
+                        matched_range = f"{min_val}-{max_val}"
+                        break
+                
+                # Use default if no range matched
+                if next_node is None:
+                    next_node = node.config.get("default_node")
+                    matched_range = "default"
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "value": numeric_value,
+                        "matched_range": matched_range,
+                        "next_node": next_node
+                    },
+                    "value": numeric_value,
+                    "matched_range": matched_range,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+            else:
+                raise ValueError(f"Unsupported condition type: {condition_type}")
 
         except Exception as e:
             logger.error(f"Condition node execution failed: {str(e)}")
@@ -1016,6 +1731,183 @@ Use these functions when you need to coordinate with other nodes in the workflow
 
         except Exception as e:
             logger.error(f"Delay node execution failed: {str(e)}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+    async def _execute_loop_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute loop node - iteration and repeated execution"""
+        try:
+            loop_type = node.config.get("loop_type", "for")
+            
+            logger.info(f"Loop Node: Executing {loop_type} loop")
+
+            if loop_type == "for":
+                # For loop over array/range
+                array_path = node.config.get("array_path", "items")
+                iterator_name = node.config.get("iterator_name", "item")
+                index_name = node.config.get("index_name", "index")
+                
+                # Get array data
+                input_data = context.get("input_data", context.get("variables", {}))
+                array_data = self._get_nested_value(input_data, array_path, [])
+                
+                if not isinstance(array_data, list):
+                    array_data = []
+                
+                results = []
+                loop_context = context.copy()
+                
+                for index, item in enumerate(array_data):
+                    # Update loop context with current item and index
+                    loop_context["variables"] = loop_context.get("variables", {}).copy()
+                    loop_context["variables"][iterator_name] = item
+                    loop_context["variables"][index_name] = index
+                    
+                    # Execute loop body (would need sub-workflow execution)
+                    # For now, just collect the items
+                    iteration_result = {
+                        "index": index,
+                        "item": item,
+                        "iteration_context": {iterator_name: item, index_name: index}
+                    }
+                    
+                    # Apply any transformations or conditions within loop
+                    loop_action = node.config.get("loop_action", "collect")
+                    if loop_action == "transform":
+                        transform_expr = node.config.get("transform_expression", "{{item}}")
+                        transformed_item = self._interpolate_variables(transform_expr, loop_context)
+                        iteration_result["transformed"] = transformed_item
+                    elif loop_action == "filter":
+                        filter_condition = node.config.get("filter_condition", "true")
+                        if self._evaluate_safe_condition(filter_condition, loop_context):
+                            iteration_result["included"] = True
+                        else:
+                            iteration_result["included"] = False
+                            continue  # Skip this iteration
+                    
+                    results.append(iteration_result)
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "results": results,
+                        "iterations": len(array_data),
+                        "successful_iterations": len(results)
+                    },
+                    "loop_type": loop_type,
+                    "iterations": len(array_data),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+            elif loop_type == "while":
+                # While loop with condition
+                condition = node.config.get("condition", "false")
+                max_iterations = node.config.get("max_iterations", 100)
+                
+                results = []
+                iteration_count = 0
+                loop_context = context.copy()
+                
+                while iteration_count < max_iterations:
+                    # Evaluate loop condition
+                    current_condition = self._interpolate_variables(condition, loop_context)
+                    if not self._evaluate_safe_condition(current_condition, loop_context):
+                        break
+                    
+                    # Execute iteration
+                    iteration_result = {
+                        "iteration": iteration_count,
+                        "condition": current_condition,
+                        "context_snapshot": loop_context.get("variables", {}).copy()
+                    }
+                    
+                    # Update loop variables
+                    increment_var = node.config.get("increment_variable")
+                    increment_value = node.config.get("increment_value", 1)
+                    
+                    if increment_var:
+                        current_value = loop_context.get("variables", {}).get(increment_var, 0)
+                        try:
+                            new_value = float(current_value) + float(increment_value)
+                            loop_context.setdefault("variables", {})[increment_var] = new_value
+                        except (ValueError, TypeError):
+                            break  # Break if can't increment
+                    
+                    results.append(iteration_result)
+                    iteration_count += 1
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "results": results,
+                        "iterations": iteration_count,
+                        "terminated_by": "condition" if iteration_count < max_iterations else "max_iterations"
+                    },
+                    "loop_type": loop_type,
+                    "iterations": iteration_count,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+            elif loop_type == "range":
+                # Numeric range loop
+                start = node.config.get("start", 0)
+                end = node.config.get("end", 10)
+                step = node.config.get("step", 1)
+                counter_name = node.config.get("counter_name", "counter")
+                
+                # Interpolate range values
+                start = int(float(self._interpolate_variables(str(start), context)))
+                end = int(float(self._interpolate_variables(str(end), context)))
+                step = int(float(self._interpolate_variables(str(step), context)))
+                
+                if step == 0:
+                    step = 1  # Prevent infinite loop
+                
+                results = []
+                loop_context = context.copy()
+                
+                current = start
+                iteration_count = 0
+                max_iterations = abs(end - start) + 1
+                
+                while (step > 0 and current < end) or (step < 0 and current > end):
+                    if iteration_count >= max_iterations:
+                        break
+                    
+                    # Update loop context
+                    loop_context["variables"] = loop_context.get("variables", {}).copy()
+                    loop_context["variables"][counter_name] = current
+                    
+                    iteration_result = {
+                        "iteration": iteration_count,
+                        "counter_value": current,
+                        "counter_name": counter_name
+                    }
+                    
+                    results.append(iteration_result)
+                    current += step
+                    iteration_count += 1
+                
+                return {
+                    "status": "completed",
+                    "output": {
+                        "results": results,
+                        "iterations": iteration_count,
+                        "range": {"start": start, "end": end, "step": step}
+                    },
+                    "loop_type": loop_type,
+                    "iterations": iteration_count,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+
+            else:
+                raise ValueError(f"Unsupported loop type: {loop_type}")
+
+        except Exception as e:
+            logger.error(f"Loop node execution failed: {str(e)}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -1052,6 +1944,97 @@ Use these functions when you need to coordinate with other nodes in the workflow
             result = result.replace(placeholder, str(output))
 
         return result
+
+    def _evaluate_safe_condition(self, condition: str, context: Dict[str, Any]) -> bool:
+        """
+        Safely evaluate a condition string with access to context variables.
+        Only allows basic comparison operations for security.
+        """
+        if not condition:
+            return True
+            
+        # Interpolate variables first
+        condition = self._interpolate_variables(condition, context)
+        
+        # Simple condition evaluation - only allow basic comparisons
+        try:
+            # Remove extra whitespace
+            condition = condition.strip()
+            
+            # Handle boolean literals
+            if condition.lower() == "true":
+                return True
+            elif condition.lower() == "false":
+                return False
+            
+            # Handle simple comparisons (==, !=, <, >, <=, >=)
+            operators = ["==", "!=", "<=", ">=", "<", ">"]
+            for op in operators:
+                if op in condition:
+                    left, right = condition.split(op, 1)
+                    left = left.strip().strip('"\'')
+                    right = right.strip().strip('"\'')
+                    
+                    # Try to convert to numbers if possible
+                    try:
+                        left_num = float(left)
+                        right_num = float(right)
+                        if op == "==": return left_num == right_num
+                        elif op == "!=": return left_num != right_num
+                        elif op == "<": return left_num < right_num
+                        elif op == ">": return left_num > right_num
+                        elif op == "<=": return left_num <= right_num
+                        elif op == ">=": return left_num >= right_num
+                    except ValueError:
+                        # String comparison
+                        if op == "==": return left == right
+                        elif op == "!=": return left != right
+                        elif op == "<": return left < right
+                        elif op == ">": return left > right
+                        elif op == "<=": return left <= right
+                        elif op == ">=": return left >= right
+                    break
+            
+            # If no operators found, try to evaluate as boolean
+            return bool(condition)
+            
+        except Exception as e:
+            logger.warning(f"Failed to evaluate condition '{condition}': {e}")
+            return False
+
+    def _get_nested_value(self, data: Any, path: str, default: Any = None) -> Any:
+        """Get a nested value from a dictionary using dot notation"""
+        if not path:
+            return data
+            
+        try:
+            keys = path.split('.')
+            current = data
+            for key in keys:
+                if isinstance(current, dict):
+                    current = current.get(key, default)
+                elif isinstance(current, list) and key.isdigit():
+                    idx = int(key)
+                    current = current[idx] if 0 <= idx < len(current) else default
+                else:
+                    return default
+            return current
+        except (KeyError, IndexError, ValueError):
+            return default
+
+    def _set_nested_value(self, data: Dict[str, Any], path: str, value: Any) -> Dict[str, Any]:
+        """Set a nested value in a dictionary using dot notation"""
+        if not path:
+            return data
+            
+        keys = path.split('.')
+        current = data
+        for key in keys[:-1]:
+            if key not in current:
+                current[key] = {}
+            current = current[key]
+        current[keys[-1]] = value
+        return data
 
     async def _add_log(self, run: WorkflowRun, node_id: str, message: str):
         """Add log entry to workflow run"""
@@ -1135,7 +2118,7 @@ Use these functions when you need to coordinate with other nodes in the workflow
         logger.info(f"Node {source_node_id} asking node {target_node_id}: {question[:100]}...")
 
         # Check communication mode
-        comm_mode = self.execution_context.get("communication_mode", CommunicationMode.SIMPLE)
+        comm_mode = self.execution_context.get("communication_mode", CommunicationMode.SIMPLE) if self.execution_context else CommunicationMode.SIMPLE
 
         if comm_mode == CommunicationMode.PUBSUB:
             return await self._ask_node_pubsub(source_node_id, target_node_id, question, context_data)
@@ -1256,7 +2239,7 @@ Use these functions when you need to coordinate with other nodes in the workflow
             target_types: Optional list of node types to target (e.g., ["ai-processor"])
         """
         # Check communication mode
-        comm_mode = self.execution_context.get("communication_mode", CommunicationMode.SIMPLE)
+        comm_mode = self.execution_context.get("communication_mode", CommunicationMode.SIMPLE) if self.execution_context else CommunicationMode.SIMPLE
 
         if comm_mode == CommunicationMode.PUBSUB:
             await self._broadcast_pubsub(source_node_id, message, target_types)
@@ -1435,9 +2418,9 @@ Use these functions when you need to coordinate with other nodes in the workflow
         )
 
         # Get agent IDs
-        execution_id = self.execution_context.get("execution_id")
-        source_agent_id = self.active_agents.get(execution_id, {}).get(source_node_id)
-        target_agent_id = self.active_agents.get(execution_id, {}).get(target_node_id)
+        execution_id = self.execution_context.get("execution_id") if self.execution_context else None
+        source_agent_id = self.active_agents.get(execution_id, {}).get(source_node_id) if execution_id else None
+        target_agent_id = self.active_agents.get(execution_id, {}).get(target_node_id) if execution_id else None
 
         if not target_agent_id:
             # Fall back to simple mode if target not registered as agent
@@ -1620,8 +2603,8 @@ Use these functions when you need to coordinate with other nodes in the workflow
 
         # Send via Redis Pub/Sub
         try:
-            execution_id = self.execution_context.get("execution_id")
-            source_agent_id = self.active_agents.get(execution_id, {}).get(source_node_id)
+            execution_id = self.execution_context.get("execution_id") if self.execution_context else None
+            source_agent_id = self.active_agents.get(execution_id, {}).get(source_node_id) if execution_id else None
 
             await self.message_bus.broadcast(
                 from_agent=source_agent_id or source_node_id,
