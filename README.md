@@ -34,29 +34,29 @@ docker run -d -p 6379:6379 --name redis redis:latest
 
 ### 2. Backend Setup
 ```bash
-cd backend
+cd apps/backend
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Configure environment
-cp .env.template .env
+cp .env.example .env
 # Edit .env with your credentials
 
 # Run server
-uvicorn app.main:app --reload
+uvicorn src.main:app --reload
 ```
 → Backend runs at http://localhost:8000
 
 ### 3. Frontend Setup
 ```bash
-cd Client
+cd apps/web
 
 # Install dependencies
 npm install
 
 # Configure environment
-cp .env.local.example .env.local
+cp .env.example .env.local
 # Edit with backend URL
 
 # Run development server
@@ -86,10 +86,11 @@ npm run dev
 
 ## 📚 Documentation
 
-- [Backend Documentation](backend/README.md)
-- [Frontend Documentation](Client/README.md)
-- [Workflow Execution Guide](backend/docs/WORKFLOW_EXECUTION_GUIDE.md)
-- [AI System Overview](backend/docs/AI_SYSTEM_README.md)
+- [Backend Documentation](apps/backend/README.md)
+- [Frontend Documentation](apps/web/README.md)
+- [Architecture Documentation](docs/architecture/)
+- [Development Guides](docs/development/)
+- [API Documentation](docs/api/)
 
 ## 🔧 API Endpoints
 
@@ -119,19 +120,23 @@ POST /ai/tasks        - Create task
 
 ```bash
 # Backend tests
-cd backend
+cd apps/backend
 pytest
 
 # Frontend tests
-cd Client
+cd apps/web
 npm run test
 ```
 
 ## 🐳 Docker Deployment
 
 ```bash
-# Start all services
+# Start all services (from config directory)
+cd config
 docker-compose up
+
+# Or from root with -f flag
+docker-compose -f config/docker-compose.yml up
 
 # Services:
 # - Redis: localhost:6379
@@ -143,17 +148,35 @@ docker-compose up
 
 ```
 ChasmX/
-├── backend/              # FastAPI backend
-│   ├── app/             # Application code
-│   ├── tests/           # Test suite
-│   ├── docs/            # Documentation
-│   └── README.md
-├── Client/              # Next.js frontend
-│   ├── app/             # Pages (App Router)
-│   ├── components/      # React components
-│   ├── docs/            # Documentation
-│   └── README.md
-└── README.md           # This file
+├── apps/                     # Application code (monorepo)
+│   ├── backend/             # FastAPI backend
+│   │   ├── src/            # Source code
+│   │   │   ├── core/       # Core configuration
+│   │   │   ├── routes/     # API routes
+│   │   │   ├── services/   # Business logic
+│   │   │   ├── models/     # Database models
+│   │   │   ├── schemas/    # Pydantic schemas
+│   │   │   └── main.py     # Entry point
+│   │   ├── tests/          # Test suite
+│   │   └── requirements.txt
+│   └── web/                # Next.js frontend
+│       ├── src/            # Source code
+│       │   ├── app/        # Next.js app router
+│       │   ├── components/ # React components
+│       │   ├── hooks/      # Custom hooks
+│       │   ├── lib/        # Utilities
+│       │   └── types/      # TypeScript types
+│       ├── public/         # Static assets
+│       └── package.json
+├── docs/                    # Documentation
+│   ├── architecture/       # System architecture
+│   ├── api/               # API documentation
+│   ├── development/       # Development guides
+│   └── planning/          # Project planning
+├── config/                 # Configuration files
+│   └── docker-compose.yml
+├── tools/                  # Development tools
+└── README.md              # This file
 ```
 
 ## 🛣️ Roadmap
