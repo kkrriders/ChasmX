@@ -10,15 +10,15 @@ from pydantic import ValidationError
 from pymongo.errors import PyMongoError
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from app.database.crud import (
+from src.database.crud import (
     create_user,
     get_user_by_email,
     verify_password,
     update_last_login,
     increment_failed_attempts,
 )
-from app.schemas.user import UserCreate
-from app.models.user import User
+from src.schemas.user import UserCreate
+from src.models.user import User
 
 # Test data
 TEST_USER_DATA = {
@@ -50,8 +50,8 @@ def mock_users_collection_fixture(monkeypatch):
         return collection
 
     # Mock both the client initialization check and collection getter
-    monkeypatch.setattr("app.database.client.client", client)  # Mock the real client
-    monkeypatch.setattr("app.database.crud.get_users_collection", mock_get_collection)
+    monkeypatch.setattr("src.database.client.client", client)  # Mock the real client
+    monkeypatch.setattr("src.database.crud.get_users_collection", mock_get_collection)
     return collection
 
 

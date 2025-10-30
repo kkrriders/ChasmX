@@ -9,8 +9,8 @@ from unittest.mock import patch
 from fastapi import status
 from jose import jwt
 
-from app.core.config import settings
-from app.core.database import connect_to_mongo
+from src.core.config import settings
+from src.core.database import connect_to_mongo
 from .conftest import TEST_USERS
 
 # Mark all tests as async
@@ -35,7 +35,7 @@ async def test_health(test_client):
 
 async def test_startup_event(app, caplog):
     """Test application startup event."""
-    with patch("app.core.database.connect_to_mongo") as mock_connect:
+    with patch("src.core.database.connect_to_mongo") as mock_connect:
         # Trigger startup event
         await app.router.startup()
         
@@ -45,7 +45,7 @@ async def test_startup_event(app, caplog):
 
 async def test_shutdown_event(app, caplog):
     """Test application shutdown event."""
-    with patch("app.core.database.close_mongo_connection") as mock_close:
+    with patch("src.core.database.close_mongo_connection") as mock_close:
         # Trigger shutdown event
         await app.router.shutdown()
         
@@ -148,7 +148,7 @@ async def test_role_based_access(test_client, auth_headers):
 async def test_database_connection_error(app, caplog):
     """Test handling of database connection errors."""
     with patch(
-        "app.core.database.connect_to_mongo",
+        "src.core.database.connect_to_mongo",
         side_effect=Exception("Connection failed")
     ):
         # Trigger startup event

@@ -11,8 +11,8 @@ import os
 from unittest.mock import AsyncMock, patch, MagicMock
 from datetime import datetime
 
-from app.models.workflow import Node
-from app.services.workflow_executor import workflow_executor
+from src.models.workflow import Node
+from src.services.workflow_executor import workflow_executor
 
 
 class TestEmailNode:

@@ -5,9 +5,9 @@ from bson import ObjectId
 from mongomock_motor import AsyncMongoMockClient
 import beanie
 
-from app.main import app
-from app.models.workflow import WorkflowStatus, VariableType, VariableScope, Workflow
-from app.core.database import get_database, connect_to_mongo, close_mongo_connection
+from src.main import app
+from src.models.workflow import WorkflowStatus, VariableType, VariableScope, Workflow
+from src.core.database import get_database, connect_to_mongo, close_mongo_connection
 
 # Set up mock MongoDB for testing
 @pytest_asyncio.fixture(autouse=True)

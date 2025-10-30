@@ -11,15 +11,15 @@ from fastapi import HTTPException
 from mongomock_motor import AsyncMongoMockClient
 from bson import ObjectId
 
-from app.utils.otp import (
+from src.utils.otp import (
     generate_otp,
     verify_otp,
     update_user_otp,
     clear_user_otp,
     OTP_SECRET
 )
-from app.utils.email import send_otp_email
-from app.models.user import User
+from src.utils.email import send_otp_email
+from src.models.user import User
 
 # Test data
 TEST_EMAIL = "test@example.com"

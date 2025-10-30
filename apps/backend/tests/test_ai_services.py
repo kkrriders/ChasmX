@@ -5,29 +5,29 @@ import pytest
 import asyncio
 from datetime import datetime
 
-from app.services.llm.base import (
+from src.services.llm.base import (
     LLMRequest,
     LLMMessage,
     ModelRole,
     ModelConfig
 )
-from app.services.llm.openrouter_provider import OpenRouterProvider
-from app.services.cache.redis_cache import RedisCache, CacheConfig
-from app.services.llm.cached_llm_service import CachedLLMService
-from app.services.agents.acp import (
+from src.services.llm.openrouter_provider import OpenRouterProvider
+from src.services.cache.redis_cache import RedisCache, CacheConfig
+from src.services.llm.cached_llm_service import CachedLLMService
+from src.services.agents.acp import (
     AgentContext,
     AgentContextProtocol,
     ContextStore,
     MemoryType,
     AgentPreferences
 )
-from app.services.agents.aap import (
+from src.services.agents.aap import (
     AgentMessageBus,
     AgentMessage,
     MessageType,
     MessagePriority
 )
-from app.services.agents.orchestrator import (
+from src.services.agents.orchestrator import (
     AgentOrchestrator,
     Agent,
     AgentStatus

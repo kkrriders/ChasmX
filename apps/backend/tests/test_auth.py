@@ -8,12 +8,12 @@ from datetime import datetime
 from jose import jwt
 import bcrypt
 
-from app.main import app
-from app.core.database import get_database
-from app.models.user import User, UserCreate
-from app.schemas.user import UserOut
-from app.core.config import settings
-from app.auth.jwt import create_access_token
+from src.main import app
+from src.core.database import get_database
+from src.models.user import User, UserCreate
+from src.schemas.user import UserOut
+from src.core.config import settings
+from src.auth.jwt import create_access_token
 
 # Test data
 TEST_USER = {

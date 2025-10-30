@@ -1,7 +1,7 @@
 """Tests for authentication and RBAC dependencies.
 
 Tests JWT token authentication and role-based access control using
-mongomo        with patch("app.auth.jwt.verify_token") as mock_verify:
+mongomo        with patch("src.auth.jwt.verify_token") as mock_verify:
             # Mock verify_token to return None for invalid token
             mock_verify.return_value = None
 
@@ -22,12 +22,12 @@ from fastapi.security import HTTPAuthorizationCredentials
 from httpx import AsyncClient
 from mongomock_motor import AsyncMongoMockClient
 
-from app.auth.dependencies import get_current_user, verify_role
+from src.auth.dependencies import get_current_user, verify_role
 from jose import jwt, JWTError
-from app.core.config import settings
-from app.auth.jwt import create_access_token
-from app.models.user import User
-from app.core.database import get_database
+from src.core.config import settings
+from src.auth.jwt import create_access_token
+from src.models.user import User
+from src.core.database import get_database
 
 # Mark all tests as async
 pytestmark = pytest.mark.asyncio
@@ -75,9 +75,9 @@ async def mock_db():
     async def mock_get_db():
         return db
 
-    with patch("app.core.database.get_database", new=mock_get_db), patch(
-        "app.auth.dependencies.get_database", new=mock_get_db
-    ), patch("app.crud.user.get_database", new=mock_get_db):
+    with patch("src.core.database.get_database", new=mock_get_db), patch(
+        "src.auth.dependencies.get_database", new=mock_get_db
+    ), patch("src.crud.user.get_database", new=mock_get_db):
         yield db
 
         # Cleanup

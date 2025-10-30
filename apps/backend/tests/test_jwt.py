@@ -3,8 +3,8 @@
 import pytest
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
-from app.auth.jwt import create_access_token, verify_token, get_current_timestamp
-from app.core.config import settings
+from src.auth.jwt import create_access_token, verify_token, get_current_timestamp
+from src.core.config import settings
 import time
 import calendar
 from unittest.mock import patch
@@ -20,7 +20,7 @@ def test_user_data():
 def mock_time():
     """Fixture that provides a mocked timestamp"""
     current = int(time.time())
-    with patch("app.auth.jwt.get_current_timestamp", return_value=current) as mock:
+    with patch("src.auth.jwt.get_current_timestamp", return_value=current) as mock:
         yield mock
 
 

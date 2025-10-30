@@ -7,8 +7,8 @@ import pytest
 from datetime import datetime
 from pydantic import ValidationError, EmailStr
 
-from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserOut
+from src.models.user import User
+from src.schemas.user import UserCreate, UserLogin, UserOut
 
 # Test data
 VALID_USER_DATA = {

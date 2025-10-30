@@ -11,10 +11,10 @@ from unittest.mock import patch
 from fastapi import status
 from httpx import AsyncClient
 
-from app.main import app
-from app.core.database import get_database
-from app.auth.jwt import create_access_token
-from app.models.user import User
+from src.main import app
+from src.core.database import get_database
+from src.auth.jwt import create_access_token
+from src.models.user import User
 
 # Mark all tests as async
 pytestmark = pytest.mark.asyncio

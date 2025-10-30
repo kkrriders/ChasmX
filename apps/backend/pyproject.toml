@@ -12,4 +12,4 @@ description = "Backend with Authentication"
 requires-python = ">=3.10"
 
 [tool.setuptools]
-packages = ["app"]
+packages = ["src"]

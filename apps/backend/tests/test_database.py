@@ -13,7 +13,7 @@ from unittest.mock import patch, MagicMock
 from loguru import logger
 
 # Import our database client module
-from app.database.client import (
+from src.database.client import (
     connect_to_mongo,
     close_mongo_connection,
     get_database,
@@ -32,7 +32,7 @@ TEST_USER = {
 @pytest.fixture
 def mock_logger():
     """Mock logger to capture log messages"""
-    with patch("app.database.client.logger") as mock_log:
+    with patch("src.database.client.logger") as mock_log:
         mock_log.info = MagicMock()  # Explicitly create info method
         mock_log.error = MagicMock()  # Explicitly create error method
         yield mock_log
@@ -44,7 +44,7 @@ async def mock_mongo():
     Setup mock MongoDB using mongomock-motor.
     Patches the AsyncIOMotorClient with AsyncMongoMockClient.
     """
-    with patch("app.database.client.AsyncIOMotorClient", AsyncMongoMockClient):
+    with patch("src.database.client.AsyncIOMotorClient", AsyncMongoMockClient):
         await connect_to_mongo()
         yield
         await close_mongo_connection()
@@ -53,7 +53,7 @@ async def mock_mongo():
 @pytest.fixture(autouse=True)
 async def reset_client():
     """Reset the global client before each test"""
-    import app.database.client as client_module
+    import src.database.client as client_module
 
     client_module.client = None
     yield
@@ -64,7 +64,7 @@ async def reset_client():
 async def test_successful_connection(mock_mongo, mock_logger):
     """Test successful MongoDB connection and logging"""
     # Import client module to get the latest client value
-    import app.database.client as client_module
+    import src.database.client as client_module
 
     # We need to call connect_to_mongo again since it's mocked
     await connect_to_mongo()
@@ -104,7 +104,7 @@ async def test_connection_failure():
     mock_client = MagicMock()
     mock_client.admin.command.side_effect = ConnectionFailure("Connection refused")
 
-    with patch("app.database.client.AsyncIOMotorClient", return_value=mock_client):
+    with patch("src.database.client.AsyncIOMotorClient", return_value=mock_client):
         with pytest.raises(ConnectionFailure):
             await connect_to_mongo()
 
@@ -119,7 +119,7 @@ async def test_invalid_uri(mock_logger):
     mock_client = MagicMock()
     mock_client.admin.command.side_effect = ConnectionFailure("Invalid URI")
 
-    with patch("app.database.client.AsyncIOMotorClient", return_value=mock_client):
+    with patch("src.database.client.AsyncIOMotorClient", return_value=mock_client):
         with pytest.raises(ConnectionFailure):
             await connect_to_mongo()
 
@@ -129,7 +129,7 @@ async def test_invalid_uri(mock_logger):
 
 def test_get_database_without_connection():
     """Test get_database when client is not initialized"""
-    with patch("app.database.client.client", None):
+    with patch("src.database.client.client", None):
         with pytest.raises(RuntimeError) as exc_info:
             get_database()
         assert "MongoDB client not initialized" in str(exc_info.value)
