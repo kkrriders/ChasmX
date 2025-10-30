@@ -27,7 +27,9 @@ import { WebhookApiCallConfigPanel, WebhookApiCallConfig } from './webhook-api-c
 import { AiProcessorConfigPanel, AiProcessorConfig } from './ai-processor-config-panel'
 import { DelayConfigPanel, DelayConfig } from './delay-config-panel'
 import { ConditionalConfigPanel, ConditionalConfig } from './conditional-logic-config-panel'
+import FilterConfigPanel, { FilterConfig } from './filter-config-panel'
 import { LoopConfigPanel, LoopConfig } from './loop-config-panel'
+import { TransformationConfigPanel, TransformationConfig } from './transformation-config-panel'
 
 interface NodeConfigPanelProps {
   node: Node | null
@@ -203,7 +205,49 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
     validationErrors: {}
   })
 
-  const [filterConditions, setFilterConditions] = useState<Array<{ field: string; operator: string; value: string }>>([])
+  // transformation config
+  const [transformationConfig, setTransformationConfig] = useState<TransformationConfig>({
+    name: '',
+    description: '',
+    transformationType: 'mapping',
+    mappings: [],
+    functions: [],
+    scriptLanguage: 'javascript',
+    customScript: '',
+    templateId: '',
+    inputSchema: {},
+    outputSchema: {},
+    enrichmentEnabled: false,
+    enrichmentConfig: {
+      apiUrl: '',
+      method: 'GET',
+      headers: {},
+      bodyTemplate: '',
+      resultMapping: {}
+    },
+    errorHandling: 'skip',
+    defaultValues: {},
+    batchMode: false,
+    performanceMode: false,
+    validationEnabled: true,
+    testInput: '',
+    transformationPreview: {},
+    notes: '',
+    author: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    version: 1,
+    undoStack: [],
+    redoStack: [],
+    validationErrors: {}
+  })
+
+  const [filterConfig, setFilterConfig] = useState<FilterConfig>({
+    name: '',
+    mode: 'simple',
+    simpleConditions: [],
+    combineLogic: 'AND'
+  } as FilterConfig)
 
   // ai
   const [aiModel, setAiModel] = useState('')
@@ -232,7 +276,14 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
     setConnectionString(node.data?.connectionString || '')
     setApiUrl(node.data?.apiUrl || '')
     setFilePath(node.data?.filePath || '')
-    setFilterConditions(node.data?.filterConditions || [])
+    setFilterConfig(node.data?.filterConfig || {
+      name: String(node.data?.label || ''),
+      mode: 'simple',
+      simpleConditions: node.data?.filterConditions || [],
+      combineLogic: 'AND',
+      inputKey: node.data?.inputKey || 'inputs',
+      outputKey: node.data?.outputKey || 'filtered'
+    })
     setAiModel(node.data?.aiModel || '')
     setAiPrompt(node.data?.aiPrompt || '')
     setAiTemperature(typeof node.data?.aiTemperature === 'number' ? node.data.aiTemperature : 0.7)
@@ -373,6 +424,41 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
       enablePreview: false,
       validationErrors: {}
     })
+    setTransformationConfig(node.data?.transformationConfig || {
+      name: '',
+      description: '',
+      transformationType: 'mapping',
+      mappings: [],
+      functions: [],
+      scriptLanguage: 'javascript',
+      customScript: '',
+      templateId: '',
+      inputSchema: {},
+      outputSchema: {},
+      enrichmentEnabled: false,
+      enrichmentConfig: {
+        apiUrl: '',
+        method: 'GET',
+        headers: {},
+        bodyTemplate: '',
+        resultMapping: {}
+      },
+      errorHandling: 'skip',
+      defaultValues: {},
+      batchMode: false,
+      performanceMode: false,
+      validationEnabled: true,
+      testInput: '',
+      transformationPreview: {},
+      notes: '',
+      author: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      version: 1,
+      undoStack: [],
+      redoStack: [],
+      validationErrors: {}
+    })
     setRawJson(node.data ? JSON.stringify(node.data, null, 2) : '')
   }, [node])
 
@@ -409,7 +495,7 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
       connectionString,
       apiUrl,
       filePath,
-      filterConditions,
+      filterConfig,
       aiModel,
       aiPrompt,
       aiTemperature,
@@ -424,6 +510,7 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
       delayConfig,
       conditionalConfig,
       loopConfig,
+      transformationConfig,
     }
 
     if (showJsonEditor && rawJson.trim()) {
@@ -461,26 +548,27 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
 
     if (nodeType.includes('processing') && nodeLabel.includes('filter')) {
       return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border p-4">
-          <Label>Filter Conditions</Label>
-          <div className="space-y-2 mt-2">
-            {filterConditions.map((c, idx) => (
-              <div key={idx} className="flex gap-2">
-                <Input value={c.field} onChange={(e) => { const copy = [...filterConditions]; copy[idx] = { ...copy[idx], field: e.target.value }; setFilterConditions(copy) }} />
-                <Select value={c.operator} onValueChange={(v) => { const copy = [...filterConditions]; copy[idx] = { ...copy[idx], operator: v as any }; setFilterConditions(copy) }}>
-                  <SelectTrigger className="h-9 w-28"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="equals">==</SelectItem>
-                    <SelectItem value="contains">contains</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input value={c.value} onChange={(e) => { const copy = [...filterConditions]; copy[idx] = { ...copy[idx], value: e.target.value }; setFilterConditions(copy) }} />
-                <Button variant="outline" size="sm" onClick={() => setFilterConditions(filterConditions.filter((_, i) => i !== idx))}><X className="h-4 w-4" /></Button>
-              </div>
-            ))}
-            <Button variant="outline" size="sm" onClick={() => setFilterConditions([...filterConditions, { field: '', operator: 'equals', value: '' }])}><Plus className="h-4 w-4 mr-2" />Add</Button>
-          </div>
-        </div>
+        <FilterConfigPanel
+          config={filterConfig}
+          onConfigChange={setFilterConfig}
+          onPreview={async (cfg) => {
+            // Basic mock preview - in a full implementation this should run through the runtime filter logic
+            try {
+              // Try to run a simple eval-based preview if an expression is present (safe-guarded)
+              if (cfg.mode === 'expression' && cfg.filterExpr) {
+                // NOTE: eval is NOT safe in production. This is a simple dev preview shim.
+                // Provide a helpful mock response instead of executing arbitrary user code.
+                return { success: true, result: { preview: 'Expression mode preview is not executed in-editor for safety.' } }
+              }
+
+              // For simple mode, return a mock structure describing conditions
+              return { success: true, result: { conditions: cfg.simpleConditions || [], combine: cfg.combineLogic } }
+            } catch (e) {
+              return { success: false, message: String(e) }
+            }
+          }}
+          variables={[]}
+        />
       )
     }
 
@@ -492,6 +580,24 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
           onPreview={async (config) => {
             // TODO: Implement actual preview functionality
             return { success: true, response: 'Preview result', tokens: 150, cost: 0.0023 }
+          }}
+          variables={[]} // TODO: Pass actual variables from workflow
+        />
+      )
+    }
+
+    // Transformation specific panel
+    if (
+      nodeType.includes('processing') &&
+      (nodeLabel.includes('transform') || nodeLabel.includes('transformer') || nodeLabel.includes('mapping'))
+    ) {
+      return (
+        <TransformationConfigPanel
+          config={transformationConfig}
+          onConfigChange={setTransformationConfig}
+          onPreview={async (config) => {
+            // TODO: Implement actual preview functionality
+            return { success: true, response: { transformed: 'data' }, tokens: 50, cost: 0.001 }
           }}
           variables={[]} // TODO: Pass actual variables from workflow
         />
@@ -689,7 +795,7 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
 
         <Separator />
 
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+  <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
           {/* If this is a Data Source, Webhook/API Call, AI Processor, Delay, Conditional Logic, or Loop node we avoid rendering the outer tab row to prevent duplicate tabs.
              These panels render their own Basic/Advanced/JSON tabs. */}
           {node && (
@@ -725,7 +831,8 @@ export function NodeConfigPanel({ node, open, onOpenChange, onSave }: NodeConfig
             </div>
           ) : (
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid grid-cols-4 gap-2 mb-4">
+              {/* make tabs horizontally scrollable on small widths to avoid forcing wide grid */}
+              <TabsList className="flex w-full gap-2 mb-4 overflow-x-auto hide-scrollbar">
                 <TabsTrigger value="basic">Basic</TabsTrigger>
                 <TabsTrigger value="specific">Specific</TabsTrigger>
                 <TabsTrigger value="advanced">Advanced</TabsTrigger>

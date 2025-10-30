@@ -12,6 +12,21 @@
   --cx-card-bg: #ffffff;
 }
 
+/* Utility: hide scrollbar but keep scrollable behavior */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* Small responsive tweaks for narrow config drawers */
+.config-drawer .tabs-trigger-compact {
+  min-width: 72px;
+  padding: 0.375rem 0.75rem;
+}
+
 /* Only target when NOT using the dark mode root class */
 :not(.dark) body:not(.home-hide-scroll),
 :not(.dark) .min-h-screen:not(.home-no-scrollbar) {

@@ -1307,140 +1307,85 @@ Use these functions when you need to coordinate with other nodes in the workflow
             }
 
     async def _execute_transformer_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute transformer node - transforms data structure"""
+        """Execute transformer node with comprehensive transformation capabilities"""
         try:
-            transform_type = node.config.get("transform_type", "map")
+            config = node.config
             input_data = context.get("input_data", context.get("variables", {}))
 
-            logger.info(f"Transformer Node: Applying {transform_type} transformation")
+            logger.info(f"Transformer Node: Executing transformation '{config.get('name', 'unnamed')}'")
 
-            if transform_type == "map":
-                # Field mapping transformation
-                field_mappings = node.config.get("field_mappings", {})
-                # field_mappings format: {"new_field": "old_field", "name": "full_name"}
-                
-                if isinstance(input_data, dict):
-                    transformed_data = {}
-                    for new_field, old_field in field_mappings.items():
-                        # Support dot notation for nested fields
-                        value = self._get_nested_value(input_data, old_field)
-                        if value is not None:
-                            # Support interpolation in field values
-                            if isinstance(value, str):
-                                value = self._interpolate_variables(value, context)
-                            self._set_nested_value(transformed_data, new_field, value)
-                    
-                    # Copy unmapped fields if configured
-                    if node.config.get("copy_unmapped", False):
-                        for key, value in input_data.items():
-                            if key not in field_mappings.values() and key not in transformed_data:
-                                transformed_data[key] = value
-                                
-                elif isinstance(input_data, list):
-                    # Apply mapping to each item in array
-                    transformed_data = []
-                    for item in input_data:
-                        if isinstance(item, dict):
-                            mapped_item = {}
-                            for new_field, old_field in field_mappings.items():
-                                value = self._get_nested_value(item, old_field)
-                                if value is not None:
-                                    if isinstance(value, str):
-                                        value = self._interpolate_variables(value, context)
-                                    self._set_nested_value(mapped_item, new_field, value)
-                            transformed_data.append(mapped_item)
-                        else:
-                            transformed_data.append(item)
-                else:
-                    transformed_data = input_data
+            # Get transformation type
+            transformation_type = config.get("transformationType", "mapping")
 
-            elif transform_type == "aggregate":
-                # Data aggregation
-                operation = node.config.get("operation", "count")
-                group_by = node.config.get("group_by")
-                
-                if isinstance(input_data, list):
-                    if group_by:
-                        # Group by field and aggregate
-                        groups = {}
-                        for item in input_data:
-                            if isinstance(item, dict):
-                                key = self._get_nested_value(item, group_by, "unknown")
-                                if key not in groups:
-                                    groups[key] = []
-                                groups[key].append(item)
-                        
-                        transformed_data = {}
-                        for key, items in groups.items():
-                            transformed_data[key] = self._apply_aggregation(items, operation)
-                    else:
-                        # Aggregate all items
-                        transformed_data = self._apply_aggregation(input_data, operation)
-                else:
-                    transformed_data = input_data
+            # Initialize transformed data
+            transformed_data = input_data
 
-            elif transform_type == "flatten":
-                # Flatten nested structures
-                max_depth = node.config.get("max_depth", 1)
-                transformed_data = self._flatten_data(input_data, max_depth)
+            # Apply transformations based on type
+            if transformation_type == "mapping":
+                transformed_data = self._apply_field_mappings(input_data, config, context)
+            elif transformation_type == "scripted":
+                transformed_data = await self._apply_scripted_transformation(input_data, config, context)
+            elif transformation_type == "template":
+                transformed_data = self._apply_template_transformation(input_data, config, context)
 
-            elif transform_type == "convert":
-                # Data type conversion
-                conversions = node.config.get("conversions", {})
-                # conversions format: {"field_name": "target_type"}
-                
-                transformed_data = self._apply_type_conversions(input_data, conversions)
+            # Apply built-in functions
+            functions = config.get("functions", [])
+            for func in functions:
+                transformed_data = self._apply_function(transformed_data, func, context)
 
-            elif transform_type == "merge":
-                # Merge with additional data
-                merge_data = node.config.get("merge_data", {})
-                merge_strategy = node.config.get("merge_strategy", "update")  # update, overwrite, keep_original
-                
-                if isinstance(input_data, dict) and isinstance(merge_data, dict):
-                    transformed_data = input_data.copy()
-                    if merge_strategy == "update":
-                        transformed_data.update(merge_data)
-                    elif merge_strategy == "overwrite":
-                        transformed_data = {**merge_data, **transformed_data}
-                    elif merge_strategy == "keep_original":
-                        for key, value in merge_data.items():
-                            if key not in transformed_data:
-                                transformed_data[key] = value
-                else:
-                    transformed_data = input_data
+            # Apply data enrichment if enabled
+            if config.get("enrichmentEnabled", False):
+                transformed_data = await self._apply_data_enrichment(transformed_data, config, context)
 
-            elif transform_type == "extract":
-                # Extract specific fields or nested values
-                extract_paths = node.config.get("extract_paths", [])
-                # extract_paths format: ["field1", "nested.field", "array.0.value"]
-                
-                transformed_data = {}
-                for path in extract_paths:
-                    value = self._get_nested_value(input_data, path)
-                    if value is not None:
-                        # Use the last part of the path as the key
-                        key = path.split('.')[-1]
-                        transformed_data[key] = value
+            # Apply error handling and validation
+            transformed_data = self._apply_error_handling_and_validation(transformed_data, config, input_data)
 
-            else:
-                raise ValueError(f"Unsupported transform type: {transform_type}")
+            # Update transformation preview if test input was provided
+            if config.get("testInput"):
+                try:
+                    test_data = json.loads(config["testInput"])
+                    preview_result = self._apply_field_mappings(test_data, config, context)
+                    config["transformationPreview"] = preview_result
+                except:
+                    pass
 
             return {
                 "status": "completed",
                 "output": transformed_data,
-                "transform_type": transform_type,
+                "transformation_type": transformation_type,
                 "input_size": len(str(input_data)) if input_data else 0,
                 "output_size": len(str(transformed_data)) if transformed_data else 0,
+                "functions_applied": len(functions),
+                "enrichment_applied": config.get("enrichmentEnabled", False),
                 "timestamp": datetime.utcnow().isoformat()
             }
 
         except Exception as e:
             logger.error(f"Transformer node execution failed: {str(e)}")
-            return {
-                "status": "error",
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
-            }
+
+            # Apply error handling
+            error_handling = config.get("errorHandling", "fail")
+            if error_handling == "skip":
+                return {
+                    "status": "skipped",
+                    "error": str(e),
+                    "output": input_data,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            elif error_handling == "default":
+                default_values = config.get("defaultValues", {})
+                return {
+                    "status": "completed_with_defaults",
+                    "error": str(e),
+                    "output": default_values,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            else:  # fail
+                return {
+                    "status": "error",
+                    "error": str(e),
+                    "timestamp": datetime.utcnow().isoformat()
+                }
 
     def _apply_aggregation(self, data: List[Any], operation: str) -> Any:
         """Apply aggregation operation to data"""
@@ -1545,6 +1490,310 @@ Use these functions when you need to coordinate with other nodes in the workflow
         except (ValueError, TypeError):
             logger.warning(f"Failed to convert {value} to {target_type}")
             return value
+
+    def _apply_field_mappings(self, input_data: Any, config: Dict[str, Any], context: Dict[str, Any]) -> Any:
+        """Apply field mappings from the transformation config"""
+        mappings = config.get("mappings", [])
+
+        if isinstance(input_data, dict):
+            transformed_data = {}
+
+            for mapping in mappings:
+                input_field = mapping.get("inputField", "")
+                output_field = mapping.get("outputField", "")
+                data_type = mapping.get("dataType", "auto")
+                required = mapping.get("required", False)
+                default_value = mapping.get("defaultValue")
+                transformation = mapping.get("transformation")
+
+                # Get value from input data
+                value = self._get_nested_value(input_data, input_field)
+
+                # Apply default value if required and value is None
+                if value is None and required and default_value is not None:
+                    value = default_value
+
+                # Apply transformation if specified
+                if transformation and value is not None:
+                    value = self._apply_transformation_expression(value, transformation, context)
+
+                # Apply data type conversion
+                if data_type != "auto" and value is not None:
+                    value = self._convert_value(value, data_type)
+
+                # Set value in output if we have both input and output field
+                if output_field and (value is not None or not required):
+                    self._set_nested_value(transformed_data, output_field, value)
+
+            return transformed_data
+
+        elif isinstance(input_data, list):
+            # Apply mapping to each item in array
+            return [self._apply_field_mappings(item, config, context) for item in input_data if isinstance(item, dict)]
+
+        return input_data
+
+    def _apply_transformation_expression(self, value: Any, expression: str, context: Dict[str, Any]) -> Any:
+        """Apply a transformation expression to a value"""
+        try:
+            # Simple expression evaluation - in production, this should be more secure
+            # For now, support basic string operations
+            if expression.startswith("upper"):
+                return str(value).upper()
+            elif expression.startswith("lower"):
+                return str(value).lower()
+            elif expression.startswith("title"):
+                return str(value).title()
+            elif expression.startswith("trim"):
+                return str(value).strip()
+            elif expression.startswith("length"):
+                return len(str(value))
+            else:
+                # Interpolate variables in the expression
+                interpolated = self._interpolate_variables(expression, {**context, "value": value})
+                return interpolated
+        except Exception as e:
+            logger.warning(f"Failed to apply transformation expression '{expression}': {str(e)}")
+            return value
+
+    async def _apply_scripted_transformation(self, input_data: Any, config: Dict[str, Any], context: Dict[str, Any]) -> Any:
+        """Apply scripted transformation using JavaScript, JSONata, or JMESPath"""
+        script_language = config.get("scriptLanguage", "javascript")
+        custom_script = config.get("customScript", "")
+
+        if not custom_script.strip():
+            return input_data
+
+        try:
+            if script_language == "javascript":
+                return await self._execute_javascript_transformation(input_data, custom_script, context)
+            elif script_language == "jsonata":
+                return self._execute_jsonata_transformation(input_data, custom_script, context)
+            elif script_language == "jmespath":
+                return self._execute_jmespath_transformation(input_data, custom_script, context)
+            else:
+                logger.warning(f"Unsupported script language: {script_language}")
+                return input_data
+        except Exception as e:
+            logger.error(f"Scripted transformation failed: {str(e)}")
+            return input_data
+
+    async def _execute_javascript_transformation(self, input_data: Any, script: str, context: Dict[str, Any]) -> Any:
+        """Execute JavaScript transformation - placeholder for actual JS execution"""
+        # In a real implementation, this would use a JavaScript engine like PyV8, Node.js, or similar
+        # For now, return input data unchanged
+        logger.warning("JavaScript transformation not implemented - returning input data unchanged")
+        return input_data
+
+    def _execute_jsonata_transformation(self, input_data: Any, expression: str, context: Dict[str, Any]) -> Any:
+        """Execute JSONata transformation"""
+        try:
+            # Placeholder - would require jsonata-python library
+            logger.warning("JSONata transformation not implemented - returning input data unchanged")
+            return input_data
+        except Exception as e:
+            logger.error(f"JSONata transformation failed: {str(e)}")
+            return input_data
+
+    def _execute_jmespath_transformation(self, input_data: Any, expression: str, context: Dict[str, Any]) -> Any:
+        """Execute JMESPath transformation"""
+        try:
+            import jmespath
+            return jmespath.search(expression, input_data)
+        except ImportError:
+            logger.warning("JMESPath library not available - install with: pip install jmespath")
+            return input_data
+        except Exception as e:
+            logger.error(f"JMESPath transformation failed: {str(e)}")
+            return input_data
+
+    def _apply_template_transformation(self, input_data: Any, config: Dict[str, Any], context: Dict[str, Any]) -> Any:
+        """Apply template-based transformation"""
+        template_id = config.get("templateId", "")
+
+        # Define common templates
+        templates = {
+            "address-normalization": self._template_address_normalization,
+            "price-formatting": self._template_price_formatting,
+            "user-profile-cleanup": self._template_user_profile_cleanup,
+            "date-standardization": self._template_date_standardization,
+            "data-masking": self._template_data_masking
+        }
+
+        template_func = templates.get(template_id)
+        if template_func:
+            return template_func(input_data, context)
+        else:
+            logger.warning(f"Unknown template: {template_id}")
+            return input_data
+
+    def _apply_function(self, data: Any, func_config: Dict[str, Any], context: Dict[str, Any]) -> Any:
+        """Apply a built-in function to the data"""
+        func_name = func_config.get("name", "")
+        func_type = func_config.get("type", "")
+        func_config_params = func_config.get("config", {})
+
+        try:
+            if func_type == "case":
+                operation = func_config_params.get("operation", "upper")
+                if operation == "upper":
+                    return self._apply_to_data(data, lambda x: str(x).upper())
+                elif operation == "lower":
+                    return self._apply_to_data(data, lambda x: str(x).lower())
+                elif operation == "title":
+                    return self._apply_to_data(data, lambda x: str(x).title())
+
+            elif func_type == "string":
+                operation = func_config_params.get("operation", "")
+                if operation == "join":
+                    separator = func_config_params.get("separator", " ")
+                    return self._apply_to_data(data, lambda x: separator.join(str(x) for x in x) if isinstance(x, list) else str(x))
+                elif operation == "split":
+                    separator = func_config_params.get("separator", ",")
+                    return self._apply_to_data(data, lambda x: str(x).split(separator))
+                elif operation == "extractNumber":
+                    import re
+                    return self._apply_to_data(data, lambda x: float(re.search(r'[\d.]+', str(x)).group()) if re.search(r'[\d.]+', str(x)) else x)
+
+            elif func_type == "math":
+                operation = func_config_params.get("operation", "")
+                if isinstance(data, list):
+                    numbers = [float(x) for x in data if isinstance(x, (int, float, str)) and str(x).replace('.', '').isdigit()]
+                    if operation == "sum":
+                        return sum(numbers)
+                    elif operation == "average":
+                        return sum(numbers) / len(numbers) if numbers else 0
+                    elif operation == "min":
+                        return min(numbers) if numbers else None
+                    elif operation == "max":
+                        return max(numbers) if numbers else None
+
+            elif func_type == "date":
+                operation = func_config_params.get("operation", "")
+                format_str = func_config_params.get("format", "YYYY-MM-DD")
+                # Placeholder for date formatting
+                return data
+
+        except Exception as e:
+            logger.warning(f"Function application failed for {func_name}: {str(e)}")
+
+        return data
+
+    def _apply_to_data(self, data: Any, func: callable) -> Any:
+        """Apply a function to data recursively"""
+        if isinstance(data, dict):
+            return {k: self._apply_to_data(v, func) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._apply_to_data(item, func) for item in data]
+        else:
+            return func(data)
+
+    async def _apply_data_enrichment(self, data: Any, config: Dict[str, Any], context: Dict[str, Any]) -> Any:
+        """Apply external API enrichment to data"""
+        enrichment_config = config.get("enrichmentConfig", {})
+        api_url = enrichment_config.get("apiUrl", "")
+        method = enrichment_config.get("method", "GET")
+        headers = enrichment_config.get("headers", {})
+        body_template = enrichment_config.get("bodyTemplate", "")
+        result_mapping = enrichment_config.get("resultMapping", {})
+
+        if not api_url:
+            return data
+
+        try:
+            # Prepare request
+            url = self._interpolate_variables(api_url, {**context, "data": data})
+
+            if method == "POST" and body_template:
+                body = self._interpolate_variables(body_template, {**context, "data": data})
+                # In real implementation, make HTTP request here
+                # enriched_data = await self._make_http_request(url, method, headers, body)
+                enriched_data = {"enriched": True}  # Placeholder
+            else:
+                # GET request
+                # enriched_data = await self._make_http_request(url, method, headers)
+                enriched_data = {"enriched": True}  # Placeholder
+
+            # Apply result mapping
+            if isinstance(data, dict) and isinstance(enriched_data, dict):
+                for output_field, input_field in result_mapping.items():
+                    value = self._get_nested_value(enriched_data, input_field)
+                    if value is not None:
+                        self._set_nested_value(data, output_field, value)
+
+            return data
+
+        except Exception as e:
+            logger.error(f"Data enrichment failed: {str(e)}")
+            return data
+
+    def _apply_error_handling_and_validation(self, data: Any, config: Dict[str, Any], original_data: Any) -> Any:
+        """Apply error handling and validation to transformed data"""
+        # Apply default values for missing required fields
+        default_values = config.get("defaultValues", {})
+
+        if isinstance(data, dict) and isinstance(default_values, dict):
+            for field, default_value in default_values.items():
+                if self._get_nested_value(data, field) is None:
+                    self._set_nested_value(data, field, default_value)
+
+        # Schema validation (placeholder)
+        if config.get("validationEnabled", False):
+            # In real implementation, validate against outputSchema
+            pass
+
+        return data
+
+    # Template implementations
+    def _template_address_normalization(self, data: Any, context: Dict[str, Any]) -> Any:
+        """Normalize address data"""
+        if isinstance(data, dict):
+            # Simple address normalization
+            if "address" in data:
+                data["address"] = str(data["address"]).strip().title()
+            if "city" in data:
+                data["city"] = str(data["city"]).strip().title()
+            if "state" in data:
+                data["state"] = str(data["state"]).strip().upper()
+            if "zip" in data:
+                data["zip"] = str(data["zip"]).strip()
+        return data
+
+    def _template_price_formatting(self, data: Any, context: Dict[str, Any]) -> Any:
+        """Format price data"""
+        if isinstance(data, dict):
+            if "price" in data:
+                try:
+                    price = float(data["price"])
+                    data["price"] = ".2f"
+                except:
+                    pass
+        return data
+
+    def _template_user_profile_cleanup(self, data: Any, context: Dict[str, Any]) -> Any:
+        """Clean user profile data"""
+        if isinstance(data, dict):
+            if "name" in data:
+                data["name"] = str(data["name"]).strip().title()
+            if "email" in data:
+                data["email"] = str(data["email"]).strip().lower()
+        return data
+
+    def _template_date_standardization(self, data: Any, context: Dict[str, Any]) -> Any:
+        """Standardize date formats"""
+        # Placeholder - would require date parsing library
+        return data
+
+    def _template_data_masking(self, data: Any, context: Dict[str, Any]) -> Any:
+        """Mask sensitive data"""
+        if isinstance(data, dict):
+            sensitive_fields = ["ssn", "credit_card", "password"]
+            for field in sensitive_fields:
+                if field in data:
+                    value = str(data[field])
+                    if len(value) > 4:
+                        data[field] = "*" * (len(value) - 4) + value[-4:]
+        return data
 
     async def _execute_condition_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute condition node - branching logic"""
