@@ -9,7 +9,7 @@
 
 **New to ChasmX?** Start here:
 1. Read **[Project README](../README.md)** (5 min) - Project overview
-2. Review **[Unified Architecture](../UNIFIED_ARCHITECTURE_AND_SYSTEM_DESIGN.md)** (1 hour) - Complete architecture guide
+2. Review **[Unified Architecture](./architecture/UNIFIED_ARCHITECTURE_AND_SYSTEM_DESIGN.md)** (1 hour) - Complete architecture guide
 
 ---
 
@@ -101,12 +101,12 @@
 
 ### 📚 Frontend Documentation
 
-Located in `Client/` directory:
-- **[Client/README.md](../Client/README.md)** - Frontend overview
-- **[Client/docs/ARCHITECTURE.md](../Client/docs/ARCHITECTURE.md)** - Frontend architecture
-- **[Client/docs/QUICK_START.md](../Client/docs/QUICK_START.md)** - Frontend quick start
-- **[Client/WORKFLOW_COMPONENTS_GUIDE.md](../Client/WORKFLOW_COMPONENTS_GUIDE.md)** - Workflow builder components
-- **[Client/ROUTES_AND_INTEGRATION.md](../Client/ROUTES_AND_INTEGRATION.md)** - Routing and API integration
+Located in development directory:
+- **[apps/web/README.md](../apps/web/README.md)** - Frontend overview
+- **[development/ARCHITECTURE.md](./development/ARCHITECTURE.md)** - Frontend architecture
+- **[development/QUICK_START.md](./development/QUICK_START.md)** - Frontend quick start
+- **[development/WORKFLOW_COMPONENTS_GUIDE.md](./development/WORKFLOW_COMPONENTS_GUIDE.md)** - Workflow builder components
+- **[development/ROUTES_AND_INTEGRATION.md](./development/ROUTES_AND_INTEGRATION.md)** - Routing and API integration
 
 ---
 

@@ -21,7 +21,8 @@
       "Bash(curl:*)",
       "Bash(python3:*)",
       "Bash(docker restart:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []
