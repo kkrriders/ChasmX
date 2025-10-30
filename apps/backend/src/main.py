@@ -8,6 +8,7 @@ from loguru import logger
 
 from src.core.database import connect_to_mongo, close_mongo_connection, get_database
 from src.core.config import settings
+from src.middleware.rate_limiter import RateLimiterMiddleware
 from src.routes import auth_router, users_router, workflow_router
 from src.routes.ai import router as ai_router
 from src.routes.websocket import router as websocket_router
@@ -15,8 +16,10 @@ from src.routes.schedule import router as schedule_router
 from src.routes.webhook import router as webhook_router
 from src.routes.usage import router as usage_router
 from src.routes.template import router as template_router
+from src.routes.api_keys import router as api_keys_router
 from src.services.ai_service_manager import ai_service_manager
 from src.services.scheduler_service import scheduler_service
+from src.services.quota_service import quota_service
 
 # Initialize FastAPI application
 app = FastAPI(
@@ -36,6 +39,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add rate limiting middleware
+app.add_middleware(RateLimiterMiddleware)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle application lifespan events."""
@@ -54,8 +60,16 @@ async def lifespan(app: FastAPI):
         )
         logger.info("Startup: Scheduler service initialized")
 
+        # Initialize quota service
+        await quota_service.connect()
+        logger.info("Startup: Quota service initialized")
+
         yield
     finally:
+        # Shutdown quota service
+        await quota_service.disconnect()
+        logger.info("Shutdown: Quota service closed")
+
         # Shutdown scheduler service
         await scheduler_service.shutdown()
         logger.info("Shutdown: Scheduler service closed")
@@ -80,6 +94,7 @@ app.include_router(websocket_router)
 app.include_router(schedule_router)
 app.include_router(webhook_router)
 app.include_router(template_router)
+app.include_router(api_keys_router)
 
 @app.get("/")
 async def root():
