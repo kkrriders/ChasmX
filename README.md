@@ -22,47 +22,51 @@ ChasmX is a modern workflow automation platform that allows users to:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- Docker (for Redis)
+- Docker & Docker Compose
 - MongoDB Atlas account
+- (Optional) Python 3.10+ and Node.js 18+ for local development
 
-### 1. Start Redis
+### Option 1: Docker (Recommended)
+
 ```bash
-docker run -d -p 6379:6379 --name redis redis:latest
+# 1. Clone the repository
+git clone <repository-url>
+cd ChasmX
+
+# 2. Configure environment
+cp config/.env.example config/.env
+cp apps/backend/.env.example apps/backend/.env
+# Edit apps/backend/.env with your MongoDB Atlas connection string and API keys
+
+# 3. Start development environment
+./scripts/dev-start.sh
+# Or: docker-compose -f config/docker-compose.dev.yml up
+
+# 4. Access the services
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+# API Docs: http://localhost:8000/docs
 ```
 
-### 2. Backend Setup
+### Option 2: Local Development
+
 ```bash
+# 1. Start Redis
+docker run -d -p 6379:6379 --name redis redis:latest
+
+# 2. Backend Setup
 cd apps/backend
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
 cp .env.example .env
 # Edit .env with your credentials
-
-# Run server
 uvicorn src.main:app --reload
-```
-→ Backend runs at http://localhost:8000
 
-### 3. Frontend Setup
-```bash
+# 3. Frontend Setup (in another terminal)
 cd apps/web
-
-# Install dependencies
 npm install
-
-# Configure environment
 cp .env.example .env.local
-# Edit with backend URL
-
-# Run development server
 npm run dev
 ```
-→ Frontend runs at http://localhost:3000
 
 ## ✨ Key Features
 
@@ -128,20 +132,29 @@ cd apps/web
 npm run test
 ```
 
-## 🐳 Docker Deployment
+## 🐳 Docker Commands
 
 ```bash
-# Start all services (from config directory)
-cd config
-docker-compose up
+# Development (with hot-reload)
+./scripts/dev-start.sh              # Start development environment
+./scripts/dev-stop.sh               # Stop development environment
+./scripts/logs.sh dev               # View development logs
 
-# Or from root with -f flag
-docker-compose -f config/docker-compose.yml up
+# Production
+./scripts/prod-start.sh             # Start production environment
+./scripts/prod-stop.sh              # Stop production environment
+./scripts/logs.sh prod              # View production logs
+
+# Manual commands
+docker-compose -f config/docker-compose.dev.yml up --build   # Dev with rebuild
+docker-compose -f config/docker-compose.yml up -d            # Prod in background
+docker-compose -f config/docker-compose.dev.yml down         # Stop and remove
 
 # Services:
 # - Redis: localhost:6379
-# - Backend: localhost:8000
+# - Backend: localhost:8000 (API) / localhost:8000/docs (Swagger)
 # - Frontend: localhost:3000
+# - MongoDB: MongoDB Atlas (cloud)
 ```
 
 ## 📊 Project Structure
