@@ -1,9 +1,10 @@
 # Use Node.js LTS version
-FROM node:20-alpine AS base
+FROM node:20-alpine3.19 AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Update packages and install security patches
+RUN apk update && apk upgrade --no-cache && apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
