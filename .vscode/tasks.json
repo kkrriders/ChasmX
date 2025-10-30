@@ -4,26 +4,12 @@
 		{
 			"label": "Run Next.js app",
 			"type": "shell",
-			"command": "pnpm dev",
+			"command": "npm --prefix \"${workspaceFolder}\\Client\" run dev",
 			"args": [],
-			"isBackground": false,
+			"isBackground": true,
 			"problemMatcher": [
 				"$tsc"
 			],
-			"group": "build"
-		},
-		{
-			"label": "Run Next.js app",
-			"type": "shell",
-			"command": "pnpm dev",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "Run Next.js app",
-			"type": "shell",
-			"command": "pnpm dev",
-			"isBackground": true,
 			"group": "build"
 		}
 	]

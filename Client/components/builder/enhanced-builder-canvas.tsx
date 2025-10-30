@@ -218,6 +218,9 @@ function EnhancedBuilderCanvasInner() {
     // If a pending template payload is present (set by the templates page), load it
     try {
       const pending = localStorage.getItem('pending-template')
+      const pendingId = localStorage.getItem('pending-template-id')
+
+      // If a full payload exists, prefer it
       if (pending) {
         const parsed = JSON.parse(pending)
         if (parsed && (parsed.nodes || parsed.edges)) {
@@ -253,6 +256,55 @@ function EnhancedBuilderCanvasInner() {
           toast({ title: 'Template Loaded', description: `Loaded template: ${parsed.name || 'Template'}` })
           return
         }
+      }
+
+      // If only an ID was stored (older modal), try to resolve via shared templates
+      if (pendingId) {
+        // Use an async IIFE so we don't make the useEffect callback async
+        ;(async () => {
+          try {
+            // dynamic import to avoid cycle problems
+            const mod = await import('@/lib/workflow-templates')
+            const templatesMap = mod.templatesMap || mod.default || {}
+            const template = templatesMap[pendingId]
+            if (template && (template.nodes || template.edges)) {
+              const parsed = template
+              const timestamp = Date.now()
+              const idMap: Record<string, string> = {}
+              const mappedNodes = (parsed.nodes || []).map((n: any, idx: number) => {
+                const newId = `${n.id}-${timestamp}-${idx}`
+                idMap[n.id] = newId
+                return {
+                  ...n,
+                  id: newId,
+                  position: n.position || { x: (idx + 1) * 200, y: 0 },
+                  type: n.type || 'custom',
+                }
+              })
+
+              const mappedEdges = (parsed.edges || []).map((e: any, idx: number) => ({
+                ...e,
+                id: e.id ? `${e.id}-${timestamp}-${idx}` : `edge-${idx}-${timestamp}`,
+                source: idMap[e.source] || e.source,
+                target: idMap[e.target] || e.target,
+                type: e.type || 'custom',
+                animated: typeof e.animated === 'boolean' ? e.animated : true,
+              }))
+
+              setNodes(mappedNodes)
+              setEdges(mappedEdges)
+              setWorkflowName(parsed.name || 'Imported Template')
+              setShowTemplates(false)
+              localStorage.removeItem('pending-template-id')
+              toast({ title: 'Template Loaded', description: `Loaded template: ${parsed.name || 'Template'}` })
+            }
+          } catch (err) {
+            console.error('Failed to resolve pending-template-id:', err)
+          }
+        })()
+
+        // Return here so we don't proceed to load autosave synchronously; the IIFE will set nodes when ready
+        return
       }
     } catch (err) {
       console.error('Failed to parse pending template:', err)
