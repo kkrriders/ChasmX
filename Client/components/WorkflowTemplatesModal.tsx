@@ -15,6 +15,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+import { templatesList } from '@/lib/workflow-templates'
+
 type Template = {
   id: string
   title: string
@@ -22,26 +24,8 @@ type Template = {
   difficulty?: 'beginner' | 'intermediate' | 'advanced'
 }
 
-const TEMPLATES: Template[] = [
-  {
-    id: 'data-pipeline',
-    title: 'Data Processing Pipeline',
-    description: 'Process and transform data from multiple sources',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'email-automation',
-    title: 'Email Automation',
-    description: 'Automate email sending based on conditions',
-    difficulty: 'beginner',
-  },
-  {
-    id: 'ai-content',
-    title: 'AI Content Generator',
-    description: 'Generate content using AI models',
-    difficulty: 'intermediate',
-  },
-]
+// Use the shared templates list as the source of truth for the modal UI
+const TEMPLATES: Template[] = templatesList.map((t) => ({ id: t.id, title: t.name, description: t.description, difficulty: t.complexity }))
 
 export function WorkflowTemplatesModal() {
   const [selectedId, setSelectedId] = useState<string>(TEMPLATES[0].id)
@@ -52,7 +36,19 @@ export function WorkflowTemplatesModal() {
 
   const handleUseTemplate = () => {
     // Store the selected template ID in localStorage so the builder can load it
-    localStorage.setItem('pending-template-id', selected.id)
+    // Store the full template payload for immediate loading by the builder
+    try {
+      const full = templatesList.find((x) => x.id === selected.id)
+      if (full) {
+        localStorage.setItem('pending-template', JSON.stringify(full))
+      } else {
+        // fallback to id if full payload is not found (shouldn't happen)
+        localStorage.setItem('pending-template-id', selected.id)
+      }
+    } catch (err) {
+      // If storage fails, still set id so builder can attempt resolution
+      try { localStorage.setItem('pending-template-id', selected.id) } catch (e) {}
+    }
     // Navigate to the builder page
     router.push('/workflows/enhanced')
     setOpen(false)
@@ -85,14 +81,14 @@ export function WorkflowTemplatesModal() {
                 const active = t.id === selectedId
                 return (
                   <button
-                    key={t.id}
-                    onClick={() => setSelectedId(t.id)}
-                    className={cn(
-                      'text-left group p-5 rounded-2xl border-2 w-full transition-all duration-200 shadow-sm flex flex-col gap-2 bg-white hover:shadow-lg',
-                      active
-                        ? 'border-indigo-500 ring-2 ring-indigo-100'
-                        : 'border-slate-200 hover:border-indigo-300',
-                    )}
+                      key={t.id}
+                      onClick={() => setSelectedId(t.id)}
+                      className={cn(
+                        'text-left group p-4 rounded-2xl border-2 w-full transition-all duration-200 shadow-sm flex flex-col justify-between bg-white hover:shadow-lg min-h-[220px]',
+                        active
+                          ? 'border-indigo-500 ring-2 ring-indigo-100'
+                          : 'border-slate-200 hover:border-indigo-300',
+                      )}
                     aria-pressed={active}
                     aria-label={`Select ${t.title}`}
                   >
@@ -140,10 +136,26 @@ export function WorkflowTemplatesModal() {
             </div>
             <div>
               <div className="text-base text-slate-700 mb-2">{selected.description}</div>
+
+              {/* Preview flow (use template preview if available, otherwise derive from node labels) */}
               <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 text-sm text-slate-700 font-mono whitespace-pre-wrap">
-                Trigger → Condition → Send Email → Log
+                {(() => {
+                  const full = templatesList.find((x) => x.id === selected.id)
+                  if (full && full.preview) return full.preview
+                  if (full && Array.isArray(full.nodes) && full.nodes.length > 0) return full.nodes.map((n: any) => n?.data?.label ?? n.id).join(' → ')
+                  return selected.description
+                })()}
               </div>
-              <div className="mt-2 text-xs text-slate-500">This template includes 4 pre-configured nodes ready to use.</div>
+
+              {/* Node names */}
+              <div className="mt-2 text-xs text-slate-500">This template includes {(templatesList.find((x) => x.id === selected.id)?.nodes || []).length} pre-configured nodes.</div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(templatesList.find((x) => x.id === selected.id)?.nodes || []).map((n: any, i: number) => (
+                  <div key={n.id || i} className="text-xs px-2 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                    {n?.data?.label ?? n.id ?? `Node ${i+1}`}
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="flex gap-3 mt-auto">
               <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow" onClick={handleUseTemplate}>
