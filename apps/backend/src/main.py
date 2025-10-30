@@ -1,5 +1,4 @@
 
-
 from datetime import datetime
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
@@ -15,6 +14,7 @@ from src.routes.websocket import router as websocket_router
 from src.routes.schedule import router as schedule_router
 from src.routes.webhook import router as webhook_router
 from src.routes.usage import router as usage_router
+from src.routes.template import router as template_router
 from src.services.ai_service_manager import ai_service_manager
 from src.services.scheduler_service import scheduler_service
 
@@ -79,6 +79,7 @@ app.include_router(usage_router)
 app.include_router(websocket_router)
 app.include_router(schedule_router)
 app.include_router(webhook_router)
+app.include_router(template_router)
 
 @app.get("/")
 async def root():
@@ -96,6 +97,22 @@ async def root():
             "users": {
                 "me": "/users/me",
                 "admin": "/users/admin/users"
+            },
+            "workflows": {
+                "list": "/workflows",
+                "create": "/workflows",
+                "templates": "/workflows/templates"
+            },
+            "templates": {
+                "list": "/templates",
+                "create": "/templates",
+                "categories": "/templates/categories",
+                "featured": "/templates/featured",
+                "search": "/templates/search"
+            },
+            "ai": {
+                "chat": "/ai/chat", 
+                "workflows": "/ai/workflows/generate"
             }
         }
     }
