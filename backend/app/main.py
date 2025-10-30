@@ -15,6 +15,7 @@ from app.routes.websocket import router as websocket_router
 from app.routes.schedule import router as schedule_router
 from app.routes.webhook import router as webhook_router
 from app.routes.usage import router as usage_router
+from app.routes.template import router as template_router
 from app.services.ai_service_manager import ai_service_manager
 from app.services.scheduler_service import scheduler_service
 
@@ -67,9 +68,6 @@ async def lifespan(app: FastAPI):
         await close_mongo_connection()
         logger.info("Shutdown: MongoDB connection closed")
 
-# Set up lifespan events
-app.router.lifespan_context = lifespan
-
 # Include routers with prefixes
 app.include_router(auth_router, prefix="/auth")
 app.include_router(users_router, prefix="/users")
@@ -79,6 +77,7 @@ app.include_router(usage_router)
 app.include_router(websocket_router)
 app.include_router(schedule_router)
 app.include_router(webhook_router)
+app.include_router(template_router)
 
 @app.get("/")
 async def root():
@@ -96,6 +95,22 @@ async def root():
             "users": {
                 "me": "/users/me",
                 "admin": "/users/admin/users"
+            },
+            "workflows": {
+                "list": "/workflows",
+                "create": "/workflows",
+                "templates": "/workflows/templates"
+            },
+            "templates": {
+                "list": "/templates",
+                "create": "/templates",
+                "categories": "/templates/categories",
+                "featured": "/templates/featured",
+                "search": "/templates/search"
+            },
+            "ai": {
+                "chat": "/ai/chat", 
+                "workflows": "/ai/workflows/generate"
             }
         }
     }
