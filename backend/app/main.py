@@ -14,6 +14,7 @@ from app.routes.ai import router as ai_router
 from app.routes.websocket import router as websocket_router
 from app.routes.schedule import router as schedule_router
 from app.routes.webhook import router as webhook_router
+from app.routes.usage import router as usage_router
 from app.services.ai_service_manager import ai_service_manager
 from app.services.scheduler_service import scheduler_service
 
@@ -74,6 +75,7 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(users_router, prefix="/users")
 app.include_router(workflow_router)
 app.include_router(ai_router)
+app.include_router(usage_router)
 app.include_router(websocket_router)
 app.include_router(schedule_router)
 app.include_router(webhook_router)

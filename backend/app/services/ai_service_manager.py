@@ -6,6 +6,7 @@ from .llm.base import ModelConfig, ModelRole
 from .llm.openrouter_provider import OpenRouterProvider
 from .llm.cached_llm_service import CachedLLMService
 from .cache.redis_cache import RedisCache, CacheConfig
+from .cache.semantic_cache import SemanticCache, SemanticCacheConfig
 from .agents.acp import AgentContextProtocol, ContextStore
 from .agents.aap import AgentMessageBus
 from .agents.orchestrator import AgentOrchestrator
@@ -18,6 +19,7 @@ class AIServiceManager:
     def __init__(self):
         """Initialize service manager"""
         self.redis_cache: Optional[RedisCache] = None
+        self.semantic_cache: Optional[SemanticCache] = None
         self.llm_provider: Optional[OpenRouterProvider] = None
         self.llm_service: Optional[CachedLLMService] = None
         self.context_store: Optional[ContextStore] = None
@@ -40,6 +42,9 @@ class AIServiceManager:
 
             # Initialize LLM Provider
             await self._init_llm_provider()
+
+            # Initialize Semantic Cache
+            await self._init_semantic_cache()
 
             # Initialize LLM Service with caching
             self.llm_service = CachedLLMService(
@@ -95,6 +100,22 @@ class AIServiceManager:
             max_retries=ai_settings.LLM_MAX_RETRIES
         )
         logger.info("Initialized OpenRouter Provider with 4 models")
+
+    async def _init_semantic_cache(self):
+        """Initialize semantic cache with embeddings"""
+        semantic_config = SemanticCacheConfig(
+            similarity_threshold=0.95,  # 95% similarity required for cache hit
+            max_search_results=10,
+            embedding_model="openai/text-embedding-3-small",
+            cache_embeddings=True
+        )
+
+        self.semantic_cache = SemanticCache(
+            redis_cache=self.redis_cache,
+            config=semantic_config,
+            openrouter_provider=self.llm_provider
+        )
+        logger.info("Initialized Semantic Cache with embedding-based similarity matching")
 
     async def _init_context_protocol(self):
         """Initialize Agent Context Protocol"""
@@ -162,6 +183,12 @@ class AIServiceManager:
             raise RuntimeError("AI services not initialized")
         return self.context_protocol
 
+    def get_semantic_cache(self) -> SemanticCache:
+        """Get semantic cache instance"""
+        if not self._initialized:
+            raise RuntimeError("AI services not initialized")
+        return self.semantic_cache
+
     async def get_stats(self) -> dict:
         """Get statistics from all services"""
         if not self._initialized:
@@ -172,6 +199,10 @@ class AIServiceManager:
         # Cache stats
         if self.redis_cache:
             stats["cache"] = await self.redis_cache.get_stats()
+
+        # Semantic cache stats
+        if self.semantic_cache:
+            stats["semantic_cache"] = await self.semantic_cache.get_cache_stats()
 
         # Orchestrator stats
         if self.orchestrator:

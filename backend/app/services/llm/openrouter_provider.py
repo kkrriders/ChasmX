@@ -17,6 +17,7 @@ from .base import (
     ModelConfig,
     ModelRole
 )
+from .cost_calculator import cost_calculator
 
 
 class OpenRouterProvider(LLMProvider):
@@ -161,10 +162,22 @@ class OpenRouterProvider(LLMProvider):
         message = choice.get("message", {})
 
         usage_data = response_data.get("usage", {})
+        prompt_tokens = usage_data.get("prompt_tokens", 0)
+        completion_tokens = usage_data.get("completion_tokens", 0)
+        total_tokens = usage_data.get("total_tokens", 0)
+
+        # Calculate cost using cost calculator
+        cost_usd = cost_calculator.calculate_cost(
+            model_id=model_id,
+            input_tokens=prompt_tokens,
+            output_tokens=completion_tokens
+        )
+
         usage = LLMUsage(
-            prompt_tokens=usage_data.get("prompt_tokens", 0),
-            completion_tokens=usage_data.get("completion_tokens", 0),
-            total_tokens=usage_data.get("total_tokens", 0)
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            cost_usd=cost_usd  # Now populated!
         )
 
         return LLMResponse(
@@ -297,3 +310,64 @@ class OpenRouterProvider(LLMProvider):
         """Get the recommended model for a specific role"""
         models = self.get_models_by_role(role)
         return models[0] if models else None
+
+    async def generate_embedding(
+        self,
+        text: str,
+        model: str = "openai/text-embedding-3-small"
+    ) -> Dict[str, Any]:
+        """
+        Generate embedding for text using OpenRouter's embedding API.
+
+        Args:
+            text: Text to embed
+            model: Embedding model to use (default: text-embedding-3-small)
+
+        Returns:
+            Dictionary with 'embedding' key containing the vector
+
+        Note:
+            OpenRouter supports OpenAI-compatible embedding endpoints.
+            The embedding models available via OpenRouter include:
+            - openai/text-embedding-3-small (1536 dims, fast, cheap)
+            - openai/text-embedding-3-large (3072 dims, better quality)
+            - openai/text-embedding-ada-002 (1536 dims, legacy)
+        """
+        session = await self._get_session()
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://chasmx.ai",  # Optional but recommended
+            "X-Title": "ChasmX Workflow Platform"  # Optional but recommended
+        }
+
+        payload = {
+            "model": model,
+            "input": text
+        }
+
+        try:
+            async with session.post(
+                f"{self.BASE_URL}/embeddings",
+                headers=headers,
+                json=payload
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    # OpenAI format: { "data": [{ "embedding": [...] }] }
+                    if "data" in data and len(data["data"]) > 0:
+                        embedding = data["data"][0]["embedding"]
+                        logger.debug(
+                            f"Generated embedding: model={model}, "
+                            f"dimensions={len(embedding)}"
+                        )
+                        return {"embedding": embedding}
+                    else:
+                        raise Exception("Invalid embedding response format")
+                else:
+                    error_text = await response.text()
+                    raise Exception(f"HTTP {response.status}: {error_text}")
+
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            raise
