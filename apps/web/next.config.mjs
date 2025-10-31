@@ -8,6 +8,12 @@ const withBundleAnalyzer = bundleAnalyzer({
 const nextConfig = {
   // Fix for multiple lockfiles warning
   outputFileTracingRoot: process.cwd(),
+
+  // Fix for WSL2 file watching issues
+  experimental: {
+    caseSensitiveRoutes: false,
+  },
+
   eslint: {
     // Disable ESLint during the production build inside Docker to avoid failing the
     // image build due to stylistic or rule-based lint errors. Developers should

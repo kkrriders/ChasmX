@@ -22,7 +22,9 @@
       "Bash(python3:*)",
       "Bash(docker restart:*)",
       "Bash(docker logs:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(ss:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []
