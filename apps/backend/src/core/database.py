@@ -41,6 +41,7 @@ async def connect_to_mongo():
         from src.models.schedule import WorkflowSchedule, ScheduleExecutionLog
         from src.models.webhook import Webhook, WebhookExecution, WebhookRateLimit
         from src.models.template import Template
+        from src.models.api_key import APIKey
 
         database = client[settings.DATABASE_NAME]
         await init_beanie(
@@ -53,10 +54,11 @@ async def connect_to_mongo():
                 Webhook,
                 WebhookExecution,
                 WebhookRateLimit,
-                Template
+                Template,
+                APIKey
             ]
         )
-        logger.info("Beanie initialized with collections: Workflow, WorkflowRun, WorkflowSchedule, ScheduleExecutionLog, Webhook, WebhookExecution, WebhookRateLimit, Template")
+        logger.info("Beanie initialized with collections: Workflow, WorkflowRun, WorkflowSchedule, ScheduleExecutionLog, Webhook, WebhookExecution, WebhookRateLimit, Template, APIKey")
 
     except Exception as e:
         # Log error and raise - don't start app without database
