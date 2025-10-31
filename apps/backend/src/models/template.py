@@ -144,11 +144,11 @@ class Template(Document):
             "organization_id",
             "featured",
             "verified",
-            ("metadata.category", "status"),
-            ("visibility", "status"),
-            ("metrics.average_rating", -1),  # Descending order
-            ("metrics.download_count", -1),  # Descending order
-            ("created_at", -1),  # Descending order
+            [("metadata.category", 1), ("status", 1)],
+            [("visibility", 1), ("status", 1)],
+            [("metrics.average_rating", -1)],  # Descending order
+            [("metrics.download_count", -1)],  # Descending order
+            [("created_at", -1)],  # Descending order
         ]
     
     def update_metrics(self):
