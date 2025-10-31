@@ -411,6 +411,13 @@ Keep it simple and practical."""
         """
         Step 4: Create edges (connections) between nodes.
 
+        Supports:
+        - Sequential flow for regular nodes
+        - Conditional branching for if/else nodes
+        - Multi-way branching for switch nodes
+        - Parallel execution for split nodes
+        - Merge points for converging paths
+
         Args:
             nodes: Configured nodes
             intent: Workflow intent
@@ -419,18 +426,176 @@ Keep it simple and practical."""
             List of edges
         """
         edges = []
+        edge_counter = 1
+        processed_indices = set()
 
-        # Simple sequential flow for now
-        # TODO: Add conditional branching logic
-        for i in range(len(nodes) - 1):
-            edges.append({
-                "id": f"edge_{i+1}",
-                "from": nodes[i].id,
-                "to": nodes[i+1].id,
-                "label": ""
-            })
+        for i, node in enumerate(nodes):
+            if i in processed_indices:
+                continue
+
+            # Handle different node types for branching
+            if node.type == "condition":
+                condition_type = node.config.get("condition_type", "simple")
+
+                if condition_type in ["simple", "if_else"]:
+                    # Create true and false branches
+                    true_path = node.config.get("true_path")
+                    false_path = node.config.get("false_path")
+
+                    # Find the next nodes for true and false paths
+                    true_node_idx = self._find_node_by_id(nodes, true_path) if true_path else i + 1
+                    false_node_idx = self._find_node_by_id(nodes, false_path) if false_path else i + 2
+
+                    # Create true branch edge
+                    if true_node_idx < len(nodes):
+                        edges.append({
+                            "id": f"edge_{edge_counter}",
+                            "from": node.id,
+                            "to": nodes[true_node_idx].id,
+                            "label": "true",
+                            "condition": "true"
+                        })
+                        edge_counter += 1
+
+                    # Create false branch edge
+                    if false_node_idx < len(nodes):
+                        edges.append({
+                            "id": f"edge_{edge_counter}",
+                            "from": node.id,
+                            "to": nodes[false_node_idx].id,
+                            "label": "false",
+                            "condition": "false"
+                        })
+                        edge_counter += 1
+
+                elif condition_type == "switch":
+                    # Create edges for each case
+                    cases = node.config.get("cases", {})
+                    default_case = node.config.get("default_case")
+
+                    for case_value, case_target in cases.items():
+                        target_idx = self._find_node_by_id(nodes, case_target)
+                        if target_idx < len(nodes):
+                            edges.append({
+                                "id": f"edge_{edge_counter}",
+                                "from": node.id,
+                                "to": nodes[target_idx].id,
+                                "label": f"case: {case_value}",
+                                "condition": f"value == {case_value}"
+                            })
+                            edge_counter += 1
+
+                    # Add default case edge
+                    if default_case:
+                        default_idx = self._find_node_by_id(nodes, default_case)
+                        if default_idx < len(nodes):
+                            edges.append({
+                                "id": f"edge_{edge_counter}",
+                                "from": node.id,
+                                "to": nodes[default_idx].id,
+                                "label": "default",
+                                "condition": "default"
+                            })
+                            edge_counter += 1
+
+                elif condition_type == "multi":
+                    # Multi-condition branching
+                    next_node_idx = i + 1
+                    if next_node_idx < len(nodes):
+                        edges.append({
+                            "id": f"edge_{edge_counter}",
+                            "from": node.id,
+                            "to": nodes[next_node_idx].id,
+                            "label": ""
+                        })
+                        edge_counter += 1
+
+            elif node.type == "loop":
+                # Loop node - create edge to loop body and exit
+                loop_body = node.config.get("loop_body")
+                exit_node = node.config.get("exit_node")
+
+                # Edge to loop body
+                if loop_body:
+                    body_idx = self._find_node_by_id(nodes, loop_body)
+                    if body_idx < len(nodes):
+                        edges.append({
+                            "id": f"edge_{edge_counter}",
+                            "from": node.id,
+                            "to": nodes[body_idx].id,
+                            "label": "iterate",
+                            "loop": True
+                        })
+                        edge_counter += 1
+
+                # Edge to exit
+                if exit_node:
+                    exit_idx = self._find_node_by_id(nodes, exit_node)
+                    if exit_idx < len(nodes):
+                        edges.append({
+                            "id": f"edge_{edge_counter}",
+                            "from": node.id,
+                            "to": nodes[exit_idx].id,
+                            "label": "exit"
+                        })
+                        edge_counter += 1
+                elif i + 1 < len(nodes):
+                    # Default exit to next node
+                    edges.append({
+                        "id": f"edge_{edge_counter}",
+                        "from": node.id,
+                        "to": nodes[i + 1].id,
+                        "label": "exit"
+                    })
+                    edge_counter += 1
+
+            elif node.type == "split":
+                # Parallel execution - create multiple outgoing edges
+                parallel_branches = node.config.get("branches", [])
+                for branch_target in parallel_branches:
+                    branch_idx = self._find_node_by_id(nodes, branch_target)
+                    if branch_idx < len(nodes):
+                        edges.append({
+                            "id": f"edge_{edge_counter}",
+                            "from": node.id,
+                            "to": nodes[branch_idx].id,
+                            "label": "parallel",
+                            "parallel": True
+                        })
+                        edge_counter += 1
+
+            else:
+                # Regular sequential flow
+                if i + 1 < len(nodes):
+                    edges.append({
+                        "id": f"edge_{edge_counter}",
+                        "from": node.id,
+                        "to": nodes[i + 1].id,
+                        "label": ""
+                    })
+                    edge_counter += 1
 
         return edges
+
+    def _find_node_by_id(self, nodes: List[NodeCandidate], node_id: Optional[str]) -> int:
+        """
+        Find the index of a node by its ID.
+
+        Args:
+            nodes: List of nodes
+            node_id: ID to search for
+
+        Returns:
+            Index of the node, or len(nodes) if not found
+        """
+        if not node_id:
+            return len(nodes)
+
+        for i, node in enumerate(nodes):
+            if node.id == node_id:
+                return i
+
+        return len(nodes)
 
     async def _validate_workflow(
         self,

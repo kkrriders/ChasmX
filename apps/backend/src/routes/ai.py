@@ -97,9 +97,14 @@ async def health_check():
 # LLM Endpoints
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_completion(request: ChatRequest):
+async def chat_completion(
+    request: ChatRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Generate a chat completion using LLM.
+
+    Supports optional authentication for usage tracking and quota enforcement.
     """
     try:
         llm_service = ai_service_manager.get_llm_service()
@@ -141,12 +146,17 @@ async def chat_completion(request: ChatRequest):
 
 
 @router.post("/chat/semantic", response_model=ChatResponse)
-async def semantic_chat_completion(request: ChatRequest):
+async def semantic_chat_completion(
+    request: ChatRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Generate a chat completion using LLM with semantic caching.
 
     This endpoint uses embedding-based similarity matching to find cached responses,
     achieving ~90%+ cache hit rates and 95% cost reduction compared to exact matching.
+
+    Supports optional authentication for usage tracking and quota enforcement.
     """
     try:
         semantic_cache = ai_service_manager.get_semantic_cache()

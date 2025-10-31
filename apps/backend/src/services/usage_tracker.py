@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any, List
 from loguru import logger
 
 from ..models.usage import TokenUsageRecord, UsageAggregation, UsageBudget
+from ..utils.email import send_budget_alert_email
 
 
 class UsageTracker:
@@ -303,7 +304,16 @@ class UsageTracker:
                     f"Budget exceeded for {scope_type} {scope_id}: "
                     f"${budget.current_usage_usd:.2f} / ${budget.budget_usd:.2f}"
                 )
-                # TODO: Send alert/notification
+
+                # Send budget exceeded alert
+                await UsageTracker._send_budget_alert(
+                    scope_type=scope_type,
+                    scope_id=scope_id,
+                    alert_type="exceeded",
+                    current_usage=budget.current_usage_usd,
+                    budget_limit=budget.budget_usd,
+                    percentage=100.0
+                )
 
             # Check alert threshold
             elif not budget.alert_sent:
@@ -314,13 +324,100 @@ class UsageTracker:
                         f"Budget alert threshold reached for {scope_type} {scope_id}: "
                         f"{usage_percent:.1f}% of budget used"
                     )
-                    # TODO: Send alert/notification
+
+                    # Send threshold alert
+                    await UsageTracker._send_budget_alert(
+                        scope_type=scope_type,
+                        scope_id=scope_id,
+                        alert_type="threshold",
+                        current_usage=budget.current_usage_usd,
+                        budget_limit=budget.budget_usd,
+                        percentage=usage_percent
+                    )
 
             await budget.save()
 
         except Exception as e:
             logger.error(f"Failed to check budget: {e}")
             # Don't raise - budget checking shouldn't block requests
+
+    @staticmethod
+    async def _send_budget_alert(
+        scope_type: str,
+        scope_id: str,
+        alert_type: str,
+        current_usage: float,
+        budget_limit: float,
+        percentage: float
+    ):
+        """
+        Send budget alert notification to user.
+
+        Args:
+            scope_type: Budget scope (user, organization, workflow)
+            scope_id: ID of the scoped entity
+            alert_type: Type of alert ('threshold' or 'exceeded')
+            current_usage: Current usage amount in USD
+            budget_limit: Budget limit in USD
+            percentage: Usage percentage
+        """
+        try:
+            # Get user email based on scope
+            user_email = None
+
+            if scope_type == "user":
+                # Import here to avoid circular imports
+                from ..models.user import User
+                from bson import ObjectId
+
+                try:
+                    # Find user by ObjectId
+                    user = await User.get(ObjectId(scope_id))
+                    if user:
+                        user_email = user.email
+                except Exception as e:
+                    logger.error(f"Failed to get user {scope_id}: {e}")
+                    return
+
+            elif scope_type == "organization":
+                # For organization scope, get admin emails
+                # This would require organization model implementation
+                logger.info(f"Organization-level alerts not yet implemented for {scope_id}")
+                return
+
+            elif scope_type == "workflow":
+                # For workflow scope, get the workflow owner's email
+                logger.info(f"Workflow-level alerts not yet implemented for {scope_id}")
+                return
+
+            if not user_email:
+                logger.warning(f"Could not find email for {scope_type} {scope_id}")
+                return
+
+            # Prepare alert details
+            details = {
+                "scope_type": scope_type,
+                "scope_id": scope_id,
+                "current_usage_usd": current_usage,
+                "budget_usd": budget_limit,
+                "percentage": percentage
+            }
+
+            # Send the alert email
+            success = await send_budget_alert_email(
+                to_email=user_email,
+                alert_type=alert_type,
+                details=details
+            )
+
+            if success:
+                logger.info(f"Budget alert sent to {user_email} for {scope_type} {scope_id}")
+            else:
+                logger.error(f"Failed to send budget alert to {user_email}")
+
+        except Exception as e:
+            logger.error(f"Error sending budget alert: {e}")
+            # Don't raise - alert sending shouldn't block the main flow
 
     @staticmethod
     async def create_budget(
