@@ -926,17 +926,9 @@ Use these functions when you need to coordinate with other nodes in the workflow
             if source_type == "mongodb":
                 return await self._fetch_from_mongodb(node, context)
 
-            # API data source (future implementation)
+            # API data source
             elif source_type == "api":
-                endpoint = node.config.get("endpoint", "")
-                # TODO: Implement API fetching
-                await asyncio.sleep(0.3)
-                return {
-                    "status": "completed",
-                    "output": {"data": "mock_api_data", "count": 0},
-                    "source_type": source_type,
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                return await self._fetch_from_api(node, context)
 
             else:
                 raise ValueError(f"Unsupported source type: {source_type}")
@@ -1003,6 +995,118 @@ Use these functions when you need to coordinate with other nodes in the workflow
 
         except Exception as e:
             logger.error(f"MongoDB fetch failed: {str(e)}")
+            raise
+
+    async def _fetch_from_api(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Fetch data from external API"""
+        try:
+            # Extract and interpolate API configuration
+            url = self._interpolate_variables(node.config.get("endpoint", ""), context)
+            method = node.config.get("method", "GET").upper()
+
+            # Request headers
+            headers = node.config.get("headers", {})
+            if isinstance(headers, dict):
+                headers = self._interpolate_dict_values(headers, context)
+
+            # Query parameters
+            params = node.config.get("params", {})
+            if isinstance(params, dict):
+                params = self._interpolate_dict_values(params, context)
+
+            # Request body (for POST/PUT/PATCH)
+            body_data = node.config.get("body", {})
+            if isinstance(body_data, str):
+                body_data = self._interpolate_variables(body_data, context)
+            elif isinstance(body_data, dict):
+                body_data = self._interpolate_dict_values(body_data, context)
+
+            # Authentication configuration
+            auth_config = node.config.get("auth", {})
+
+            # Timeout and retry configuration
+            timeout = node.config.get("timeout", 30)  # seconds
+            max_retries = node.config.get("retries", 3)
+            retry_delay = node.config.get("retry_delay", 1)  # seconds
+
+            # Response validation
+            expected_status = node.config.get("expected_status", [200, 201])
+            if isinstance(expected_status, int):
+                expected_status = [expected_status]
+
+            # Data extraction configuration
+            response_path = node.config.get("response_path", None)  # JSONPath for extracting specific data
+
+            logger.info(f"API Data Source: {method} {url}")
+
+            # Validate required fields
+            if not url:
+                raise ValueError("API endpoint URL is required")
+
+            # Execute API request with retry logic
+            last_error = None
+            for attempt in range(max_retries + 1):
+                try:
+                    response_data = await self._execute_http_request(
+                        url=url,
+                        method=method,
+                        headers=headers,
+                        body_data=body_data,
+                        params=params,
+                        auth_config=auth_config,
+                        timeout=timeout
+                    )
+
+                    # Check if status code is expected
+                    if response_data["status_code"] not in expected_status:
+                        raise ValueError(
+                            f"Unexpected status code {response_data['status_code']}. "
+                            f"Expected one of: {expected_status}"
+                        )
+
+                    # Extract data from response
+                    output_data = response_data.get("json") if response_data.get("json") else response_data.get("text")
+
+                    # Apply response path extraction if specified
+                    if response_path and isinstance(output_data, dict):
+                        # Simple dot notation path extraction (e.g., "data.items" -> output_data["data"]["items"])
+                        path_parts = response_path.split(".")
+                        for part in path_parts:
+                            if isinstance(output_data, dict) and part in output_data:
+                                output_data = output_data[part]
+                            else:
+                                logger.warning(f"Response path '{response_path}' not found in response")
+                                break
+
+                    logger.info(f"API data source request successful on attempt {attempt + 1}")
+
+                    return {
+                        "status": "completed",
+                        "output": output_data,
+                        "count": len(output_data) if isinstance(output_data, list) else 1,
+                        "source_type": "api",
+                        "url": url,
+                        "method": method,
+                        "status_code": response_data["status_code"],
+                        "attempts": attempt + 1,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+
+                except Exception as e:
+                    last_error = e
+                    if attempt < max_retries:
+                        logger.warning(f"API data source attempt {attempt + 1} failed: {str(e)}. Retrying in {retry_delay}s...")
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        logger.error(f"API data source failed after {max_retries + 1} attempts: {str(e)}")
+                        raise
+
+            # If we get here, all retries failed
+            if last_error:
+                raise last_error
+
+        except Exception as e:
+            logger.error(f"API data source fetch failed: {str(e)}")
             raise
 
     async def _execute_webhook_node(self, node: Node, context: Dict[str, Any]) -> Dict[str, Any]:

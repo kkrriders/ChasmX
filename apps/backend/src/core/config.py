@@ -16,12 +16,12 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = "chasm_db"
 
     # JWT Settings
-    JWT_SECRET_KEY: str  # Required from environment
+    JWT_SECRET_KEY: str  # Required from environment - MUST be set!
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # OTP Settings
-    OTP_SECRET_KEY: str  # Required from environment
+    OTP_SECRET_KEY: str  # Required from environment - MUST be set!
 
     # Password Settings
     MIN_PASSWORD_LENGTH: int = 8
@@ -94,7 +94,39 @@ class Settings(BaseSettings):
         auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
+    def validate_required_settings(self) -> None:
+        """Validate that all required settings are properly configured"""
+        errors = []
+
+        # Check JWT_SECRET_KEY
+        if not self.JWT_SECRET_KEY or self.JWT_SECRET_KEY == "your-super-secret-jwt-key-here":
+            errors.append("JWT_SECRET_KEY must be set to a secure random value (not default)")
+
+        # Check OTP_SECRET_KEY
+        if not self.OTP_SECRET_KEY or self.OTP_SECRET_KEY == "your-super-secret-otp-key-here":
+            errors.append("OTP_SECRET_KEY must be set to a secure random value (not default)")
+
+        # Check MONGODB_URL
+        if not self.MONGODB_URL:
+            errors.append("MONGODB_URL must be set")
+
+        # Warn about production settings
+        if self.ENV == "production":
+            if self.CORS_ORIGINS == "*":
+                errors.append("CORS_ORIGINS should not be '*' in production - specify allowed domains")
+
+            if not self.OPENROUTER_API_KEY:
+                errors.append("OPENROUTER_API_KEY should be set for AI features to work")
+
+        if errors:
+            error_message = "Configuration validation failed:\n" + "\n".join(f"  - {error}" for error in errors)
+            raise ValueError(error_message)
+
 settings = Settings()
+
+# Validate settings on import for production
+if settings.ENV == "production":
+    settings.validate_required_settings()
 
 # Backward compatibility aliases
 ai_settings = settings

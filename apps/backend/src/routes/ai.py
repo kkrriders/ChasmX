@@ -5,6 +5,9 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from loguru import logger
 
+from ..auth.dependencies import get_current_user_optional
+from ..models.user import User
+
 from ..services.ai_service_manager import ai_service_manager
 from ..services.llm.base import LLMRequest, LLMResponse, LLMMessage, ModelRole
 from ..services.agents.orchestrator import Agent, Task
@@ -542,7 +545,10 @@ class WorkflowGenerationResponse(BaseModel):
 
 
 @router.post("/workflows/generate", response_model=WorkflowGenerationResponse)
-async def generate_workflow(request: WorkflowGenerationRequest):
+async def generate_workflow(
+    request: WorkflowGenerationRequest,
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Generate a workflow structure from a natural language prompt using AI.
 
@@ -564,10 +570,20 @@ async def generate_workflow(request: WorkflowGenerationRequest):
         # Initialize the advanced workflow generator agent
         agent = WorkflowGeneratorAgent(llm_service)
 
+        # Build user context if authenticated
+        user_context = None
+        if current_user:
+            user_context = {
+                "user_id": str(current_user.id),
+                "email": current_user.email,
+                "roles": current_user.roles,
+                "preferences": getattr(current_user, 'preferences', {})
+            }
+
         # Generate workflow using multi-step reasoning
         workflow_data, summary, reasoning = await agent.generate_workflow(
             prompt=request.prompt,
-            user_context=None  # TODO: Add user context from request if available
+            user_context=user_context
         )
 
         # Track usage for the workflow generation
@@ -583,13 +599,14 @@ async def generate_workflow(request: WorkflowGenerationRequest):
                 prompt_tokens=estimated_tokens,
                 completion_tokens=len(summary) * 4,
                 cost_usd=0.0,  # Free models used
-                user_id=None,  # TODO: Extract from auth
+                user_id=str(current_user.id) if current_user else None,
                 workflow_id=None,
                 endpoint="/ai/workflows/generate",
                 metadata={
                     "agent": "workflow_generator",
                     "prompt_length": len(request.prompt),
-                    "nodes_generated": len(workflow_data.get("nodes", []))
+                    "nodes_generated": len(workflow_data.get("nodes", [])),
+                    "authenticated": current_user is not None
                 }
             )
         except Exception as e:

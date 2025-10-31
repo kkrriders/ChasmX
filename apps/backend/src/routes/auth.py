@@ -1,9 +1,11 @@
 
 
 from typing import Dict
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from loguru import logger
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from src.utils.otp import generate_otp, verify_otp, update_user_otp
 from src.utils.email import send_otp_email
@@ -25,8 +27,13 @@ from src.auth.jwt import create_access_token
 # Create router without prefix (prefix will be added in main.py)
 router = APIRouter(tags=["auth"])
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 async def register(
+    request: Request,
     user_in: UserCreate = Body(),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> UserOut:
@@ -69,7 +76,9 @@ async def register(
         )
 
 @router.post("/login")
+@limiter.limit("10/minute")
 async def login(
+    request: Request,
     user_in: UserLogin = Body(),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict:
@@ -138,7 +147,9 @@ async def login(
         )
     
 @router.post("/check-user", response_model=Dict)
+@limiter.limit("20/minute")
 async def check_user_exists(
+    request: Request,
     email: str = Body(..., embed=True),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict:
@@ -155,7 +166,9 @@ async def check_user_exists(
     return {"exists": user is not None}
 
 @router.post("/verify-otp", response_model=Dict)
+@limiter.limit("5/minute")
 async def verify_otp_endpoint(
+    request: Request,
     user_in: OTPVerify = Body(),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict:
@@ -215,7 +228,9 @@ async def verify_otp_endpoint(
         )
 
 @router.post("/resend-otp", response_model=Dict)
+@limiter.limit("3/minute")
 async def resend_otp(
+    request: Request,
     email: str = Body(..., embed=True),
     db: AsyncIOMotorDatabase = Depends(get_database)
 ) -> Dict:

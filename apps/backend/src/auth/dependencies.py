@@ -4,7 +4,7 @@ This module provides dependencies for user authentication and role-based access 
 It integrates with JWT token verification and MongoDB user operations.
 """
 
-from typing import Annotated, List, Callable, Any
+from typing import Annotated, List, Callable, Any, Optional
 from functools import wraps
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -18,6 +18,7 @@ from src.auth.jwt import verify_token
 
 # Security scheme for Bearer token authentication
 security = HTTPBearer(auto_error=True)
+security_optional = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
@@ -100,3 +101,45 @@ def verify_role(required_roles: List[str]) -> Callable:
         return current_user
 
     return role_verifier
+
+async def get_current_user_optional(
+    credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(security_optional)],
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Optional[User]:
+    """Get the current authenticated user from bearer token, or None if not authenticated.
+
+    This is useful for endpoints that work with or without authentication,
+    and want to provide additional features for authenticated users.
+
+    Args:
+        credentials: The HTTP Authorization credentials containing the bearer token (optional)
+        db: The database connection from FastAPI dependency injection
+
+    Returns:
+        User: The authenticated user object, or None if not authenticated
+
+    Note:
+        Unlike get_current_user, this does NOT raise an exception if no token is provided.
+    """
+    if not credentials or not credentials.credentials:
+        return None
+
+    token = credentials.credentials
+    payload = verify_token(token)
+
+    if not payload:
+        logger.warning("Invalid or expired token provided in optional auth")
+        return None
+
+    email = payload.get("sub")
+    if not email:
+        logger.warning("Invalid token: Missing 'sub' claim")
+        return None
+
+    user = await get_user_by_email(email, db)
+    if not user:
+        logger.warning(f"Token valid but user not found: {email}")
+        return None
+
+    logger.info(f"Optional auth: Access granted for user: {email}")
+    return user
