@@ -22,47 +22,51 @@ ChasmX is a modern workflow automation platform that allows users to:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- Docker (for Redis)
+- Docker & Docker Compose
 - MongoDB Atlas account
+- (Optional) Python 3.10+ and Node.js 18+ for local development
 
-### 1. Start Redis
+### Option 1: Docker (Recommended)
+
 ```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd ChasmX
+
+# 2. Configure environment
+cp config/.env.example config/.env
+cp apps/backend/.env.example apps/backend/.env
+# Edit apps/backend/.env with your MongoDB Atlas connection string and API keys
+
+# 3. Start development environment
+./scripts/dev-start.sh
+# Or: docker-compose -f config/docker-compose.dev.yml up
+
+# 4. Access the services
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+# API Docs: http://localhost:8000/docs
+```
+
+### Option 2: Local Development
+
+```bash
+# 1. Start Redis
 docker run -d -p 6379:6379 --name redis redis:latest
-```
 
-### 2. Backend Setup
-```bash
-cd backend
-
-# Install dependencies
+# 2. Backend Setup
+cd apps/backend
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.template .env
+cp .env.example .env
 # Edit .env with your credentials
+uvicorn src.main:app --reload
 
-# Run server
-uvicorn app.main:app --reload
-```
-→ Backend runs at http://localhost:8000
-
-### 3. Frontend Setup
-```bash
-cd Client
-
-# Install dependencies
+# 3. Frontend Setup (in another terminal)
+cd apps/web
 npm install
-
-# Configure environment
-cp .env.local.example .env.local
-# Edit with backend URL
-
-# Run development server
+cp .env.example .env.local
 npm run dev
 ```
-→ Frontend runs at http://localhost:3000
 
 ## ✨ Key Features
 
@@ -86,10 +90,11 @@ npm run dev
 
 ## 📚 Documentation
 
-- [Backend Documentation](backend/README.md)
-- [Frontend Documentation](Client/README.md)
-- [Workflow Execution Guide](backend/docs/WORKFLOW_EXECUTION_GUIDE.md)
-- [AI System Overview](backend/docs/AI_SYSTEM_README.md)
+- [Backend Documentation](apps/backend/README.md)
+- [Frontend Documentation](apps/web/README.md)
+- [Architecture Documentation](docs/architecture/)
+- [Development Guides](docs/development/)
+- [API Documentation](docs/api/)
 
 ## 🔧 API Endpoints
 
@@ -119,41 +124,72 @@ POST /ai/tasks        - Create task
 
 ```bash
 # Backend tests
-cd backend
+cd apps/backend
 pytest
 
 # Frontend tests
-cd Client
+cd apps/web
 npm run test
 ```
 
-## 🐳 Docker Deployment
+## 🐳 Docker Commands
 
 ```bash
-# Start all services
-docker-compose up
+# Development (with hot-reload)
+./scripts/dev-start.sh              # Start development environment
+./scripts/dev-stop.sh               # Stop development environment
+./scripts/logs.sh dev               # View development logs
+
+# Production
+./scripts/prod-start.sh             # Start production environment
+./scripts/prod-stop.sh              # Stop production environment
+./scripts/logs.sh prod              # View production logs
+
+# Manual commands
+docker-compose -f config/docker-compose.dev.yml up --build   # Dev with rebuild
+docker-compose -f config/docker-compose.yml up -d            # Prod in background
+docker-compose -f config/docker-compose.dev.yml down         # Stop and remove
 
 # Services:
 # - Redis: localhost:6379
-# - Backend: localhost:8000
+# - Backend: localhost:8000 (API) / localhost:8000/docs (Swagger)
 # - Frontend: localhost:3000
+# - MongoDB: MongoDB Atlas (cloud)
 ```
 
 ## 📊 Project Structure
 
 ```
 ChasmX/
-├── backend/              # FastAPI backend
-│   ├── app/             # Application code
-│   ├── tests/           # Test suite
-│   ├── docs/            # Documentation
-│   └── README.md
-├── Client/              # Next.js frontend
-│   ├── app/             # Pages (App Router)
-│   ├── components/      # React components
-│   ├── docs/            # Documentation
-│   └── README.md
-└── README.md           # This file
+├── apps/                     # Application code (monorepo)
+│   ├── backend/             # FastAPI backend
+│   │   ├── src/            # Source code
+│   │   │   ├── core/       # Core configuration
+│   │   │   ├── routes/     # API routes
+│   │   │   ├── services/   # Business logic
+│   │   │   ├── models/     # Database models
+│   │   │   ├── schemas/    # Pydantic schemas
+│   │   │   └── main.py     # Entry point
+│   │   ├── tests/          # Test suite
+│   │   └── requirements.txt
+│   └── web/                # Next.js frontend
+│       ├── src/            # Source code
+│       │   ├── app/        # Next.js app router
+│       │   ├── components/ # React components
+│       │   ├── hooks/      # Custom hooks
+│       │   ├── lib/        # Utilities
+│       │   └── types/      # TypeScript types
+│       ├── public/         # Static assets
+│       └── package.json
+├── docs/                    # Documentation
+│   ├── architecture/       # System architecture
+│   ├── api/               # API documentation
+│   ├── development/       # Development guides
+│   └── planning/          # Project planning
+├── config/                 # Configuration files
+│   └── docker-compose.yml
+├── tools/                  # Development tools
+└── README.md              # This file
 ```
 
 ## 🛣️ Roadmap
