@@ -30,8 +30,9 @@ export const API_ENDPOINTS = {
   },
   // User endpoints
   USER: {
-    PROFILE: '/user/profile',
-    UPDATE: '/user/update',
+    PROFILE: '/users/me',
+    UPDATE: '/users/me',
+    NOTIFICATIONS: '/users/me/preferences/notifications',
   },
   AI: {
     GENERATE_WORKFLOW: '/ai/workflows/generate',
