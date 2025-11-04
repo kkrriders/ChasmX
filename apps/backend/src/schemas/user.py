@@ -18,6 +18,11 @@ class UserOut(BaseModel):
     roles: list[str]
     created_at: datetime
     last_login: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    company: Optional[str] = None
+    bio: Optional[str] = None
     
     model_config = ConfigDict(
         json_schema_extra={
@@ -25,7 +30,11 @@ class UserOut(BaseModel):
                 "email": "user@example.com",
                 "roles": ["business_user"],
                 "created_at": "2025-09-23T10:00:00",
-                "last_login": "2025-09-23T11:00:00"
+                "last_login": "2025-09-23T11:00:00",
+                "first_name": "John",
+                "last_name": "Doe",
+                "company": "Acme Corp",
+                "bio": "Software engineer with 5+ years experience"
             }
         },
         from_attributes=True  # Allow model creation from class/dict with attributes

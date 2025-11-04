@@ -19,8 +19,15 @@ class User(BaseModel):
     failed_attempts: int = Field(default=0, ge=0)
     last_login: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = None
     otp_code: Optional[str] = None
     otp_expiry: Optional[datetime] = None
+    
+    # Profile fields
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    company: Optional[str] = None
+    bio: Optional[str] = None
     
     model_config = ConfigDict(
         json_schema_extra={
@@ -28,7 +35,11 @@ class User(BaseModel):
                 "email": "user@example.com",
                 "hashed_password": "hashed_string_here",
                 "roles": ["business_user"],
-                "failed_attempts": 0
+                "failed_attempts": 0,
+                "first_name": "John",
+                "last_name": "Doe",
+                "company": "Acme Corp",
+                "bio": "Software engineer with 5+ years experience"
             }
         },
         populate_by_name=True,  # Allow both id and _id
@@ -85,9 +96,54 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserUpdate(BaseModel):
+    """Schema for user profile update"""
+    first_name: Optional[str] = Field(None, max_length=50)
+    last_name: Optional[str] = Field(None, max_length=50)
+    email: Optional[EmailStr] = None
+    company: Optional[str] = Field(None, max_length=100)
+    bio: Optional[str] = Field(None, max_length=500)
+    
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "first_name": "John",
+                "last_name": "Doe", 
+                "email": "john.doe@example.com",
+                "company": "Acme Corp",
+                "bio": "Software engineer with 5+ years experience"
+            }
+        }
+    )
+    
+    @field_validator("first_name", "last_name", "company")
+    @classmethod
+    def validate_string_fields(cls, v: Optional[str]) -> Optional[str]:
+        """Validate string fields are not empty and trimmed"""
+        if v is not None:
+            v = v.strip()
+            if len(v) == 0:
+                return None
+        return v
+    
+    @field_validator("bio")
+    @classmethod 
+    def validate_bio(cls, v: Optional[str]) -> Optional[str]:
+        """Validate bio field"""
+        if v is not None:
+            v = v.strip()
+            if len(v) == 0:
+                return None
+        return v
+
 class UserOut(BaseModel):
     """Schema for user response without sensitive data"""
     email: EmailStr
     roles: List[str]
     last_login: Optional[datetime] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    company: Optional[str] = None
+    bio: Optional[str] = None

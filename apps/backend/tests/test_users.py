@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, Any
 from unittest.mock import patch
 from fastapi import status
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 from src.main import app
 from src.core.database import get_database
@@ -27,7 +27,11 @@ TEST_USERS = {
         "roles": ["business_user"],
         "created_at": datetime.utcnow(),
         "last_login": None,
-        "failed_attempts": 0
+        "failed_attempts": 0,
+        "first_name": None,
+        "last_name": None,
+        "company": None,
+        "bio": None
     },
     "admin": {
         "email": "admin@example.com",
@@ -35,7 +39,11 @@ TEST_USERS = {
         "roles": ["business_user", "admin"],
         "created_at": datetime.utcnow(),
         "last_login": None,
-        "failed_attempts": 0
+        "failed_attempts": 0,
+        "first_name": None,
+        "last_name": None,
+        "company": None,
+        "bio": None
     },
     "compliance": {
         "email": "compliance@example.com",
@@ -43,7 +51,11 @@ TEST_USERS = {
         "roles": ["business_user", "compliance_officer"],
         "created_at": datetime.utcnow(),
         "last_login": None,
-        "failed_attempts": 0
+        "failed_attempts": 0,
+        "first_name": None,
+        "last_name": None,
+        "company": None,
+        "bio": None
     }
 }
 
@@ -74,7 +86,7 @@ async def test_client(mock_db):
     """Create test client with mocked database"""
     app.dependency_overrides[get_database] = lambda: mock_db
     
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
     
     # Clear overrides after test
@@ -206,3 +218,175 @@ async def test_admin_users_pagination(test_client, mock_db, auth_headers):
         
         assert len(data["users"]) <= limit
         assert data["count"] == len(data["users"])
+
+# =================== User Profile Update Tests ===================
+
+@pytest.mark.asyncio
+async def test_update_profile_valid(test_client, auth_headers):
+    """Test successful profile update with valid data"""
+    update_data = {
+        "first_name": "John",
+        "last_name": "Doe",
+        "company": "Acme Corp",
+        "bio": "Software engineer with 5+ years experience"
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    user_data = response.json()
+    
+    # Verify updated fields
+    assert user_data["first_name"] == update_data["first_name"]
+    assert user_data["last_name"] == update_data["last_name"]
+    assert user_data["company"] == update_data["company"]
+    assert user_data["bio"] == update_data["bio"]
+    assert "updated_at" in user_data
+    assert user_data["updated_at"] is not None
+
+@pytest.mark.asyncio
+async def test_update_profile_partial(test_client, auth_headers):
+    """Test partial profile update"""
+    update_data = {
+        "first_name": "Jane"
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    user_data = response.json()
+    
+    # Verify only first_name was updated
+    assert user_data["first_name"] == "Jane"
+    assert user_data["last_name"] is None  # Should remain unchanged
+    assert "updated_at" in user_data
+
+@pytest.mark.asyncio
+async def test_update_profile_email_valid(test_client, auth_headers):
+    """Test updating email to a new valid email"""
+    update_data = {
+        "email": "newemail@example.com"
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    user_data = response.json()
+    
+    assert user_data["email"] == "newemail@example.com"
+
+@pytest.mark.asyncio
+async def test_update_profile_email_duplicate(test_client, auth_headers):
+    """Test updating email to an existing email should fail"""
+    update_data = {
+        "email": "admin@example.com"  # This email already exists
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "Email already registered" in response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_update_profile_same_email(test_client, auth_headers):
+    """Test updating email to the same email should work"""
+    update_data = {
+        "email": "user@example.com",  # Same email as current user
+        "first_name": "John"
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    user_data = response.json()
+    
+    assert user_data["email"] == "user@example.com"
+    assert user_data["first_name"] == "John"
+
+@pytest.mark.asyncio
+async def test_update_profile_empty_fields(test_client, auth_headers):
+    """Test updating with empty strings should set fields to None"""
+    update_data = {
+        "first_name": "",
+        "last_name": "   ",  # Whitespace only
+        "company": "Acme Corp"
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    user_data = response.json()
+    
+    assert user_data["first_name"] is None
+    assert user_data["last_name"] is None
+    assert user_data["company"] == "Acme Corp"
+
+@pytest.mark.asyncio
+async def test_update_profile_no_fields(test_client, auth_headers):
+    """Test update with no fields should return current user"""
+    update_data = {}
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_200_OK
+    user_data = response.json()
+    
+    # Should return current user data
+    assert user_data["email"] == "user@example.com"
+
+@pytest.mark.asyncio
+async def test_update_profile_no_token(test_client):
+    """Test profile update without token"""
+    update_data = {
+        "first_name": "John"
+    }
+    
+    response = await test_client.put("/users/me", json=update_data)
+    
+    # Should be unauthorized (401) or forbidden (403)
+    assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+
+@pytest.mark.asyncio
+async def test_update_profile_field_validation(test_client, auth_headers):
+    """Test field validation for profile update"""
+    # Test max length validation
+    update_data = {
+        "first_name": "a" * 51,  # Max length is 50
+        "bio": "a" * 501  # Max length is 500
+    }
+    
+    response = await test_client.put(
+        "/users/me",
+        json=update_data,
+        headers=auth_headers["business"]
+    )
+    
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
