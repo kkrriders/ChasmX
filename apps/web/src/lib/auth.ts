@@ -163,8 +163,8 @@ export class AuthService {
 
   async checkUserExists(email: string): Promise<{ exists: boolean; error?: string }> {
     try {
-      const data = await api.post<{ exists: boolean }>(API_ENDPOINTS.AUTH.CHECK_USER, { email })
-      return { exists: data.exists }
+      const response = await api.post<{ exists: boolean }>(API_ENDPOINTS.AUTH.CHECK_USER, { email })
+      return { exists: response.data.exists }
 
     } catch (error) {
       return {
@@ -179,24 +179,24 @@ export class AuthService {
     this.notify()
 
     try {
-      const data = await api.post<{ access_token: string; user: any }>(
+      const response = await api.post<{ access_token: string; user: any }>(
         API_ENDPOINTS.AUTH.VERIFY_OTP,
         { email, otp }
       )
 
       // Store token and user info (only on client side)
-      if (data.access_token && typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', data.access_token)
-        localStorage.setItem('user_email', data.user.email)
+      if (response.data.access_token && typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', response.data.access_token)
+        localStorage.setItem('user_email', response.data.user.email)
       }
 
       // Update auth state
       this.authState = {
         user: {
-          id: data.user.id || data.user.email,
-          email: data.user.email,
-          firstName: data.user.first_name || 'User',
-          lastName: data.user.last_name || '',
+          id: response.data.user.id || response.data.user.email,
+          email: response.data.user.email,
+          firstName: response.data.user.first_name || 'User',
+          lastName: response.data.user.last_name || '',
         },
         isAuthenticated: true,
         isLoading: false,

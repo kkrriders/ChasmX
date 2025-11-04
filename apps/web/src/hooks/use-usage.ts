@@ -57,11 +57,15 @@ export function useUsage() {
   const loadSummary = async (startDate?: string, endDate?: string) => {
     try {
       setLoading(true)
-      const params: any = {}
-      if (startDate) params.start_date = startDate
-      if (endDate) params.end_date = endDate
+      const params = new URLSearchParams()
+      if (startDate) params.append('start_date', startDate)
+      if (endDate) params.append('end_date', endDate)
 
-      const response = await apiClient.get(API_ENDPOINTS.USAGE.SUMMARY, { params })
+      const url = params.toString()
+        ? `${API_ENDPOINTS.USAGE.SUMMARY}?${params.toString()}`
+        : API_ENDPOINTS.USAGE.SUMMARY
+
+      const response = await apiClient.get<UsageSummary>(url)
       setSummary(response.data)
       setError(null)
     } catch (err: any) {
@@ -73,9 +77,7 @@ export function useUsage() {
 
   const getDailyUsage = async (days: number = 30) => {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.USAGE.DAILY, {
-        params: { days }
-      })
+      const response = await apiClient.get(`${API_ENDPOINTS.USAGE.DAILY}?days=${days}`)
       return response.data
     } catch (err: any) {
       throw new Error(err.response?.data?.detail || "Failed to get daily usage")
@@ -84,7 +86,7 @@ export function useUsage() {
 
   const loadBudgets = async () => {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.USAGE.BUDGETS)
+      const response = await apiClient.get<Budget[]>(API_ENDPOINTS.USAGE.BUDGETS)
       setBudgets(response.data)
     } catch (err: any) {
       throw new Error(err.response?.data?.detail || "Failed to load budgets")

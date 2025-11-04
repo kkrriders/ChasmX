@@ -84,7 +84,7 @@ export function ExecutionSummary({ open, onOpenChange, executionContext, startTi
           <h4 className="font-medium mb-2">Node Details</h4>
           <ScrollArea className="h-[300px] rounded-md border p-4">
             <div className="space-y-4">
-              {Array.from(executionContext.nodeStates.entries()).map(([nodeId, state]: [string, any]) => (
+              {(Array.from(executionContext.nodeStates.entries()) as [string, any][]).map(([nodeId, state]) => (
                 <div key={nodeId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Badge

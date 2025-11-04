@@ -87,10 +87,11 @@ interface VersionItemProps {
   version: WorkflowVersion;
   isLatest: boolean;
   onRestore?: (version: WorkflowVersion) => void;
-  onCompare?: (version: WorkflowVersion) => void;
+  onCompare?: (versionA: number, versionB: number) => void;
+  latestVersionNumber?: number;
 }
 
-function VersionItem({ version, isLatest, onRestore, onCompare }: VersionItemProps) {
+function VersionItem({ version, isLatest, onRestore, onCompare, latestVersionNumber }: VersionItemProps) {
   return (
     <div className={cn(
       'p-4 border rounded-lg hover:bg-accent/50 transition-colors',
@@ -167,11 +168,11 @@ function VersionItem({ version, isLatest, onRestore, onCompare }: VersionItemPro
               Restore
             </Button>
           )}
-          {onCompare && (
+          {onCompare && latestVersionNumber && (
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => onCompare(version)}
+              onClick={() => onCompare(version.version_number, latestVersionNumber)}
               className="h-8"
             >
               <FileText className="h-3.5 w-3.5 mr-1" />
@@ -284,6 +285,7 @@ export function VersionHistory({
               isLatest={index === 0}
               onRestore={onRestore}
               onCompare={onCompare}
+              latestVersionNumber={versions[0]?.version_number}
             />
           ))}
         </div>

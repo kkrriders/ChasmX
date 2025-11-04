@@ -849,11 +849,11 @@ function EnhancedBuilderCanvasInner() {
       return
     }
 
+    // Save workflow first (or use existing ID)
+    let workflowId = currentWorkflowId
+
     try {
       setIsExecuting(true)
-
-      // Save workflow first (or use existing ID)
-      let workflowId = currentWorkflowId
       if (!workflowId) {
         workflowId = await handleSave()
         if (!workflowId) {
@@ -908,18 +908,21 @@ function EnhancedBuilderCanvasInner() {
             duration: 0,
             output: undefined,
             error: undefined,
+            retryCount: 0,
+            logs: [],
           })
         })
 
         setExecutionContext({
           executionId: fakeExecutionId,
-          workflowId: workflowId,
+          workflowId: workflowId || `workflow-${Date.now()}`,
           status: 'running',
           nodeStates,
           logs: [],
           errors: [],
           startTime: new Date(),
           endTime: undefined,
+          variables: {},
         } as any)
 
         setShowExecution(true)
@@ -940,7 +943,9 @@ function EnhancedBuilderCanvasInner() {
               // start node
               setExecutionContext(prev => {
                 if (!prev) return prev
-                const node = { ...prev.nodeStates.get(id) }
+                const existingNode = prev.nodeStates.get(id)
+                if (!existingNode) return prev
+                const node = { ...existingNode }
                 node.status = 'running'
                 node.startTime = new Date()
                 const newMap = new Map(prev.nodeStates)
@@ -957,7 +962,9 @@ function EnhancedBuilderCanvasInner() {
               // mark success
               setExecutionContext(prev => {
                 if (!prev) return prev
-                const node = { ...prev.nodeStates.get(id) }
+                const existingNode = prev.nodeStates.get(id)
+                if (!existingNode) return prev
+                const node = { ...existingNode }
                 node.status = 'success'
                 node.endTime = new Date()
                 node.duration = node.endTime.getTime() - (node.startTime ? new Date(node.startTime).getTime() : Date.now())
@@ -982,7 +989,9 @@ function EnhancedBuilderCanvasInner() {
 
               setExecutionContext(prev => {
                 if (!prev) return prev
-                const node = { ...prev.nodeStates.get(id) }
+                const existingNode = prev.nodeStates.get(id)
+                if (!existingNode) return prev
+                const node = { ...existingNode }
                 node.status = 'running'
                 node.startTime = new Date()
                 const newMap = new Map(prev.nodeStates)
@@ -998,7 +1007,9 @@ function EnhancedBuilderCanvasInner() {
 
               setExecutionContext(prev => {
                 if (!prev) return prev
-                const node = { ...prev.nodeStates.get(id) }
+                const existingNode = prev.nodeStates.get(id)
+                if (!existingNode) return prev
+                const node = { ...existingNode }
                 node.status = 'success'
                 node.endTime = new Date()
                 node.duration = node.endTime.getTime() - (node.startTime ? new Date(node.startTime).getTime() : Date.now())
@@ -1136,7 +1147,9 @@ function EnhancedBuilderCanvasInner() {
       // start node
       setExecutionContext(prev => {
         if (!prev) return prev
-        const node = { ...prev.nodeStates.get(nodeId) }
+        const existingNode = prev.nodeStates.get(nodeId)
+        if (!existingNode) return prev
+        const node = { ...existingNode }
         node.status = 'running'
         node.startTime = new Date()
         const newMap = new Map(prev.nodeStates)
@@ -1152,7 +1165,9 @@ function EnhancedBuilderCanvasInner() {
       // finish
       setExecutionContext(prev => {
         if (!prev) return prev
-        const node = { ...prev.nodeStates.get(nodeId) }
+        const existingNode = prev.nodeStates.get(nodeId)
+        if (!existingNode) return prev
+        const node = { ...existingNode }
         node.status = 'success'
         node.endTime = new Date()
         node.duration = node.endTime.getTime() - (node.startTime ? new Date(node.startTime).getTime() : Date.now())
@@ -1541,7 +1556,7 @@ function EnhancedBuilderCanvasInner() {
           <div className="mt-6">
             <WorkflowValidation nodes={nodes} edges={edges} />
             <div className="mt-6 flex gap-2">
-              <Button onClick={handleRun} className="flex-1">
+              <Button onClick={() => handleRun()} className="flex-1">
                 <Play className="h-4 w-4 mr-2" />
                 Test Workflow
               </Button>

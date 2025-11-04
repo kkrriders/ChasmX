@@ -27,7 +27,7 @@ export function useTemplates() {
   const loadTemplates = async () => {
     try {
       setLoading(true)
-      const response = await apiClient.get(API_ENDPOINTS.TEMPLATES.LIST)
+      const response = await apiClient.get<Template[]>(API_ENDPOINTS.TEMPLATES.LIST)
       setTemplates(response.data)
       setError(null)
     } catch (err: any) {
@@ -105,9 +105,9 @@ export function useTemplates() {
 
   const searchTemplates = async (query: string, category?: string) => {
     try {
-      const params: any = { q: query }
-      if (category) params.category = category
-      const response = await apiClient.get(API_ENDPOINTS.TEMPLATES.SEARCH, { params })
+      const params = new URLSearchParams({ q: query })
+      if (category) params.append('category', category)
+      const response = await apiClient.get(`${API_ENDPOINTS.TEMPLATES.SEARCH}?${params.toString()}`)
       return response.data
     } catch (err: any) {
       throw new Error(err.response?.data?.detail || "Failed to search templates")

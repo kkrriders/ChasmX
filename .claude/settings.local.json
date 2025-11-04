@@ -25,7 +25,8 @@
       "Bash(cp:*)",
       "Bash(ss:*)",
       "Bash(docker exec:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

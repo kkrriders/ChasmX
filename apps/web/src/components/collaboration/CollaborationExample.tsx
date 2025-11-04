@@ -37,8 +37,8 @@ function WorkflowEditorContent() {
     // Implement restore logic
   };
 
-  const handleCompare = (version: WorkflowVersion) => {
-    console.log('Compare version:', version.version_number);
+  const handleCompare = (versionA: number, versionB: number) => {
+    console.log('Compare versions:', versionA, 'vs', versionB);
     // Implement compare logic
   };
 

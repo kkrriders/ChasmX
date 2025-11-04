@@ -408,7 +408,7 @@ export function ExecutionPanel({
                           </div>
                           <div className="text-xs text-slate-500">
                             {state.status === 'running' && 'Processing...'}
-                            {state.status === 'success' && state.endTime && `Completed in ${formatDuration(new Date(state.endTime).getTime() - new Date(state.startTime).getTime())}`}
+                            {state.status === 'success' && state.endTime && state.startTime && `Completed in ${formatDuration(new Date(state.endTime).getTime() - new Date(state.startTime).getTime())}`}
                             {state.status === 'error' && 'Failed to execute'}
                           </div>
                         </div>

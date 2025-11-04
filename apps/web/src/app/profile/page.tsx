@@ -55,7 +55,7 @@ export default function ProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.USER.PROFILE)
+      const response = await apiClient.get<UserProfile>(API_ENDPOINTS.USER.PROFILE)
       setProfile(response.data)
       setFullName(response.data.full_name || "")
       setCompany(response.data.company || "")
@@ -72,7 +72,7 @@ export default function ProfilePage() {
 
   const loadNotifications = async () => {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.USER.NOTIFICATIONS)
+      const response = await apiClient.get<NotificationPreferences>(API_ENDPOINTS.USER.NOTIFICATIONS)
       setNotifications(response.data)
     } catch (error: any) {
       console.error("Error loading notifications:", error)
@@ -82,7 +82,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setSaving(true)
     try {
-      const response = await apiClient.put(API_ENDPOINTS.USER.UPDATE, {
+      const response = await apiClient.put<UserProfile>(API_ENDPOINTS.USER.UPDATE, {
         full_name: fullName,
         company: company,
       })
