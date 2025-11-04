@@ -4,25 +4,16 @@
 		{
 			"label": "Run Next.js app",
 			"type": "shell",
-			"command": "pnpm dev",
+			"command": "npm --prefix apps/web run dev",
 			"args": [],
 			"isBackground": false,
-			"problemMatcher": [
-				"$tsc"
-			],
+			"problemMatcher": [],
 			"group": "build"
 		},
 		{
-			"label": "Run Next.js app",
+			"label": "Run Next.js app (background)",
 			"type": "shell",
-			"command": "pnpm dev",
-			"isBackground": true,
-			"group": "build"
-		},
-		{
-			"label": "Run Next.js app",
-			"type": "shell",
-			"command": "pnpm dev",
+			"command": "npm --prefix apps/web run dev",
 			"isBackground": true,
 			"group": "build"
 		}
