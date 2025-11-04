@@ -46,11 +46,58 @@ export function WorkflowPreview({ nodes, edges, onRunTest, onStopTest, onReset }
   const handleRunTest = () => {
     setIsRunning(true)
     setTestResults([
-      { id: "1", step: "Initialize Workflow", status: "success", duration: 120, message: "Workflow initialized successfully" },
-      { id: "2", step: "Data Validation", status: "running", duration: 0, message: "Validating input data..." },
-      { id: "3", step: "AI Processing", status: "pending", duration: 0 },
-      { id: "4", step: "Send Notification", status: "pending", duration: 0 },
+      { id: "1", step: "Initialize Workflow", status: "running", duration: 0, message: "Initializing workflow..." },
+      { id: "2", step: "Data Validation", status: "pending", duration: 0, message: "Waiting to start..." },
+      { id: "3", step: "AI Processing", status: "pending", duration: 0, message: "Waiting to start..." },
+      { id: "4", step: "Send Notification", status: "pending", duration: 0, message: "Waiting to start..." },
     ])
+
+    // Simulate step execution with realistic timing
+    const simulateExecution = async () => {
+      // Step 1: Initialize
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setTestResults(prev => prev.map(r => 
+        r.id === "1" ? { ...r, status: "success", duration: 1000, message: "Workflow initialized successfully" } : r
+      ))
+
+      // Step 2: Validation
+      setTestResults(prev => prev.map(r => 
+        r.id === "2" ? { ...r, status: "running", message: "Validating input data..." } : r
+      ))
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      setTestResults(prev => prev.map(r => 
+        r.id === "2" ? { ...r, status: "success", duration: 1500, message: "Data validation completed" } : r
+      ))
+
+      // Step 3: AI Processing
+      setTestResults(prev => prev.map(r => 
+        r.id === "3" ? { ...r, status: "running", message: "Processing with AI model..." } : r
+      ))
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      setTestResults(prev => prev.map(r => 
+        r.id === "3" ? { ...r, status: "success", duration: 2000, message: "AI processing completed" } : r
+      ))
+
+      // Step 4: Notification
+      setTestResults(prev => prev.map(r => 
+        r.id === "4" ? { ...r, status: "running", message: "Sending notification..." } : r
+      ))
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setTestResults(prev => prev.map(r => 
+        r.id === "4" ? { ...r, status: "success", duration: 800, message: "Notification sent successfully" } : r
+      ))
+
+      // Complete execution
+      setIsRunning(false)
+    }
+
+    simulateExecution().catch(() => {
+      setIsRunning(false)
+      setTestResults(prev => prev.map(r => 
+        r.status === "running" ? { ...r, status: "error", message: "Execution failed" } : r
+      ))
+    })
+
     onRunTest?.()
   }
 
@@ -86,15 +133,15 @@ export function WorkflowPreview({ nodes, edges, onRunTest, onStopTest, onReset }
   const getStatusColor = (status: string) => {
     switch (status) {
       case "success":
-        return "bg-green-100 text-green-700"
+        return "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400"
       case "error":
-        return "bg-red-100 text-red-700"
+        return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400"
       case "running":
-        return "bg-blue-100 text-blue-700"
+        return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 animate-pulse"
       case "pending":
-        return "bg-gray-100 text-gray-700"
+        return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400"
       default:
-        return "bg-gray-100 text-gray-700"
+        return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900/30 dark:text-slate-400"
     }
   }
 
@@ -115,13 +162,13 @@ export function WorkflowPreview({ nodes, edges, onRunTest, onStopTest, onReset }
         <div className="space-y-3">
           <div className="flex gap-2">
             {!isRunning ? (
-              <Button
+                <Button
                 onClick={handleRunTest}
                 className="flex-1"
                 size="sm"
               >
                 <Play className="h-4 w-4 mr-2" />
-                Run Test
+                Test
               </Button>
             ) : (
               <Button
@@ -146,12 +193,20 @@ export function WorkflowPreview({ nodes, edges, onRunTest, onStopTest, onReset }
           {isRunning && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Progress</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Progress</span>
+                  {isRunning && (
+                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                  )}
+                </div>
                 <span className="text-sm text-muted-foreground">
                   {completedSteps}/{totalSteps} steps
                 </span>
               </div>
-              <Progress value={progress} className="h-2" />
+              <Progress value={progress} className="h-2 mb-2" />
+              <p className="text-xs text-muted-foreground text-center">
+                {testResults.find(r => r.status === "running")?.message || "Preparing execution..."}
+              </p>
             </div>
           )}
         </div>

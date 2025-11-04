@@ -68,8 +68,12 @@ export function HydrationErrorSuppressor() {
         try {
           originalError.apply(console, args)
         } catch {
-          // If the original throws for some reason, fall back to the default implementation
-          Function.prototype.apply.call(console.error, console, args)
+          // If calling the original via apply throws, try calling the saved original directly
+          try {
+            Function.prototype.apply.call(originalError, console, args)
+          } catch {
+            // Give up silently if even that fails - we don't want logging to crash the app
+          }
         }
       }
     }
@@ -92,7 +96,11 @@ export function HydrationErrorSuppressor() {
         try {
           originalWarn.apply(console, args)
         } catch {
-          Function.prototype.apply.call(console.warn, console, args)
+          try {
+            Function.prototype.apply.call(originalWarn, console, args)
+          } catch {
+            // swallow - don't let logging break the app
+          }
         }
       }
     }

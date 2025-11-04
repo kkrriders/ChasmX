@@ -95,7 +95,7 @@ export function CommandPalette({
     // Workflow Actions
     {
       id: 'run',
-      label: 'Run Workflow',
+      label: 'Test Workflow',
       description: 'Execute the current workflow',
       icon: <Play className="h-4 w-4" />,
       action: () => {

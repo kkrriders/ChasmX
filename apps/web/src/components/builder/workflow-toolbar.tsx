@@ -47,7 +47,8 @@ interface WorkflowToolbarProps {
   nodeCount: number
   connectionCount: number
   onSave: () => void
-  onRun: () => void
+  // onRun now accepts an optional execution mode
+  onRun: (mode?: 'sequential' | 'parallel') => void
   onUndo?: () => void
   onRedo?: () => void
   onZoomIn?: () => void
@@ -333,24 +334,31 @@ export function WorkflowToolbar({
                 // ignore
               }
 
-              // Primary: call provided handler (which will actually start execution)
-              if (onRun) return onRun()
-
-              // Fallback: dispatch a global event so builders that didn't pass the prop still run
+              // Always dispatch a global run event with a default mode so any
+              // global listeners receive the intended execution mode.
               try {
-                console.debug('[workflow-toolbar] Dispatching global workflow-run event')
-                window.dispatchEvent(new CustomEvent('workflow-run'))
+                console.debug('[workflow-toolbar] Dispatching global workflow-run event with mode=sequential')
+                window.dispatchEvent(new CustomEvent('workflow-run', { detail: { mode: 'sequential' } }))
               } catch (e) {
                 // no-op
               }
+
+              // Call provided handler (which will actually start execution).
+              if (onRun) {
+                try {
+                  onRun('sequential')
+                } catch (err) {
+                  console.error('WorkflowToolbar onRun threw:', err)
+                }
+              }
             }}
-            aria-label="Run workflow"
+            aria-label="Test workflow"
             disabled={nodeCount === 0}
-            title={nodeCount === 0 ? 'Add nodes to enable Run' : undefined}
+            title={nodeCount === 0 ? 'Add nodes to enable Test' : undefined}
             className={`focus-visible:ring-2 focus-visible:ring-primary/50 ${nodeCount === 0 ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
             <Play className="h-4 w-4 mr-1" />
-            Run
+            Test
           </Button>
         </div>
       </div>
