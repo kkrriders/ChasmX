@@ -44,22 +44,22 @@ function normalizeWorkflowRun(run: WorkflowRun): WorkflowRun {
 
 export async function fetchWorkflows(): Promise<WorkflowSummary[]> {
   const response = await api.get<WorkflowSummary[]>(API_ENDPOINTS.WORKFLOWS.LIST, true)
-  return (response ?? []).map(normalizeWorkflowSummary)
+  return (response.data ?? []).map(normalizeWorkflowSummary)
 }
 
 export async function fetchWorkflow(workflowId: string): Promise<Workflow> {
   const response = await api.get<Workflow>(API_ENDPOINTS.WORKFLOWS.GET(workflowId), true)
-  return normalizeWorkflow(response)
+  return normalizeWorkflow(response.data)
 }
 
 export async function fetchWorkflowExecutions(workflowId: string): Promise<WorkflowRun[]> {
   const response = await api.get<WorkflowRun[]>(API_ENDPOINTS.WORKFLOWS.EXECUTIONS(workflowId), true)
-  return (response ?? []).map(normalizeWorkflowRun)
+  return (response.data ?? []).map(normalizeWorkflowRun)
 }
 
 export async function fetchWorkflowExecution(executionId: string): Promise<WorkflowRun> {
   const response = await api.get<WorkflowRun>(API_ENDPOINTS.WORKFLOWS.EXECUTION(executionId), true)
-  return normalizeWorkflowRun(response)
+  return normalizeWorkflowRun(response.data)
 }
 
 export interface ExecuteWorkflowRequest {
@@ -84,7 +84,7 @@ export async function executeWorkflow(
     request,
     true
   )
-  return response
+  return response.data
 }
 
 export async function generateWorkflowFromPrompt(prompt: string): Promise<GeneratedWorkflowResponse> {
@@ -94,11 +94,11 @@ export async function generateWorkflowFromPrompt(prompt: string): Promise<Genera
     true,
   )
 
-  if (response?.workflow) {
-    response.workflow = normalizeWorkflow(response.workflow)
+  if (response.data?.workflow) {
+    response.data.workflow = normalizeWorkflow(response.data.workflow)
   }
 
-  return response
+  return response.data
 }
 
 export function buildExecutionStreamUrl(executionId: string): string | null {

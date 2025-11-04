@@ -77,47 +77,54 @@ class APIClient {
     }
   }
 
-  async get<T>(endpoint: string, requiresAuth = false): Promise<T> {
-    return this.request<T>(endpoint, {
+  async get<T>(endpoint: string, requiresAuth = true): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint, {
       method: 'GET',
       requiresAuth,
     })
+    return { data }
   }
 
   async post<T>(
     endpoint: string,
     data?: any,
-    requiresAuth = false
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
+    requiresAuth = true
+  ): Promise<{ data: T }> {
+    const responseData = await this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
       requiresAuth,
     })
+    return { data: responseData }
   }
 
   async put<T>(
     endpoint: string,
     data?: any,
-    requiresAuth = false
-  ): Promise<T> {
-    return this.request<T>(endpoint, {
+    requiresAuth = true
+  ): Promise<{ data: T }> {
+    const responseData = await this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
       requiresAuth,
     })
+    return { data: responseData }
   }
 
-  async delete<T>(endpoint: string, requiresAuth = false): Promise<T> {
-    return this.request<T>(endpoint, {
+  async delete<T>(endpoint: string, requiresAuth = true): Promise<{ data: T }> {
+    const data = await this.request<T>(endpoint, {
       method: 'DELETE',
       requiresAuth,
     })
+    return { data }
   }
 }
 
 // Create singleton instance
 export const api = new APIClient(config.apiUrl)
+
+// Export as apiClient for backward compatibility
+export const apiClient = api
 
 // Export for testing or creating custom instances
 export { APIClient }

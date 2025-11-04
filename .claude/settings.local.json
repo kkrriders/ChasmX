@@ -24,7 +24,8 @@
       "Bash(docker logs:*)",
       "Bash(cp:*)",
       "Bash(ss:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

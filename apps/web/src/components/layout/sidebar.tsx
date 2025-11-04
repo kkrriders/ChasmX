@@ -23,6 +23,10 @@ import {
   Database,
   Star,
   LogOut,
+  Clock,
+  Webhook,
+  Key,
+  TrendingUp,
 } from "lucide-react"
 
 // Memoized navigation data to prevent recreation on every render
@@ -50,6 +54,30 @@ const mainNavigation = [
   },
 ]
 
+const automationNavigation = [
+  {
+    name: "Schedules",
+    href: "/schedules",
+    icon: Clock,
+    badge: null,
+    description: "Workflow scheduling",
+  },
+  {
+    name: "Webhooks",
+    href: "/webhooks",
+    icon: Webhook,
+    badge: null,
+    description: "Event triggers",
+  },
+  {
+    name: "API Keys",
+    href: "/api-keys",
+    icon: Key,
+    badge: null,
+    description: "API access management",
+  },
+]
+
 const governanceNavigation = [
   {
     name: "Governance",
@@ -57,6 +85,13 @@ const governanceNavigation = [
     icon: Shield,
     badge: null,
     description: "Policies and compliance",
+  },
+  {
+    name: "Usage",
+    href: "/usage",
+    icon: TrendingUp,
+    badge: null,
+    description: "Usage analytics & costs",
   },
   {
     name: "Analytics",
@@ -254,6 +289,7 @@ export const Sidebar = memo(function Sidebar() {
         }}
       >
         <NavSection title="Main" items={mainNavigation} />
+        <NavSection title="Automation" items={automationNavigation} />
         <NavSection title="Governance" items={governanceNavigation} />
         <NavSection title="Administration" items={adminNavigation} />
         <NavSection title="Support" items={supportNavigation} />

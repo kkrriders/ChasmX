@@ -752,7 +752,7 @@ function EnhancedBuilderCanvasInner() {
     try {
       // Save to backend
       const response = await api.post<any>('/workflows/', workflow)
-      setCurrentWorkflowId(response.id)
+      setCurrentWorkflowId(response.data.id)
       setLastSaved(new Date())
       setHasUnsavedChanges(false)
 
@@ -761,11 +761,11 @@ function EnhancedBuilderCanvasInner() {
 
       toast({
         title: "Success",
-        description: `Workflow saved to server (ID: ${response.id})`,
+        description: `Workflow saved to server (ID: ${response.data.id})`,
         duration: 3000,
       })
 
-      return response.id
+      return response.data.id
     } catch (error: any) {
       console.error('Failed to save workflow:', error)
       toast({
@@ -784,7 +784,8 @@ function EnhancedBuilderCanvasInner() {
   // Poll execution status
   const pollExecutionStatus = useCallback(async (executionId: string) => {
     try {
-      const status = await api.get<any>(`/workflows/executions/${executionId}`)
+      const response = await api.get<any>(`/workflows/executions/${executionId}`)
+      const status = response.data
 
       setExecutionContext({
         executionId: status.execution_id,
@@ -863,17 +864,17 @@ function EnhancedBuilderCanvasInner() {
 
       toast({
         title: "Execution Started",
-        description: `Workflow execution started (ID: ${response.execution_id})`,
+        description: `Workflow execution started (ID: ${response.data.execution_id})`,
         duration: 2000,
       })
 
       // Start polling for status updates
       pollIntervalRef.current = setInterval(() => {
-        pollExecutionStatus(response.execution_id)
+        pollExecutionStatus(response.data.execution_id)
       }, 1000) // Poll every second
 
       // Initial poll
-      pollExecutionStatus(response.execution_id)
+      pollExecutionStatus(response.data.execution_id)
 
     } catch (error: any) {
       console.error('Failed to execute workflow:', error)
