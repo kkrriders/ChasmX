@@ -36,6 +36,21 @@ from .api_key import (
     TIER_LIMITS
 )
 
+from .collaboration import (
+    UserPresence,
+    PresenceStatus,
+    CursorPosition,
+    WorkflowVersion,
+    VersionType,
+    WorkflowComment,
+    CommentStatus,
+    Comment,
+    CollaborationSession,
+    CollaborationSessionStatus,
+    WorkflowChange,
+    ChangeType,
+)
+
 __all__ = [
     "WorkflowStatus",
     "VariableType",
@@ -58,9 +73,21 @@ __all__ = [
     "WebhookExecution",
     "WebhookRateLimit",
     "APIKeyStatus",
-    "UserTier", 
+    "UserTier",
     "QuotaLimits",
     "UsageStats",
     "APIKey",
-    "TIER_LIMITS"
+    "TIER_LIMITS",
+    "UserPresence",
+    "PresenceStatus",
+    "CursorPosition",
+    "WorkflowVersion",
+    "VersionType",
+    "WorkflowComment",
+    "CommentStatus",
+    "Comment",
+    "CollaborationSession",
+    "CollaborationSessionStatus",
+    "WorkflowChange",
+    "ChangeType",
 ]
