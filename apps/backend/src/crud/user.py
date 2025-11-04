@@ -89,3 +89,77 @@ async def verify_password(
     except Exception as e:
         logger.error(f"Password verification error: {str(e)}")
         return False
+
+async def update_password(
+    email: str,
+    new_password: str,
+    db: AsyncIOMotorDatabase
+) -> bool:
+    """Update user's password"""
+    # Hash the new password
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(new_password.encode(), salt)
+    
+    result = await db.users.update_one(
+        {"email": email},
+        {
+            "$set": {
+                "hashed_password": hashed_password.decode(),
+                "updated_at": datetime.utcnow()
+            },
+            "$unset": {
+                "password_reset_token": "",
+                "password_reset_expires": ""
+            }
+        }
+    )
+    return result.modified_count > 0
+
+async def set_password_reset_token(
+    email: str,
+    token: str,
+    expires_at: datetime,
+    db: AsyncIOMotorDatabase
+) -> bool:
+    """Set password reset token for user"""
+    result = await db.users.update_one(
+        {"email": email},
+        {
+            "$set": {
+                "password_reset_token": token,
+                "password_reset_expires": expires_at,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    return result.modified_count > 0
+
+async def get_user_by_reset_token(
+    token: str,
+    db: AsyncIOMotorDatabase
+) -> User | None:
+    """Get user by password reset token"""
+    user_dict = await db.users.find_one({
+        "password_reset_token": token,
+        "password_reset_expires": {"$gt": datetime.utcnow()}
+    })
+    return User(**user_dict) if user_dict else None
+
+async def clear_password_reset_token(
+    email: str,
+    db: AsyncIOMotorDatabase
+) -> bool:
+    """Clear password reset token for user"""
+    result = await db.users.update_one(
+        {"email": email},
+        {
+            "$unset": {
+                "password_reset_token": "",
+                "password_reset_expires": ""
+            },
+            "$set": {
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    return result.modified_count > 0
