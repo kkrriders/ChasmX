@@ -70,11 +70,11 @@ export function WorkflowToolbar({
                   <Play className="h-4 w-4" />
                 )}
                 <span className="hidden sm:inline">
-                  {isExecuting ? 'Running...' : 'Execute'}
+                  {isExecuting ? 'Running...' : 'Test'}
                 </span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Execute selected workflow</TooltipContent>
+            <TooltipContent>Test selected workflow</TooltipContent>
           </Tooltip>
         )}
 

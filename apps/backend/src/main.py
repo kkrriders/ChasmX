@@ -39,7 +39,19 @@ app = FastAPI(
 
 # Add rate limiter to app state
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Custom rate limit exception handler
+async def rate_limit_handler(request: Request, exc: Exception):
+    """Handle rate limit exceeded exceptions"""
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "Rate limit exceeded",
+            "detail": "Too many requests. Please try again later.",
+        }
+    )
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 # Configure CORS middleware
 app.add_middleware(

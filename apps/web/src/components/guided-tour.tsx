@@ -14,7 +14,7 @@ const STEPS: Step[] = [
   {
     id: 'toolbar',
     title: 'Workflow Toolbar',
-    description: 'Use the toolbar to name, save, run, and export your workflow. Try the Run button when you are ready.',
+    description: 'Use the toolbar to name, save, test, and export your workflow. Try the Test button when you are ready.',
     anchor: 'workflow-toolbar',
   },
   {

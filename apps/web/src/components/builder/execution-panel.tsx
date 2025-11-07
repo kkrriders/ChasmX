@@ -29,6 +29,7 @@ import {
   X,
   Wrench,
 } from 'lucide-react'
+import { ExecutionSummary } from './execution-summary'
 
 interface ExecutionPanelProps {
   open: boolean
@@ -37,7 +38,8 @@ interface ExecutionPanelProps {
   onPause?: () => void
   onResume?: () => void
   onStop?: () => void
-  onRun?: () => void
+  // onRun now accepts an optional execution mode ('sequential' | 'parallel')
+  onRun?: (mode?: 'sequential' | 'parallel') => void
   isExecuting?: boolean
 }
 
@@ -52,6 +54,17 @@ export function ExecutionPanel({
   isExecuting,
 }: ExecutionPanelProps) {
   const [progress, setProgress] = useState(0)
+  const [executionMode, setExecutionMode] = useState<'sequential' | 'parallel'>('sequential')
+  const [showSummary, setShowSummary] = useState(false)
+  const [startTime, setStartTime] = useState<Date | undefined>()
+
+  useEffect(() => {
+    if (isExecuting && !startTime) {
+      setStartTime(new Date())
+    } else if (!isExecuting) {
+      setStartTime(undefined)
+    }
+  }, [isExecuting])
 
   useEffect(() => {
     if (executionContext) {
@@ -134,14 +147,25 @@ export function ExecutionPanel({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* <button
-                  onClick={() => onOpenChange(false)}
-                  className="p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
-                  title="Close"
-                  aria-label="Close execution panel"
+                <div className="flex gap-2 items-center mr-4">
+                  <select
+                    value={executionMode}
+                    onChange={(e) => setExecutionMode(e.target.value as 'sequential' | 'parallel')}
+                    className="text-sm bg-transparent border rounded px-2 py-1"
+                  >
+                    <option value="sequential">Sequential</option>
+                    <option value="parallel">Parallel</option>
+                  </select>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowSummary(true)}
+                  disabled={!executionContext || isExecuting}
                 >
-                  <X className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                </button> */}
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Summary
+                </Button>
               </div>
             </div>
           </SheetHeader>
@@ -150,16 +174,27 @@ export function ExecutionPanel({
               <button
                 onClick={() => {
                   if (isExecuting) return
-                  if (onRun) return onRun()
-                  // fallback global event
+
+                  // Always dispatch a global event so any listeners (including the
+                  // EnhancedBuilderCanvas global handler) get notified. This gives
+                  // immediate UI feedback even if the provided onRun prop doesn't
+                  // trigger the backend or set execution context synchronously.
                   try {
-                    window.dispatchEvent(new CustomEvent('workflow-run'))
+                    window.dispatchEvent(new CustomEvent('workflow-run', { detail: { mode: executionMode } }))
                   } catch (e) {}
+
+                  if (onRun) {
+                    try {
+                      onRun(executionMode)
+                    } catch (err) {
+                      console.error('ExecutionPanel onRun threw:', err)
+                    }
+                  }
                 }}
                 disabled={isExecuting}
                 className={`w-16 h-16 mx-auto mb-4 rounded-full ${isExecuting ? 'bg-gray-300 dark:bg-slate-800 cursor-not-allowed' : 'bg-[#514eec] hover:scale-105'} flex items-center justify-center shadow-lg transform transition-all`}
-                title={isExecuting ? 'Execution in progress' : 'Run workflow'}
-                aria-label="Run workflow"
+                title={isExecuting ? 'Test in progress' : 'Test workflow'}
+                aria-label="Test workflow"
               >
                 {isExecuting ? (
                   <svg className="h-6 w-6 text-white animate-spin" viewBox="0 0 24 24">
@@ -170,8 +205,8 @@ export function ExecutionPanel({
                   <Play className="h-8 w-8 text-white" />
                 )}
               </button>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Ready to Execute</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Click the Run button to start your workflow execution</p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Ready to Test</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Click the Test button to start your workflow test</p>
             </div>
           </div>
         </SheetContent>
@@ -359,10 +394,23 @@ export function ExecutionPanel({
                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                           state.status === 'success' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
                           state.status === 'error' ? 'bg-red-100 dark:bg-red-900/30' :
-                          state.status === 'running' ? 'bg-[#514eec]/10 dark:bg-[#514eec]/20' :
+                          state.status === 'running' ? 'bg-[#514eec]/10 dark:bg-[#514eec]/20 animate-pulse' :
                           'bg-slate-100 dark:bg-slate-800'
                         }`}>
                           {getStatusIcon(state.status)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate">{nodeId}</span>
+                            <span className="text-xs text-slate-500">
+                              {state.startTime && new Date(state.startTime).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {state.status === 'running' && 'Processing...'}
+                            {state.status === 'success' && state.endTime && state.startTime && `Completed in ${formatDuration(new Date(state.endTime).getTime() - new Date(state.startTime).getTime())}`}
+                            {state.status === 'error' && 'Failed to execute'}
+                          </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -401,6 +449,24 @@ export function ExecutionPanel({
                         </div>
                       </div>
                     )}
+                    {/* Retry button for failed nodes */}
+                    {state.status === 'error' && (
+                      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/20 flex items-center justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            try {
+                              window.dispatchEvent(new CustomEvent('workflow-retry', { detail: { nodeId } }))
+                            } catch (e) {
+                              console.error('Failed to dispatch workflow-retry', e)
+                            }
+                          }}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    )}
                     
                     {state.output && state.status === 'success' && (
                       <div className="mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-900/30">
@@ -421,6 +487,21 @@ export function ExecutionPanel({
                                 : String(state.output)}
                             </pre>
                           </div>
+
+                          {/* Execution logs for this node */}
+                          {executionContext.logs && (
+                            <div className="mt-3">
+                              <h6 className="text-xs font-semibold mb-1">Logs</h6>
+                              <div className="space-y-2">
+                                {executionContext.logs.filter(l => l.nodeId === nodeId).map((log: any, idx: number) => (
+                                  <div key={idx} className="p-2 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono">
+                                    <div className="text-muted-foreground text-[11px] mb-1">{new Date(log.timestamp).toLocaleTimeString()} • {log.level.toUpperCase()}</div>
+                                    <div>{log.message}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </details>
                       </div>
                     )}
@@ -594,6 +675,13 @@ export function ExecutionPanel({
         </div>
         </ScrollArea>
       </SheetContent>
+
+      <ExecutionSummary
+        open={showSummary}
+        onOpenChange={setShowSummary}
+        executionContext={executionContext}
+        startTime={startTime}
+      />
     </Sheet>
   )
 }

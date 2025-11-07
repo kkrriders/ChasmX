@@ -6,6 +6,7 @@ import { Toaster } from "sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CommandPalette } from "@/components/ui/command-palette"
 import { HydrationErrorSuppressor } from "@/components/hydration-error-suppressor"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata: Metadata = {
   title: "ChasmX - Transform Ideas into Intelligent Workflows",
@@ -34,10 +35,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <HydrationErrorSuppressor />
-          <CommandPalette />
-          {children}
-          <Toaster position="top-right" />
+          <ErrorBoundary>
+            <HydrationErrorSuppressor />
+            <CommandPalette />
+            {children}
+            <Toaster position="top-right" />
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>
