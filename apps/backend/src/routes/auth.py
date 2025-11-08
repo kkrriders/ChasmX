@@ -1,6 +1,6 @@
 
 
-from typing import Dict
+from typing import Dict, Annotated
 from fastapi import APIRouter, Body, Depends, HTTPException, status, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from loguru import logger
@@ -8,21 +8,27 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from src.utils.otp import generate_otp, verify_otp, update_user_otp
-from src.utils.email import send_otp_email
+from src.utils.email import send_otp_email, send_password_reset_email, send_password_changed_notification
+from src.utils.password_reset import generate_reset_token, get_reset_token_expiry
 from src.schemas.otp import OTPVerify
 
 from src.core.database import get_database
 from src.core.config import settings
 from src.schemas.user import UserOut
-from src.models.user import UserCreate, UserLogin
+from src.models.user import UserCreate, UserLogin, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest, User
 from src.crud.user import (
     get_user_by_email,
     create_user,
     verify_password,
     increment_failed_attempts,
-    update_last_login
+    update_last_login,
+    update_password,
+    set_password_reset_token,
+    get_user_by_reset_token,
+    clear_password_reset_token
 )
 from src.auth.jwt import create_access_token
+from src.auth.dependencies import get_current_user
 
 # Create router without prefix (prefix will be added in main.py)
 router = APIRouter(tags=["auth"])
@@ -281,4 +287,159 @@ async def resend_otp(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to resend OTP"
+        )
+
+
+@router.post("/change-password")
+@limiter.limit("5/minute")
+async def change_password(
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+    password_request: ChangePasswordRequest = Body(),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Dict:
+    """Change user password with current password verification.
+    
+    Args:
+        password_request: Current and new password data
+        current_user: Current authenticated user
+        db: Database instance from dependency injection
+        
+    Returns:
+        Dict: Success message
+        
+    Raises:
+        HTTPException: 400 for invalid current password
+                      500 for server errors
+    """
+    try:
+        # Verify current password
+        if not await verify_password(current_user, password_request.current_password):
+            logger.warning(f"Failed current password verification for user: {current_user.email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password is incorrect"
+            )
+        
+        # Update to new password
+        if not await update_password(current_user.email, password_request.new_password, db):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update password"
+            )
+        
+        # Send confirmation email
+        await send_password_changed_notification(current_user.email)
+        
+        logger.info(f"Password changed successfully for user: {current_user.email}")
+        return {"message": "Password changed successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Change password error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to change password"
+        )
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(
+    request: Request,
+    forgot_request: ForgotPasswordRequest = Body(),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Dict:
+    """Initiate password reset flow via email.
+    
+    Args:
+        forgot_request: Email for password reset
+        db: Database instance from dependency injection
+        
+    Returns:
+        Dict: Success message (always returns success for security)
+        
+    Note:
+        Always returns success message even if email doesn't exist
+        for security reasons (prevents email enumeration)
+    """
+    try:
+        # Check if user exists
+        user = await get_user_by_email(forgot_request.email, db)
+        
+        if user:
+            # Generate reset token
+            reset_token = generate_reset_token()
+            expires_at = get_reset_token_expiry()
+            
+            # Save reset token
+            if await set_password_reset_token(forgot_request.email, reset_token, expires_at, db):
+                # Send reset email
+                await send_password_reset_email(forgot_request.email, reset_token)
+                logger.info(f"Password reset initiated for user: {forgot_request.email}")
+            else:
+                logger.error(f"Failed to save reset token for user: {forgot_request.email}")
+        else:
+            logger.info(f"Password reset requested for non-existent email: {forgot_request.email}")
+        
+        # Always return success message for security
+        return {"message": "If the email exists, a password reset link has been sent"}
+        
+    except Exception as e:
+        logger.error(f"Forgot password error: {str(e)}")
+        # Still return success message to avoid revealing errors
+        return {"message": "If the email exists, a password reset link has been sent"}
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+async def reset_password(
+    request: Request,
+    reset_request: ResetPasswordRequest = Body(),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+) -> Dict:
+    """Complete password reset with token.
+    
+    Args:
+        reset_request: Reset token and new password
+        db: Database instance from dependency injection
+        
+    Returns:
+        Dict: Success message
+        
+    Raises:
+        HTTPException: 400 for invalid/expired token
+                      500 for server errors
+    """
+    try:
+        # Find user by reset token
+        user = await get_user_by_reset_token(reset_request.token, db)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token"
+            )
+        
+        # Update password
+        if not await update_password(user.email, reset_request.new_password, db):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update password"
+            )
+        
+        # Send confirmation email
+        await send_password_changed_notification(user.email)
+        
+        logger.info(f"Password reset completed for user: {user.email}")
+        return {"message": "Password reset successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Reset password error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset password"
         )

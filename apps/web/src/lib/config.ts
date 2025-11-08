@@ -15,6 +15,9 @@ export const API_ENDPOINTS = {
     RESEND_OTP: '/auth/resend-otp',
     CHECK_USER: '/auth/check-user',
     LOGOUT: '/auth/logout',
+    CHANGE_PASSWORD: '/auth/change-password',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
   // Workflow endpoints
   WORKFLOWS: {
@@ -103,5 +106,13 @@ export const API_ENDPOINTS = {
     VERSIONS: (workflowId: string) => `/collaboration/workflows/${workflowId}/versions`,
     COMMENTS: (workflowId: string) => `/collaboration/workflows/${workflowId}/comments`,
     CHANGES: (workflowId: string) => `/collaboration/workflows/${workflowId}/changes`,
+  },
+  // Analytics endpoints
+  ANALYTICS: {
+    REALTIME_METRICS: '/analytics/metrics/realtime',
+    ACTIVE_WORKFLOWS: '/analytics/workflows/active',
+    NODE_PERFORMANCE: '/analytics/nodes/performance',
+    QUALITY_METRICS: '/analytics/quality',
+    HEALTH: '/analytics/health',
   },
 } as const

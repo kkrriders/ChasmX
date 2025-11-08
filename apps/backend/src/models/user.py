@@ -23,6 +23,10 @@ class User(BaseModel):
     otp_code: Optional[str] = None
     otp_expiry: Optional[datetime] = None
     
+    # Password reset fields
+    password_reset_token: Optional[str] = None
+    password_reset_expires: Optional[datetime] = None
+    
     # Profile fields
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -147,3 +151,53 @@ class UserOut(BaseModel):
     last_name: Optional[str] = None
     company: Optional[str] = None
     bio: Optional[str] = None
+
+class ChangePasswordRequest(BaseModel):
+    """Schema for changing password with current password verification"""
+    current_password: str
+    new_password: str
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        """Validate new password meets minimum requirements"""
+        # Using hardcoded values to avoid circular import issue
+        MIN_PASSWORD_LENGTH = 8
+        if len(v) < MIN_PASSWORD_LENGTH:
+            raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters long")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+            raise ValueError("Password must contain at least one special character")
+        return v
+
+class ForgotPasswordRequest(BaseModel):
+    """Schema for initiating password reset"""
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for completing password reset with token"""
+    token: str
+    new_password: str
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        """Validate new password meets minimum requirements"""
+        # Using hardcoded values to avoid circular import issue
+        MIN_PASSWORD_LENGTH = 8
+        if len(v) < MIN_PASSWORD_LENGTH:
+            raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters long")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in v):
+            raise ValueError("Password must contain at least one special character")
+        return v

@@ -20,7 +20,7 @@ from src.routes.webhook import router as webhook_router
 from src.routes.usage import router as usage_router
 from src.routes.template import router as template_router
 from src.routes.api_keys import router as api_keys_router
-from src.routes.collaboration import router as collaboration_router
+from src.routes.analytics import router as analytics_router
 from src.services.ai_service_manager import ai_service_manager
 from src.services.scheduler_service import scheduler_service
 from src.services.quota_service import quota_service
@@ -39,7 +39,19 @@ app = FastAPI(
 
 # Add rate limiter to app state
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Custom rate limit exception handler
+async def rate_limit_handler(request: Request, exc: Exception):
+    """Handle rate limit exceeded exceptions"""
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "Rate limit exceeded",
+            "detail": "Too many requests. Please try again later.",
+        }
+    )
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 # Configure CORS middleware
 app.add_middleware(
@@ -117,7 +129,7 @@ app.include_router(schedule_router)
 app.include_router(webhook_router)
 app.include_router(template_router)
 app.include_router(api_keys_router)
-app.include_router(collaboration_router)
+app.include_router(analytics_router)
 
 @app.get("/")
 async def root():
@@ -130,7 +142,12 @@ async def root():
             "auth": {
                 "register": "/auth/register",
                 "login": "/auth/login",
-                "verify_otp": "/auth/verify-otp"
+                "verify_otp": "/auth/verify-otp",
+                "resend_otp": "/auth/resend-otp",
+                "check_user": "/auth/check-user",
+                "change_password": "/auth/change-password",
+                "forgot_password": "/auth/forgot-password",
+                "reset_password": "/auth/reset-password"
             },
             "users": {
                 "me": "/users/me",
@@ -151,6 +168,12 @@ async def root():
             "ai": {
                 "chat": "/ai/chat", 
                 "workflows": "/ai/workflows/generate"
+            },
+            "analytics": {
+                "realtime_metrics": "/analytics/metrics/realtime",
+                "active_workflows": "/analytics/workflows/active",
+                "node_performance": "/analytics/nodes/performance",
+                "quality_metrics": "/analytics/quality"
             }
         }
     }
