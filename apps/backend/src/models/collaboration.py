@@ -88,14 +88,14 @@ class WorkflowVersion(Document):
     - Visual diff comparison
     - Rollback to previous versions
     """
-    workflow_id: Indexed[str] = Field(..., description="Workflow ID")
+    workflow_id: str = Field(..., description="Workflow ID")
     version_number: int = Field(..., description="Sequential version number")
 
     # Version metadata
     version_type: VersionType = Field(default=VersionType.AUTO, description="Type of save")
     created_by: str = Field(..., description="User who created this version")
     created_by_name: str = Field(..., description="User display name")
-    created_at: Indexed[datetime] = Field(default_factory=datetime.utcnow, description="Creation time")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation time")
 
     # Workflow state
     workflow_data: Dict[str, Any] = Field(..., description="Complete workflow JSON")
@@ -151,10 +151,10 @@ class WorkflowComment(Document):
     Supports threaded discussions, reactions, and resolution tracking.
     Can be attached to the whole workflow or specific nodes.
     """
-    workflow_id: Indexed[str] = Field(..., description="Workflow ID")
+    workflow_id: str = Field(..., description="Workflow ID")
 
     # Comment location
-    node_id: Optional[Indexed[str]] = Field(None, description="Specific node (if applicable)")
+    node_id: Optional[str] = Field(None, description="Specific node (if applicable)")
     position: Optional[Dict[str, float]] = Field(None, description="Position in canvas")
 
     # Thread
@@ -167,7 +167,7 @@ class WorkflowComment(Document):
     resolved_at: Optional[datetime] = Field(None, description="Resolution time")
 
     # Metadata
-    created_at: Indexed[datetime] = Field(default_factory=datetime.utcnow, description="Thread creation")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Thread creation")
     last_activity: datetime = Field(default_factory=datetime.utcnow, description="Last comment time")
     participant_ids: List[str] = Field(default_factory=list, description="All participants")
 
@@ -194,11 +194,11 @@ class CollaborationSession(Document):
     Groups related presence, edits, and activity for a workflow editing session.
     Useful for analytics and session replay.
     """
-    workflow_id: Indexed[str] = Field(..., description="Workflow ID")
+    workflow_id: str = Field(..., description="Workflow ID")
     session_id: str = Field(..., description="Unique session ID")
 
     # Session info
-    started_at: Indexed[datetime] = Field(default_factory=datetime.utcnow, description="Session start")
+    started_at: datetime = Field(default_factory=datetime.utcnow, description="Session start")
     ended_at: Optional[datetime] = Field(None, description="Session end")
     status: CollaborationSessionStatus = Field(default=CollaborationSessionStatus.ACTIVE)
 
@@ -246,7 +246,7 @@ class WorkflowChange(Document):
     - Change feed / activity log
     - Conflict detection
     """
-    workflow_id: Indexed[str] = Field(..., description="Workflow ID")
+    workflow_id: str = Field(..., description="Workflow ID")
     session_id: Optional[str] = Field(None, description="Collaboration session")
 
     # Change info
@@ -256,7 +256,7 @@ class WorkflowChange(Document):
     # Attribution
     user_id: str = Field(..., description="User who made the change")
     user_name: str = Field(..., description="User display name")
-    timestamp: Indexed[datetime] = Field(default_factory=datetime.utcnow, description="When changed")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="When changed")
 
     # Context
     version: Optional[int] = Field(None, description="Associated version number")

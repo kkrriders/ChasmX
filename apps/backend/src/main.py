@@ -21,6 +21,7 @@ from src.routes.usage import router as usage_router
 from src.routes.template import router as template_router
 from src.routes.api_keys import router as api_keys_router
 from src.routes.analytics import router as analytics_router
+from src.routes.security import router as security_router
 from src.services.ai_service_manager import ai_service_manager
 from src.services.scheduler_service import scheduler_service
 from src.services.quota_service import quota_service
@@ -130,6 +131,7 @@ app.include_router(webhook_router)
 app.include_router(template_router)
 app.include_router(api_keys_router)
 app.include_router(analytics_router)
+app.include_router(security_router)
 
 @app.get("/")
 async def root():
