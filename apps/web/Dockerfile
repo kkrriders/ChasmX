@@ -1,5 +1,5 @@
 # Use Node.js LTS version
-FROM node:20-alpine3.19 AS base
+FROM node:23-alpine3.19 AS base
 
 # Install dependencies only when needed
 FROM base AS deps
