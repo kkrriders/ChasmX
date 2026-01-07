@@ -1,6 +1,6 @@
 # Development Dockerfile for ChasmX Backend
 # NOTE: This is for DEVELOPMENT only. For production, use Dockerfile.prod
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Set working directory
 WORKDIR /app
