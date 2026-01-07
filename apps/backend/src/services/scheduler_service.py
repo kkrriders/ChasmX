@@ -45,7 +45,11 @@ class SchedulerService:
                     database=db_name,
                     collection='apscheduler_jobs',
                     client=None,  # Will use existing connection
-                    host=mongodb_uri
+                    host=mongodb_uri,
+                    # Connection timeouts
+                    serverSelectionTimeoutMS=20000,
+                    connectTimeoutMS=20000,
+                    socketTimeoutMS=20000
                 )
             }
 

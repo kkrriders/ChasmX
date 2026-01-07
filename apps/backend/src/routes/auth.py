@@ -14,8 +14,8 @@ from src.schemas.otp import OTPVerify
 
 from src.core.database import get_database
 from src.core.config import settings
-from src.schemas.user import UserOut
-from src.models.user import UserCreate, UserLogin, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest, User
+from src.schemas.user import UserOut, UserCreate, UserLogin, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest
+from src.models.user import User
 from src.crud.user import (
     get_user_by_email,
     create_user,

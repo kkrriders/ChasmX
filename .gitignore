@@ -39,11 +39,23 @@ yarn-error.log*
 out/
 .cache/
 
-# Environment Variables
+# Environment Variables and Secrets
 .env
 .env.local
 .env.*.local
 .env.production
+.env.development
+.env.staging
+
+# Secrets and credentials (never commit these!)
+*secret*.json
+*credentials*.json
+*serviceaccount*.json
+*.pem
+*.key
+!*.pub.key  # Public keys are OK
+.secrets/
+secrets/
 
 # Test files (keep /tests/ directory but ignore standalone tests)
 test_*.py

@@ -19,11 +19,11 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend API Service
+  # Backend API Service (Production)
   backend:
     build:
       context: ../apps/backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: chasmx-backend
     restart: unless-stopped
     ports:

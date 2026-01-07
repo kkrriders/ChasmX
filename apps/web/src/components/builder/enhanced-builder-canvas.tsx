@@ -1524,19 +1524,21 @@ function EnhancedBuilderCanvasInner() {
                     Choose components from the library, start with a template, or let AI generate one for you
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Button 
-                      onClick={() => setShowAiGenerator(true)} 
-                      className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      Generate with AI
+                    <Button onClick={() => setShowTemplates(true)} className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                      <GitBranch className="h-4 w-4" />
+                      Browse Templates
                     </Button>
                     <div className="flex gap-2">
                       <Button onClick={() => setShowLibrary(true)} variant="outline" className="flex-1">
-                        Browse Components
+                        Components
                       </Button>
-                      <Button onClick={() => setShowTemplates(true)} variant="outline" className="flex-1">
-                        Use Template
+                      <Button 
+                        onClick={() => setShowAiGenerator(true)} 
+                        variant="outline"
+                        className="flex-1 gap-2"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        AI Generate
                       </Button>
                     </div>
                   </div>

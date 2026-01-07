@@ -1,8 +1,6 @@
 version: '3.8'
 
-# Development docker-compose with hot-reload and debugging enabled
-# Usage: docker-compose -f config/docker-compose.dev.yml up
-# Note: Uses MongoDB Atlas (configured in apps/backend/.env)
+
 
 services:
   # Redis Cache & Message Broker
@@ -43,6 +41,8 @@ services:
       # Enable debug mode
       DEBUG: "True"
       LOG_LEVEL: DEBUG
+    dns:
+      - 8.8.8.8
     volumes:
       # Mount source for hot-reload
       - ../apps/backend/src:/app/src:delegated

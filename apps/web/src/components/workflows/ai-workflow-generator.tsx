@@ -81,11 +81,6 @@ export function AiWorkflowGenerator({
     }
   }
 
-  // Open dialog when component mounts
-  useEffect(() => {
-    setOpen(true)
-  }, [])
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>

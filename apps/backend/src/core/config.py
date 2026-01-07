@@ -27,8 +27,10 @@ class Settings(BaseSettings):
     MIN_PASSWORD_LENGTH: int = 8
     MAX_FAILED_ATTEMPTS: int = 5
 
-    # CORS Settings
-    CORS_ORIGINS: str = "*"  # Default to all origins
+    # CORS Settings - MUST be explicitly set in production
+    # For development: use "http://localhost:3000,http://localhost:8000"
+    # For production: specify exact domains, NEVER use "*"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
 
     # SMTP Settings for OTP emails
     SMTP_HOST: str = "smtp.gmail.com"
@@ -97,36 +99,72 @@ class Settings(BaseSettings):
     def validate_required_settings(self) -> None:
         """Validate that all required settings are properly configured"""
         errors = []
+        warnings = []
+
+        # Insecure/default values to check against
+        INSECURE_DEFAULTS = [
+            "your-super-secret-jwt-key-here",
+            "your-super-secret-otp-key-here",
+            "secret",
+            "password",
+            "changeme",
+            "test",
+            "default"
+        ]
 
         # Check JWT_SECRET_KEY
-        if not self.JWT_SECRET_KEY or self.JWT_SECRET_KEY == "your-super-secret-jwt-key-here":
-            errors.append("JWT_SECRET_KEY must be set to a secure random value (not default)")
+        if not self.JWT_SECRET_KEY:
+            errors.append("JWT_SECRET_KEY must be set")
+        elif self.JWT_SECRET_KEY.lower() in INSECURE_DEFAULTS or len(self.JWT_SECRET_KEY) < 32:
+            errors.append("JWT_SECRET_KEY must be a secure random value (min 32 characters, not a default value)")
 
         # Check OTP_SECRET_KEY
-        if not self.OTP_SECRET_KEY or self.OTP_SECRET_KEY == "your-super-secret-otp-key-here":
-            errors.append("OTP_SECRET_KEY must be set to a secure random value (not default)")
+        if not self.OTP_SECRET_KEY:
+            errors.append("OTP_SECRET_KEY must be set")
+        elif self.OTP_SECRET_KEY.lower() in INSECURE_DEFAULTS or len(self.OTP_SECRET_KEY) < 32:
+            errors.append("OTP_SECRET_KEY must be a secure random value (min 32 characters, not a default value)")
 
         # Check MONGODB_URL
         if not self.MONGODB_URL:
             errors.append("MONGODB_URL must be set")
 
-        # Warn about production settings
+        # Check SMTP Settings for defaults
+        if self.SMTP_USER == "your-email@gmail.com" or self.SMTP_PASSWORD == "your-app-password":
+            warnings.append("SMTP credentials appear to be default values - email functionality will not work")
+
+        # Production-specific validations
         if self.ENV == "production":
+            # CORS must be specific in production
             if self.CORS_ORIGINS == "*":
-                errors.append("CORS_ORIGINS should not be '*' in production - specify allowed domains")
+                errors.append("CORS_ORIGINS must not be '*' in production - specify exact allowed domains")
 
+            # API keys should be set
             if not self.OPENROUTER_API_KEY:
-                errors.append("OPENROUTER_API_KEY should be set for AI features to work")
+                warnings.append("OPENROUTER_API_KEY not set - AI features will not work")
 
+            # Redis password should be set in production
+            if not self.REDIS_PASSWORD and not self.REDIS_URL:
+                warnings.append("REDIS_PASSWORD not set - Redis is running without authentication")
+
+            # MongoDB should use secure connection
+            if self.MONGODB_URL and not self.MONGODB_URL.startswith("mongodb+srv://"):
+                warnings.append("MONGODB_URL should use secure connection (mongodb+srv://) in production")
+
+        # Print warnings
+        if warnings:
+            import sys
+            warning_message = "Configuration warnings:\n" + "\n".join(f"  ⚠️  {warning}" for warning in warnings)
+            print(f"\n{warning_message}\n", file=sys.stderr)
+
+        # Raise errors
         if errors:
-            error_message = "Configuration validation failed:\n" + "\n".join(f"  - {error}" for error in errors)
+            error_message = "❌ Configuration validation failed:\n" + "\n".join(f"  - {error}" for error in errors)
             raise ValueError(error_message)
 
 settings = Settings()
 
-# Validate settings on import for production
-if settings.ENV == "production":
-    settings.validate_required_settings()
+# Always validate settings on import (will raise errors in production, warnings in dev)
+settings.validate_required_settings()
 
 # Backward compatibility aliases
 ai_settings = settings

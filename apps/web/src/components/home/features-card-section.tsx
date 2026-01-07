@@ -10,239 +10,195 @@ import {
   Shield, 
   Layers, 
   BarChart3,
-  Database,
-  Cloud,
-  Lock
+  Bot
 } from "lucide-react"
-
-const features = [
-  {
-    icon: Brain,
-    title: "AI-Powered Intelligence",
-    description: "Leverage cutting-edge AI models for intelligent automation and decision-making",
-    color: "from-purple-500 to-pink-500",
-    bgGlow: "bg-purple-500/20",
-  },
-  {
-    icon: Workflow,
-    title: "Visual Flow Builder",
-    description: "Intuitive drag-and-drop interface to design complex workflows without coding",
-    color: "from-blue-500 to-cyan-500",
-    bgGlow: "bg-blue-500/20",
-  },
-  {
-    icon: Zap,
-    title: "Lightning Fast",
-    description: "Execute workflows in milliseconds with real-time monitoring and instant feedback",
-    color: "from-yellow-500 to-orange-500",
-    bgGlow: "bg-yellow-500/20",
-  },
-  {
-    icon: Shield,
-    title: "Enterprise Security",
-    description: "Bank-grade encryption, SOC 2 compliance, and comprehensive audit trails",
-    color: "from-green-500 to-emerald-500",
-    bgGlow: "bg-green-500/20",
-  },
-  {
-    icon: Layers,
-    title: "500+ Integrations",
-    description: "Connect with your favorite tools and services through our extensive marketplace",
-    color: "from-indigo-500 to-purple-500",
-    bgGlow: "bg-indigo-500/20",
-  },
-  {
-    icon: BarChart3,
-    title: "Advanced Analytics",
-    description: "Deep insights with customizable dashboards, reports, and performance metrics",
-    color: "from-red-500 to-pink-500",
-    bgGlow: "bg-red-500/20",
-  },
-]
-
-const pricingPlans = [
-  {
-    name: "Starter",
-    price: "Free",
-    period: "/month",
-    description: "Perfect for individuals and small teams",
-    features: [
-      "Up to 10 workflow runs/month",
-      "3 active workflows",
-      "Basic integrations",
-      "Community support",
-      "7-day execution history",
-    ],
-    cta: "Start Free",
-    popular: false,
-    icon: Database,
-  },
-  {
-    name: "Professional",
-    price: "2999",
-    period: "/month",
-    description: "For growing teams and businesses",
-    features: [
-      "Unlimited workflow runs",
-      "Unlimited workflows",
-      "All integrations",
-      "Priority support",
-      "90-day execution history",
-      "Advanced AI models",
-      "Team collaboration",
-    ],
-    cta: "Start Trial",
-    popular: true,
-    icon: Cloud,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    description: "For large organizations",
-    features: [
-      "Everything in Professional",
-      "Dedicated infrastructure",
-      "SLA guarantee",
-      "Custom integrations",
-      "Unlimited history",
-      "Advanced security",
-      "24/7 phone support",
-    ],
-    cta: "Contact Sales",
-    popular: false,
-    icon: Lock,
-  },
-]
 
 export function FeaturesCardSection() {
   return (
-    <section className="py-20 bg-gradient-to-b from-white to-slate-50">
-  <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Features Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <Badge className="mb-4 bg-purple-500/10 text-purple-600 border-purple-500/20 dark:bg-purple-500/10 dark:text-purple-300">
-            Features
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-            Everything You Need to <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">Succeed</span>
-          </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Powerful features designed to help you build, deploy, and scale your workflows effortlessly
-          </p>
-        </motion.div>
+    <section className="py-32 bg-background relative overflow-hidden">
+      {/* Optimized Backgrounds: Use radial-gradient instead of blur-filter */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08),transparent_70%)] -z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.08),transparent_70%)] -z-10 pointer-events-none" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
-          {features.map((feature, index) => {
-            const Icon = feature.icon
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card className="relative overflow-hidden border-slate-200 hover:border-purple-300 transition-all duration-300 hover:shadow-xl h-full group dark:border-slate-700 dark:hover:border-purple-400">
-                  <CardContent className="p-6">
-                    <div className={`absolute top-0 right-0 w-32 h-32 ${feature.bgGlow} blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${feature.color} w-fit mb-4`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{feature.title}</h3>
-                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )
-          })}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-20">
+          <Badge variant="outline" className="mb-4 border-indigo-500/30 text-indigo-400 bg-indigo-500/5">
+            Capabilities
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight text-white">
+            Everything you need to <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">automate intelligence</span>
+          </h2>
+          <p className="text-lg text-zinc-400 leading-relaxed">
+            ChasmX combines the power of Large Language Models with a drag-and-drop workflow builder, giving you the best of both worlds.
+          </p>
         </div>
 
-        {/* Pricing Section (Cart Alternative) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <Badge className="mb-4 bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
-            Pricing
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-            Choose Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Perfect Plan</span>
-          </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Start free, scale as you grow. No hidden fees, cancel anytime.
-          </p>
-        </motion.div>
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[320px]">
+          
+          {/* Main Feature: Visual Builder (Large - 2x1) */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="md:col-span-2 row-span-2 group"
+          >
+            <div className="h-full rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm overflow-hidden hover:border-indigo-500/30 transition-all duration-500 relative flex flex-col">
+              
+              <div className="p-8 relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center mb-4 text-indigo-400 border border-indigo-500/20">
+                  <Workflow className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2 text-white">Visual Flow Builder</h3>
+                <p className="text-zinc-400 max-w-md">Drag, drop, and connect nodes to create complex logic paths.</p>
+              </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {pricingPlans.map((plan, index) => {
-            const Icon = plan.icon
-            return (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className={plan.popular ? "md:-mt-4" : ""}
-              >
-                <Card className={`relative overflow-hidden h-full ${
-                  plan.popular 
-                    ? "border-purple-500 border-2 shadow-2xl shadow-purple-500/20 dark:shadow-purple-600/20" 
-                    : "border-slate-200 dark:border-slate-700"
-                }`}>
-                  {plan.popular && (
-                    <div className="absolute top-0 inset-x-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold text-center py-2">
-                      Most Popular
-                    </div>
-                  )}
-                  <CardContent className={`p-8 ${plan.popular ? "pt-14" : ""}`}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`p-2 rounded-lg ${
-                        plan.popular ? "bg-purple-500/10" : "bg-slate-100 dark:bg-slate-800"
-                      }`}>
-                        <Icon className={`w-5 h-5 ${
-                          plan.popular ? "text-purple-600 dark:text-purple-300" : "text-slate-600 dark:text-slate-300"
-                        }`} />
+              {/* Abstract UI Representation - Simplified for Stability */}
+              <div className="flex-1 w-full bg-[#09090b] border-t border-white/10 relative overflow-hidden mt-4">
+                <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] opacity-[0.03]" />
+                
+                {/* Node Container - Centered */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative w-full max-w-lg h-40">
+                    
+                    {/* Node 1 */}
+                    <div className="absolute top-4 left-4 w-36 p-3 bg-zinc-800 border border-white/10 rounded-lg shadow-lg z-10 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-md bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                        <Zap className="w-4 h-4 text-orange-400" />
                       </div>
-                      <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{plan.name}</h3>
+                      <div className="space-y-1.5">
+                        <div className="h-2 w-16 bg-white/10 rounded-full" />
+                        <div className="h-1.5 w-8 bg-white/5 rounded-full" />
+                      </div>
+                      {/* Connector Dot */}
+                      <div className="absolute right-[-5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-zinc-800" />
                     </div>
-                    <div className="mb-4">
-                      <span className="text-4xl font-bold text-slate-900 dark:text-slate-100">{plan.price}</span>
-                      <span className="text-slate-600 dark:text-slate-300">{plan.period}</span>
+
+                    {/* Node 2 */}
+                    <div className="absolute bottom-4 right-4 w-36 p-3 bg-zinc-800 border border-indigo-500/30 rounded-lg shadow-lg shadow-indigo-500/5 z-10 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-md bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                        <Brain className="w-4 h-4 text-indigo-400" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="h-2 w-16 bg-white/10 rounded-full" />
+                        <div className="h-1.5 w-10 bg-white/5 rounded-full" />
+                      </div>
+                       {/* Connector Dot */}
+                      <div className="absolute left-[-5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-indigo-500 rounded-full border-2 border-zinc-800" />
                     </div>
-                    <p className="text-slate-600 dark:text-slate-300 mb-6">{plan.description}</p>
-                    <button className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
-                      plan.popular
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-500/50"
-                        : "bg-slate-100 text-slate-900 hover:bg-slate-200"
-                    }`}>
-                      {plan.cta}
-                    </button>
-                    <ul className="mt-6 space-y-3">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2 text-sm">
-                          <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span className="text-slate-600 dark:text-slate-300">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )
-          })}
+
+                    {/* Connecting Line */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none z-0">
+                      <path 
+                        d="M 165 45 C 250 45, 250 115, 330 115" 
+                        fill="none" 
+                        stroke="url(#gradient-line-feature)" 
+                        strokeWidth="2" 
+                        strokeDasharray="6 4"
+                        className="animate-pulse" 
+                      />
+                      <defs>
+                        <linearGradient id="gradient-line-feature" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#f97316" />
+                          <stop offset="100%" stopColor="#6366f1" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Feature 2: AI Intelligence */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="md:col-span-1 group"
+          >
+            <div className="h-full rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm p-8 hover:border-purple-500/30 transition-all duration-300 relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15),transparent_70%)] pointer-events-none" />
+               
+               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-6 text-purple-400 border border-purple-500/20">
+                  <Brain className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-white">LLM Native</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                  Built-in access to GPT-4, Claude 3, and Gemini. Use standard prompts to process complex data.
+                </p>
+                <div className="p-3 bg-black/40 rounded-lg border border-white/5 font-mono text-xs text-purple-300">
+                  &gt; Summarize this email...
+                </div>
+            </div>
+          </motion.div>
+
+           {/* Feature 3: Real-time Analytics */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="md:col-span-1 group"
+          >
+            <div className="h-full rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm p-8 hover:border-green-500/30 transition-all duration-300 relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.15),transparent_70%)] pointer-events-none" />
+
+                <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center mb-6 text-green-400 border border-green-500/20">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-white">Sub-100ms Latency</h3>
+                <p className="text-sm text-zinc-400 leading-relaxed mb-6">
+                  Built on a globally distributed Rust infrastructure.
+                </p>
+                
+                {/* Latency Graph */}
+                <div className="flex items-end gap-1 h-12 w-full mt-auto opacity-50 group-hover:opacity-100 transition-opacity">
+                  {[40, 65, 30, 80, 45, 60, 35].map((h, i) => (
+                    <div key={i} className="flex-1 bg-green-500/20 rounded-t-sm" style={{ height: `${h}%` }}>
+                      <div className="w-full bg-green-500/50 rounded-t-sm" style={{ height: '30%' }} />
+                    </div>
+                  ))}
+                </div>
+            </div>
+          </motion.div>
+
+          {/* Feature 4: Security (Wide bottom) */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="md:col-span-3 group"
+          >
+            <div className="h-full rounded-3xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm p-8 hover:border-white/20 transition-all duration-300 flex flex-col md:flex-row items-center gap-12 relative overflow-hidden">
+               <div className="absolute left-0 bottom-0 w-64 h-64 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05),transparent_70%)] pointer-events-none" />
+
+               <div className="flex-1">
+                  <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-6 text-white border border-white/10">
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-bold mb-3 text-white">Enterprise-Grade Security</h3>
+                  <p className="text-zinc-400 text-lg leading-relaxed">
+                    SOC 2 Type II Compliant, Encrypted at rest (AES-256), and granular Role-Based Access Control (RBAC).
+                  </p>
+               </div>
+               
+               <div className="flex gap-4">
+                  {['SOC 2 Type II', 'GDPR Ready', 'ISO 27001'].map((tag) => (
+                    <div key={tag} className="px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-sm font-medium text-zinc-300 hover:bg-white/10 transition-colors cursor-default">
+                      {tag}
+                    </div>
+                  ))}
+               </div>
+            </div>
+          </motion.div>
+          
         </div>
       </div>
     </section>

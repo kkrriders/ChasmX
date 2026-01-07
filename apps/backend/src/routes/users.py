@@ -12,8 +12,8 @@ from datetime import datetime
 
 from src.auth.dependencies import get_current_user, verify_role
 from src.core.database import get_database
-from src.models.user import User, UserUpdate
-from src.schemas.user import UserOut
+from src.models.user import User
+from src.schemas.user import UserOut, UserUpdate
 from src.schemas.preferences import NotificationPreferencesOut, NotificationPreferencesUpdate
 from src.services.notification_preferences_service import get_notification_preferences_service
 

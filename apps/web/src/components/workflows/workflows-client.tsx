@@ -97,7 +97,7 @@ export default function WorkflowsClient() {
   }, [refreshWorkflows, refreshWorkflowDetails, refreshExecution])
 
   const handleCreateWorkflow = useCallback(() => {
-    router.push('/workbench/new')
+    router.push('/workflows/new')
   }, [router])
 
   const handleExecuteWorkflow = useCallback(async () => {

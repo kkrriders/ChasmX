@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from src.core.database import connect_to_mongo, close_mongo_connection, get_database
 from src.core.config import settings
 from src.middleware.rate_limiter import RateLimiterMiddleware
+from src.middleware.error_handler import setup_error_handlers, RequestIdMiddleware
 from src.routes import auth_router, users_router, workflow_router
 from src.routes.ai import router as ai_router
 from src.routes.websocket import router as websocket_router
@@ -182,20 +183,88 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for monitoring."""
+    """Basic health check endpoint - returns 200 if service is running."""
+    return {
+        "status": "healthy",
+        "service": "Backend API",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+@app.get("/readiness")
+async def readiness_check():
+    """
+    Comprehensive readiness check - verifies all dependencies are healthy.
+
+    Checks:
+    - MongoDB connection
+    - Redis connection
+    - AI services initialization
+    - Scheduler service status
+
+    Returns 200 if all services are ready, 503 if any service is down.
+    """
+    checks = {
+        "mongodb": {"status": "unknown", "message": ""},
+        "redis": {"status": "unknown", "message": ""},
+        "ai_services": {"status": "unknown", "message": ""},
+        "scheduler": {"status": "unknown", "message": ""},
+    }
+
+    overall_status = "healthy"
+
+    # Check MongoDB
     try:
         db = await get_database()
         await db.command("ping")
-        return {
-            "status": "healthy",
-            "database": "connected",
-            "timestamp": datetime.utcnow().isoformat()
-        }
+        checks["mongodb"] = {"status": "healthy", "message": "Connected"}
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return {
-            "status": "degraded",
-            "database": "disconnected",
-            "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+        checks["mongodb"] = {"status": "unhealthy", "message": str(e)}
+        overall_status = "degraded"
+
+    # Check Redis
+    try:
+        from src.services.cache.redis_cache import redis_cache
+        if redis_cache.redis:
+            await redis_cache.redis.ping()
+            checks["redis"] = {"status": "healthy", "message": "Connected"}
+        else:
+            checks["redis"] = {"status": "degraded", "message": "Not initialized"}
+            overall_status = "degraded"
+    except Exception as e:
+        checks["redis"] = {"status": "unhealthy", "message": str(e)}
+        overall_status = "degraded"
+
+    # Check AI Services
+    try:
+        if ai_service_manager.is_initialized:
+            checks["ai_services"] = {"status": "healthy", "message": "Initialized"}
+        else:
+            checks["ai_services"] = {"status": "degraded", "message": "Not initialized"}
+            overall_status = "degraded"
+    except Exception as e:
+        checks["ai_services"] = {"status": "unhealthy", "message": str(e)}
+        overall_status = "degraded"
+
+    # Check Scheduler
+    try:
+        if scheduler_service.is_running:
+            checks["scheduler"] = {"status": "healthy", "message": "Running"}
+        else:
+            checks["scheduler"] = {"status": "degraded", "message": "Not running"}
+            overall_status = "degraded"
+    except Exception as e:
+        checks["scheduler"] = {"status": "unhealthy", "message": str(e)}
+        overall_status = "degraded"
+
+    status_code = 200 if overall_status == "healthy" else 503
+
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": overall_status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "checks": checks
         }
+    )

@@ -4,22 +4,44 @@ import { memo, useState } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { X, Copy, Settings, LucideIcon } from 'lucide-react'
+import { 
+  X, Copy, Settings, LucideIcon, 
+  Database, Filter, Brain, FileText, Webhook, Split, Mail, Clock, Merge
+} from 'lucide-react'
+
+// Icon mapping for string lookups
+const ICON_MAP: Record<string, LucideIcon> = {
+  'Database': Database,
+  'Filter': Filter,
+  'Settings': Settings,
+  'Brain': Brain,
+  'FileText': FileText,
+  'Webhook': Webhook,
+  'Split': Split,
+  'Mail': Mail,
+  'Clock': Clock,
+  'Merge': Merge,
+}
 
 interface CustomNodeData {
   label: string
   description?: string
-  icon?: LucideIcon
+  icon?: LucideIcon | string
   category?: string
   color?: string
 }
 
 export const CustomNode = memo(({ data, selected, id }: NodeProps) => {
   const nodeData = data as unknown as CustomNodeData
-  const IconComponent = nodeData.icon
+  let IconComponent: any = nodeData.icon
+  
+  // Resolve string icon to component
+  if (typeof IconComponent === 'string') {
+    IconComponent = ICON_MAP[IconComponent] || Settings
+  }
   
   // Check if IconComponent is a valid React component
-  const isValidIcon = IconComponent && typeof IconComponent === 'function'
+  const isValidIcon = IconComponent && (typeof IconComponent === 'function' || typeof IconComponent === 'object')
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelValue, setLabelValue] = useState(String(nodeData.label || ''))
   

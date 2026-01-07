@@ -6,7 +6,8 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import Depends
 from loguru import logger
 from src.core.database import get_database
-from src.models.user import User, UserCreate
+from src.models.user import User
+from src.schemas.user import UserCreate
 from src.core.config import settings
 
 async def get_user_by_email(

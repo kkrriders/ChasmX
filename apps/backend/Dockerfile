@@ -1,4 +1,5 @@
-# Use Python 3.11 slim image
+# Development Dockerfile for ChasmX Backend
+# NOTE: This is for DEVELOPMENT only. For production, use Dockerfile.prod
 FROM python:3.11-slim
 
 # Set working directory
@@ -22,7 +23,7 @@ RUN apt-get update && \
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -30,5 +31,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run the application
+# Run the application with hot-reload (DEVELOPMENT ONLY)
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
