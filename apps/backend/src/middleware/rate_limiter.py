@@ -48,6 +48,10 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         
     async def _get_redis_client(self) -> Optional[redis.Redis]:
         """Get or create Redis client"""
+        # Skip Redis if cache is disabled
+        if not settings.CACHE_ENABLED:
+            return None
+
         if self.redis_client is None:
             try:
                 self.redis_client = redis.from_url(
@@ -56,11 +60,11 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
                     socket_timeout=5,
                     socket_connect_timeout=5
                 )
-                # Test connection
-                ping_result = self.redis_client.ping()
+                # Test connection (await the coroutine)
+                ping_result = await self.redis_client.ping()
                 logger.info("Rate limiter connected to Redis")
             except Exception as e:
-                logger.error(f"Failed to connect to Redis for rate limiting: {e}")
+                logger.warning(f"Redis unavailable for rate limiting, continuing without it: {e}")
                 # Continue without rate limiting if Redis is unavailable
                 self.redis_client = None
                 return None

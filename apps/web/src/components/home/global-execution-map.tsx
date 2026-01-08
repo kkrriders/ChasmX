@@ -16,9 +16,9 @@ export function GlobalExecutionMap() {
       }
       setPoints(prev => {
         const newArr = [...prev, newPoint]
-        return newArr.slice(-15) // Keep only last 15 points to prevent memory leak
+        return newArr.slice(-10) // Keep only last 10 points to prevent memory leak
       })
-    }, 800)
+    }, 1200)
     return () => clearInterval(interval)
   }, [])
 
@@ -42,7 +42,7 @@ export function GlobalExecutionMap() {
             key={point.id}
             initial={{ scale: 0, opacity: 1 }}
             animate={{ scale: 4, opacity: 0 }}
-            transition={{ duration: 2 }}
+            transition={{ duration: 3 }}
             style={{ left: `${point.x}%`, top: `${point.y}%` }}
             className="absolute w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,1)]"
           />

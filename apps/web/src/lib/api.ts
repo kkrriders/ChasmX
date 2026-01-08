@@ -51,6 +51,9 @@ class APIClient {
 
       // Handle non-OK responses
       if (!response.ok) {
+        if (response.status === 401 && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+        }
         const errorText = await response.text()
         throw new Error(errorText || `HTTP error! status: ${response.status}`)
       }
@@ -65,8 +68,11 @@ class APIClient {
     } catch (error) {
       // Enhance fetch errors with URL/method context to make debugging easier.
       if (error instanceof Error) {
-        // eslint-disable-next-line no-console
-        console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+        // Don't log expected auth errors
+        if (!error.message.includes('401') && !error.message.includes('Invalid or expired token')) {
+          // eslint-disable-next-line no-console
+          console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+        }
         throw new Error(`Failed to fetch ${url}: ${error.message}`)
       }
 

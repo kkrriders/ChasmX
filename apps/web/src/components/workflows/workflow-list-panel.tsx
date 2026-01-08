@@ -9,13 +9,14 @@ import {
   Workflow as WorkflowIcon,
   Clock,
   Calendar,
+  MoreVertical,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { WorkflowStatusBadge } from '@/components/workflows/workflow-status-badge'
 import { WorkflowFilters, type FilterState } from '@/components/workflows/workflow-filters'
 import {
@@ -26,6 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { WorkflowSummary } from '@/types/workflow'
+import { cn } from '@/lib/utils'
 
 interface WorkflowListPanelProps {
   workflows: WorkflowSummary[]
@@ -56,19 +58,9 @@ export function WorkflowListPanel({
   const [sortField, setSortField] = useState<SortField>('updated')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
-  const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortOrder('desc')
-    }
-  }
-
   const filtered = useMemo(() => {
     let result = workflows
 
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       result = result.filter(workflow =>
@@ -78,22 +70,18 @@ export function WorkflowListPanel({
       )
     }
 
-    // Apply status filter
     if (filters.statuses.length > 0) {
       result = result.filter(workflow => filters.statuses.includes(workflow.status))
     }
 
-    // Apply tag filter
     if (filters.tags.length > 0) {
       result = result.filter(workflow =>
         workflow.metadata?.tags?.some(tag => filters.tags.includes(tag))
       )
     }
 
-    // Apply sorting
     result = [...result].sort((a, b) => {
       let comparison = 0
-
       switch (sortField) {
         case 'name':
           comparison = a.name.localeCompare(b.name)
@@ -105,7 +93,6 @@ export function WorkflowListPanel({
           comparison = a.status.localeCompare(b.status)
           break
       }
-
       return sortOrder === 'asc' ? comparison : -comparison
     })
 
@@ -116,15 +103,15 @@ export function WorkflowListPanel({
   const totalCount = workflows.length
 
   return (
-    <Card className="h-full">
-      <CardHeader className="flex flex-col gap-4 border-b pb-6">
+    <Card className="h-full border-white/5 bg-zinc-900/50 backdrop-blur-md flex flex-col overflow-hidden">
+      <CardHeader className="flex flex-col gap-4 border-b border-white/5 pb-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <CardTitle className="text-xl font-semibold">Workflows</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl font-bold text-white tracking-tight">Workflows</CardTitle>
+            <CardDescription className="text-zinc-500 text-xs uppercase tracking-wider font-medium">
               {resultCount === totalCount
-                ? `${totalCount} workflow${totalCount !== 1 ? 's' : ''}`
-                : `${resultCount} of ${totalCount} workflows`}
+                ? `${totalCount} total`
+                : `${resultCount} of ${totalCount} filtered`}
             </CardDescription>
           </div>
           <Button
@@ -132,20 +119,20 @@ export function WorkflowListPanel({
             size="icon"
             onClick={() => void onRefresh()}
             disabled={isLoading}
-            aria-label="Refresh workflows"
+            className="text-zinc-400 hover:text-white hover:bg-white/5"
           >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
           </Button>
         </div>
 
         <div className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 group-focus-within:text-blue-400 transition-colors" />
             <Input
               value={searchTerm}
               onChange={event => setSearchTerm(event.target.value)}
-              placeholder="Search by name or description"
-              className="pl-10"
+              placeholder="Search workflows..."
+              className="pl-10 bg-black/20 border-white/5 focus-visible:ring-blue-500/50 text-white placeholder:text-zinc-600"
             />
           </div>
 
@@ -160,198 +147,131 @@ export function WorkflowListPanel({
                 setSortOrder(order)
               }}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[140px] bg-black/20 border-white/5 text-zinc-300 h-9 text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="updated-desc">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>Latest First</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="updated-asc">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>Oldest First</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="name-asc">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="h-3.5 w-3.5" />
-                    <span>Name (A-Z)</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="name-desc">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="h-3.5 w-3.5" />
-                    <span>Name (Z-A)</span>
-                  </div>
-                </SelectItem>
+              <SelectContent className="bg-zinc-900 border-white/10 text-zinc-300">
+                <SelectItem value="updated-desc">Latest First</SelectItem>
+                <SelectItem value="updated-asc">Oldest First</SelectItem>
+                <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name-desc">Name (Z-A)</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-400">
             {error}
           </div>
         )}
       </CardHeader>
-      <CardContent className="px-0">
-        <ScrollArea className="h-[540px]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12"></TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3 h-8 font-medium"
-                    onClick={() => toggleSort('name')}
-                  >
-                    Name
-                    <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3 h-8 font-medium"
-                    onClick={() => toggleSort('status')}
-                  >
-                    Status
-                    <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="-ml-3 h-8 font-medium"
-                    onClick={() => toggleSort('updated')}
-                  >
-                    Last Updated
-                    <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                  </Button>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      
+      <CardContent className="p-0 flex-1 overflow-hidden">
+        <ScrollArea className="h-full max-h-[600px]">
+          <div className="p-3 space-y-2">
+            <AnimatePresence mode="popLayout">
               {isLoading && workflows.length === 0 ? (
                 Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell colSpan={4}>
-                      <div className="flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading workflows...
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <div key={index} className="h-20 rounded-xl bg-white/5 border border-white/5 animate-pulse" />
                 ))
               ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4}>
-                    <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center text-muted-foreground">
-                      <WorkflowIcon className="h-10 w-10" />
-                      <div className="text-sm font-medium">
-                        {searchTerm || filters.statuses.length > 0
-                          ? 'No workflows match your filters'
-                          : 'No workflows found'}
-                      </div>
-                      <p className="text-xs text-muted-foreground/80">
-                        {searchTerm || filters.statuses.length > 0
-                          ? 'Try adjusting your search or filters'
-                          : 'Create your first workflow to get started'}
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <div key="empty-state" className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                  <div className="p-4 rounded-full bg-white/5">
+                    <WorkflowIcon className="h-8 w-8 text-zinc-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm font-medium text-white">No workflows found</div>
+                    <p className="text-xs text-zinc-500 max-w-[200px]">
+                      Try adjusting your search or create your first workflow.
+                    </p>
+                  </div>
+                </div>
               ) : (
-                filtered.map(workflow => {
+                filtered.map((workflow, idx) => {
                   const isSelected = workflow.id === selectedId
                   const updatedDate = new Date(workflow.updated_at)
-                  const isRecent = Date.now() - updatedDate.getTime() < 24 * 60 * 60 * 1000 // 24 hours
+                  const isRecent = Date.now() - updatedDate.getTime() < 24 * 60 * 60 * 1000
 
                   return (
-                    <TableRow
+                    <motion.div
                       key={workflow.id}
-                      data-state={isSelected ? 'selected' : undefined}
-                      className="cursor-pointer transition-colors hover:bg-muted/50"
-                      onClick={() => onSelect(workflow.id)}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      layout
                     >
-                      <TableCell className="pl-6">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <WorkflowIcon className="h-4 w-4" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-foreground">{workflow.name}</span>
-                            {isRecent && (
-                              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                New
-                              </span>
-                            )}
+                      <div
+                        onClick={() => onSelect(workflow.id)}
+                        className={cn(
+                          "group relative p-4 rounded-xl border transition-all cursor-pointer",
+                          isSelected 
+                            ? "bg-blue-500/10 border-blue-500/30 shadow-lg shadow-blue-500/5" 
+                            : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10"
+                        )}
+                      >
+                        {isSelected && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-500 rounded-r-full" />
+                        )}
+                        
+                        <div className="flex items-start gap-4">
+                          <div className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors",
+                            isSelected 
+                              ? "bg-blue-500/20 border-blue-500/30 text-blue-400" 
+                              : "bg-zinc-800 border-white/5 text-zinc-400 group-hover:text-zinc-200"
+                          )}>
+                            <WorkflowIcon className="h-5 w-5" />
                           </div>
-                          {workflow.metadata?.description && (
-                            <span className="text-xs text-muted-foreground line-clamp-1">
-                              {workflow.metadata.description}
-                            </span>
-                          )}
-                          {workflow.metadata?.tags && workflow.metadata.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {workflow.metadata.tags.slice(0, 2).map(tag => (
-                                <span
-                                  key={tag}
-                                  className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                              {workflow.metadata.tags.length > 2 && (
-                                <span className="text-xs text-muted-foreground">
-                                  +{workflow.metadata.tags.length - 2}
-                                </span>
-                              )}
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <h4 className="text-sm font-semibold text-white truncate">
+                                  {workflow.name}
+                                </h4>
+                                {isRecent && (
+                                  <span className="shrink-0 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                )}
+                              </div>
+                              <WorkflowStatusBadge status={workflow.status} />
                             </div>
-                          )}
+                            
+                            {workflow.metadata?.description && (
+                              <p className="text-xs text-zinc-500 line-clamp-1 mb-2 italic">
+                                {workflow.metadata.description}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-between mt-auto">
+                              <div className="flex items-center gap-3 text-[10px] text-zinc-500 uppercase font-medium">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{updatedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  <span>{updatedDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex gap-1">
+                                {workflow.metadata?.tags?.slice(0, 1).map(tag => (
+                                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-400 border border-white/5">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <WorkflowStatusBadge status={workflow.status} />
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span className="text-sm">
-                            {updatedDate.toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: updatedDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span className="text-xs">
-                            {updatedDate.toLocaleTimeString(undefined, {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </motion.div>
                   )
                 })
               )}
-            </TableBody>
-          </Table>
+            </AnimatePresence>
+          </div>
         </ScrollArea>
       </CardContent>
     </Card>

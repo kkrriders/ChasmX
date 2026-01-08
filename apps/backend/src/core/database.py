@@ -50,6 +50,7 @@ async def connect_to_mongo():
             WorkflowChange,
         )
         from src.models.two_factor import User2FA, User2FARecoveryCode
+        from src.models.team import Team, TeamInvitation
 
         database = client[settings.DATABASE_NAME]
         await init_beanie(
@@ -71,9 +72,11 @@ async def connect_to_mongo():
                 WorkflowChange,
                 User2FA,
                 User2FARecoveryCode,
+                Team,
+                TeamInvitation,
             ]
         )
-        logger.info("Beanie initialized with collections: Workflow, WorkflowRun, WorkflowSchedule, ScheduleExecutionLog, Webhook, WebhookExecution, WebhookRateLimit, Template, APIKey, UserPresence, WorkflowVersion, WorkflowComment, CollaborationSession, WorkflowChange, User2FA")
+        logger.info("Beanie initialized with collections: Workflow, WorkflowRun, WorkflowSchedule, ScheduleExecutionLog, Webhook, WebhookExecution, WebhookRateLimit, Template, APIKey, UserPresence, WorkflowVersion, WorkflowComment, CollaborationSession, WorkflowChange, User2FA, Team, TeamInvitation")
 
     except Exception as e:
         # Log error and raise - don't start app without database

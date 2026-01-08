@@ -166,7 +166,7 @@ export const Sidebar = memo(function Sidebar() {
                 className={cn(
                   "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-md"
+                    ? "bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 shadow-md"
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-1",
                 )}
                 style={{ willChange: 'transform' }}
@@ -175,7 +175,7 @@ export const Sidebar = memo(function Sidebar() {
                   className={cn(
                     "h-4 w-4 flex-shrink-0 transition-colors",
                     isActive
-                      ? "text-primary-foreground"
+                      ? "text-white dark:text-zinc-950"
                       : "text-muted-foreground group-hover:text-sidebar-accent-foreground",
                   )}
                 />
@@ -190,7 +190,7 @@ export const Sidebar = memo(function Sidebar() {
                             variant={isActive ? "secondary" : "outline"}
                             className={cn(
                               "text-xs h-5 px-1.5",
-                              isActive ? "bg-primary-foreground/20 text-primary-foreground" : "",
+                              isActive ? "bg-white/20 text-white dark:bg-zinc-950/10 dark:text-zinc-950 border-transparent" : "",
                             )}
                           >
                             {item.badge}
@@ -205,7 +205,7 @@ export const Sidebar = memo(function Sidebar() {
                 )}
 
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary-foreground rounded-r-full" />
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white dark:bg-zinc-950 rounded-r-full" />
                 )}
               </Link>
             </li>
@@ -242,10 +242,6 @@ export const Sidebar = memo(function Sidebar() {
             <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center shadow-glow">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
-            <div>
-              <span className="font-bold text-sidebar-foreground">ChasmX</span>
-              <p className="text-xs text-muted-foreground">Enterprise Platform</p>
-            </div>
           </Link>
         )}
         <ModernButton
@@ -262,7 +258,10 @@ export const Sidebar = memo(function Sidebar() {
       {!collapsed && (
         <div className="p-4 border-b border-sidebar-border/50">
           <Link href="/workflows/new" target="_blank" rel="noopener noreferrer">
-            <ModernButton gradient glow className="w-full gap-2 shadow-lg" size="sm">
+            <ModernButton 
+              className="w-full gap-2 shadow-lg bg-zinc-800 hover:bg-zinc-700 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-zinc-950 font-semibold" 
+              size="sm"
+            >
               <Plus className="h-4 w-4" />
               New Workflow
             </ModernButton>

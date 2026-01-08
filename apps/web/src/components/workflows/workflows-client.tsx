@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { AlertCircle, Plus, Settings } from "lucide-react"
+import { AlertCircle, Plus, LayoutGrid, ListFilter, Activity, Search } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExecutionHistory } from "@/components/workflows/execution-history"
 import { ExecutionDetailsPanel } from "@/components/workflows/execution-details-panel"
 import { WorkflowListPanel } from "@/components/workflows/workflow-list-panel"
@@ -21,19 +21,20 @@ import {
   useWorkflowDetails,
   useWorkflows,
 } from "@/hooks/use-workflows"
+import { cn } from "@/lib/utils"
 
 export default function WorkflowsClient() {
   const router = useRouter()
   const { workflows, isLoading: isWorkflowsLoading, error: workflowsError, refresh: refreshWorkflows } = useWorkflows()
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'overview' | 'details'>('overview')
+  
   const {
     workflow: selectedWorkflow,
     executions,
     isLoading: isWorkflowDetailsLoading,
-    error: workflowDetailsError,
     refresh: refreshWorkflowDetails,
   } = useWorkflowDetails(selectedWorkflowId)
+  
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null)
   const [liveExecutionId, setLiveExecutionId] = useState<string | null>(null)
   const [isExecuting, setIsExecuting] = useState(false)
@@ -41,23 +42,13 @@ export default function WorkflowsClient() {
   const [showExecutionPanel, setShowExecutionPanel] = useState(false)
 
   useEffect(() => {
-    if (workflows.length === 0) {
-      setSelectedWorkflowId(null)
-      return
-    }
-
-    if (!selectedWorkflowId || !workflows.some(workflow => workflow.id === selectedWorkflowId)) {
+    if (workflows.length > 0 && !selectedWorkflowId) {
       setSelectedWorkflowId(workflows[0].id)
     }
   }, [workflows, selectedWorkflowId])
 
   useEffect(() => {
-    if (executions.length === 0) {
-      setSelectedExecutionId(null)
-      return
-    }
-
-    if (!selectedExecutionId || !executions.some(execution => execution.execution_id === selectedExecutionId)) {
+    if (executions.length > 0 && !selectedExecutionId) {
       setSelectedExecutionId(executions[0].execution_id)
     }
   }, [executions, selectedExecutionId])
@@ -75,15 +66,8 @@ export default function WorkflowsClient() {
     return executions.find(execution => execution.execution_id === selectedExecutionId) ?? null
   }, [executions, liveExecution, selectedExecutionId])
 
-  const isExecutionLoading = useMemo(() => {
-    if (!selectedExecutionId) return false
-    if (isWorkflowDetailsLoading) return true
-    return !activeExecution
-  }, [selectedExecutionId, isWorkflowDetailsLoading, activeExecution])
-
   const handleWorkflowSelect = useCallback((workflowId: string) => {
     setSelectedWorkflowId(workflowId)
-    setActiveTab('details')
   }, [])
 
   const handleExecutionSelect = useCallback((executionId: string) => {
@@ -92,9 +76,9 @@ export default function WorkflowsClient() {
 
   const handleRefreshAll = useCallback(async () => {
     await refreshWorkflows()
-    await refreshWorkflowDetails()
-    await refreshExecution()
-  }, [refreshWorkflows, refreshWorkflowDetails, refreshExecution])
+    if (selectedWorkflowId) await refreshWorkflowDetails()
+    if (selectedExecutionId) await refreshExecution()
+  }, [refreshWorkflows, refreshWorkflowDetails, refreshExecution, selectedWorkflowId, selectedExecutionId])
 
   const handleCreateWorkflow = useCallback(() => {
     router.push('/workflows/new')
@@ -102,189 +86,162 @@ export default function WorkflowsClient() {
 
   const handleExecuteWorkflow = useCallback(async () => {
     if (!selectedWorkflowId) return
-
     setIsExecuting(true)
     setExecutionError(null)
     setShowExecutionPanel(true)
-
     try {
-      const response = await executeWorkflow(selectedWorkflowId, {
-        inputs: {},
-        async_execution: true,
-      })
-
+      const response = await executeWorkflow(selectedWorkflowId, { inputs: {}, async_execution: true })
       setLiveExecutionId(response.execution_id)
-      console.log('Workflow execution started:', response)
-
-      // Refresh executions list after a short delay
-      setTimeout(() => {
-        refreshWorkflowDetails()
-      }, 1000)
+      setTimeout(() => refreshWorkflowDetails(), 1000)
     } catch (err) {
-      console.error('Execution error:', err)
       setExecutionError(err instanceof Error ? err.message : 'Failed to execute workflow')
     } finally {
       setIsExecuting(false)
     }
   }, [selectedWorkflowId, refreshWorkflowDetails])
 
-  const handleCloseExecutionPanel = useCallback(() => {
-    setShowExecutionPanel(false)
-  }, [])
-
-  const allExecutions = useMemo(() => executions, [executions])
-
   return (
-    <div className="relative space-y-6 pb-8">
-      {/* Live Execution Panel - Slides in from right */}
-      {showExecutionPanel && (
-        <div className="fixed right-0 top-0 bottom-0 w-[500px] z-50 shadow-2xl">
-          <ExecutionPanelV2
-            executionId={liveExecutionId}
-            onClose={handleCloseExecutionPanel}
-          />
-        </div>
-      )}
-      {/* Header */}
-      <header className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Workflows</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Design, manage, and monitor your AI-powered workflow automations
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <AiWorkflowGenerator
-            onGenerated={async () => {
-              await refreshWorkflows()
-            }}
-          />
-          <Button onClick={handleCreateWorkflow} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Workflow
-          </Button>
-        </div>
-      </header>
+    <div className="flex h-full flex-col bg-[#09090b] text-white relative overflow-hidden">
+      {/* Background Orbs */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full -z-10" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 blur-[120px] rounded-full -z-10" />
 
-      {/* Quick Actions Toolbar */}
-      <WorkflowToolbar
-        onCreate={handleCreateWorkflow}
-        onRefresh={handleRefreshAll}
-        onExecute={selectedWorkflowId ? handleExecuteWorkflow : undefined}
-        onExport={selectedWorkflowId ? () => {
-          console.log('Export workflow:', selectedWorkflowId)
-        } : undefined}
-        onExportAll={() => {
-          console.log('Export all workflows')
-        }}
-        onImport={() => {
-          console.log('Import workflow')
-        }}
-        isRefreshing={isWorkflowsLoading}
-        isExecuting={isExecuting}
-        disabled={isWorkflowsLoading}
-      />
-
-      {/* Error Alert */}
-      {(workflowsError || workflowDetailsError || executionError) && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>
-            {executionError ? 'Execution Failed' : 'Unable to load workflows'}
-          </AlertTitle>
-          <AlertDescription>
-            {executionError ?? workflowDetailsError ?? workflowsError ?? "Something went wrong while loading workflows."}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Metrics */}
-      <WorkflowMetrics
-        workflows={workflows}
-        executions={allExecutions}
-        isLoading={isWorkflowsLoading}
-      />
-
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'overview' | 'details')} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="details" disabled={!selectedWorkflowId}>
-            Details
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-            <WorkflowListPanel
-              workflows={workflows}
-              isLoading={isWorkflowsLoading}
-              error={workflowsError}
-              selectedId={selectedWorkflowId}
-              onSelect={handleWorkflowSelect}
-              onRefresh={refreshWorkflows}
+      {/* Slide-over Execution Panel */}
+      <AnimatePresence>
+        {showExecutionPanel && (
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[100] shadow-2xl border-l border-white/10"
+          >
+            <ExecutionPanelV2
+              executionId={liveExecutionId}
+              onClose={() => setShowExecutionPanel(false)}
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            <div className="space-y-6">
-              {selectedWorkflowId ? (
-                <>
-                  <ExecutionDetailsPanel
-                    workflow={selectedWorkflow}
-                    execution={activeExecution}
-                    isWorkflowLoading={isWorkflowDetailsLoading}
-                    isExecutionLoading={isExecutionLoading}
-                    streamState={streamState}
-                    streamError={streamError}
-                    events={events}
-                    onRefresh={handleRefreshAll}
-                  />
-
-                  <ExecutionHistory
-                    executions={executions}
-                    isLoading={isWorkflowDetailsLoading}
-                    selectedExecutionId={selectedExecutionId}
-                    onSelect={handleExecutionSelect}
-                  />
-                </>
-              ) : (
-                <div className="flex min-h-[400px] items-center justify-center rounded-xl border border-dashed">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Select a workflow to view details and execution history
-                    </p>
-                  </div>
-                </div>
-              )}
+      {/* Redesigned Header */}
+      <div className="px-8 py-8 border-b border-white/5 bg-zinc-900/20 backdrop-blur-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <LayoutGrid className="w-5 h-5 text-blue-400" />
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
+                Orchestration
+              </h1>
             </div>
+            <p className="text-sm text-zinc-500 font-medium">
+              Monitor and manage your autonomous AI agents and complex logic flows.
+            </p>
           </div>
-        </TabsContent>
 
-        <TabsContent value="details" className="space-y-6">
-          {selectedWorkflowId && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <ExecutionDetailsPanel
-                workflow={selectedWorkflow}
-                execution={activeExecution}
-                isWorkflowLoading={isWorkflowDetailsLoading}
-                isExecutionLoading={isExecutionLoading}
-                streamState={streamState}
-                streamError={streamError}
-                events={events}
-                onRefresh={handleRefreshAll}
-              />
+          <div className="flex items-center gap-3">
+            <AiWorkflowGenerator onGenerated={refreshWorkflows} />
+            <WorkflowToolbar
+              onCreate={handleCreateWorkflow}
+              onRefresh={handleRefreshAll}
+              onExecute={selectedWorkflowId ? handleExecuteWorkflow : undefined}
+              isRefreshing={isWorkflowsLoading}
+              isExecuting={isExecuting}
+            />
+          </div>
+        </div>
+        
+        <div className="mt-8">
+          <WorkflowMetrics
+            workflows={workflows}
+            executions={executions}
+            isLoading={isWorkflowsLoading}
+          />
+        </div>
+      </div>
 
-              <ExecutionHistory
-                executions={executions}
-                isLoading={isWorkflowDetailsLoading}
-                selectedExecutionId={selectedExecutionId}
-                onSelect={handleExecutionSelect}
-              />
+      {/* Main Multi-Pane Content */}
+      <div className="flex-1 flex overflow-hidden p-6 gap-6">
+        {/* Left Pane: Workflow List */}
+        <div className="w-[400px] hidden xl:flex flex-col shrink-0">
+          <WorkflowListPanel
+            workflows={workflows}
+            isLoading={isWorkflowsLoading}
+            error={workflowsError}
+            selectedId={selectedWorkflowId}
+            onSelect={handleWorkflowSelect}
+            onRefresh={refreshWorkflows}
+          />
+        </div>
+
+        {/* Right Pane: Details & History */}
+        <div className="flex-1 flex flex-col gap-6 overflow-hidden">
+          {selectedWorkflowId ? (
+            <div className="flex-1 grid lg:grid-cols-2 gap-6 overflow-hidden">
+              <div className="flex flex-col overflow-hidden">
+                <ExecutionDetailsPanel
+                  workflow={selectedWorkflow}
+                  execution={activeExecution}
+                  isWorkflowLoading={isWorkflowDetailsLoading}
+                  isExecutionLoading={!activeExecution && selectedExecutionId !== null}
+                  streamState={streamState}
+                  streamError={streamError}
+                  events={events}
+                  onRefresh={handleRefreshAll}
+                />
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <ExecutionHistory
+                  executions={executions}
+                  isLoading={isWorkflowDetailsLoading}
+                  selectedExecutionId={selectedExecutionId}
+                  onSelect={handleExecutionSelect}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/5">
+              <div className="p-6 rounded-full bg-white/5 mb-4">
+                <Activity className="w-12 h-12 text-zinc-700" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">No Workflow Selected</h3>
+              <p className="text-sm text-zinc-500 max-w-[300px] text-center italic">
+                Select a workflow from the list to begin monitoring its activity and diagnostics.
+              </p>
             </div>
           )}
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
+
+      {/* Error Alert Overlay */}
+      <AnimatePresence>
+        {(workflowsError || executionError) && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
+          >
+            <Alert variant="destructive" className="bg-rose-500/10 border-rose-500/20 text-rose-400 shadow-2xl backdrop-blur-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="font-bold uppercase tracking-widest text-xs">System Alert</AlertTitle>
+              <AlertDescription className="text-sm opacity-90">
+                {executionError ?? workflowsError}
+              </AlertDescription>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="absolute top-2 right-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                onClick={() => { setExecutionError(null); }}
+              >
+                Dismiss
+              </Button>
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -27,6 +27,14 @@ export class AuthService {
   }
   private listeners: ((state: AuthState) => void)[] = []
 
+  private constructor() {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('auth:unauthorized', () => {
+        this.logout()
+      })
+    }
+  }
+
   static getInstance(): AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService()

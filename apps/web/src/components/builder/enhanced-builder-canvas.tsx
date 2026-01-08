@@ -1383,7 +1383,7 @@ function EnhancedBuilderCanvasInner() {
             defaultViewport={{ x: 0, y: 0, zoom: 1 }}
             minZoom={0.1}
             maxZoom={2}
-            className="bg-gray-50 dark:bg-gray-900"
+            className="bg-slate-50 dark:bg-black"
             snapToGrid={true}
             snapGrid={[15, 15]}
             defaultEdgeOptions={{
@@ -1397,11 +1397,11 @@ function EnhancedBuilderCanvasInner() {
               variant={BackgroundVariant.Dots} 
               gap={20} 
               size={1} 
-              className="bg-gray-50 dark:bg-gray-900"
+              className="bg-slate-50 dark:bg-black"
             />
             <Controls />
             <MiniMap
-              className="bg-white dark:bg-gray-800 border rounded-lg shadow-md"
+              className="bg-white dark:bg-[#13151a] border border-slate-200 dark:border-white/10 rounded-lg shadow-md"
               nodeColor={(node) => {
                 if (node.selected) return '#10b981'
                 const category = (node.data as any)?.category
@@ -1424,6 +1424,7 @@ function EnhancedBuilderCanvasInner() {
                 variant={showLibrary ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowLibrary(!showLibrary)}
+                className={showLibrary ? "bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-700 dark:hover:bg-zinc-200" : "bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md border-slate-200 dark:border-white/10"}
               >
                 <Layers className="h-4 w-4 mr-1" />
                 Library
@@ -1432,25 +1433,17 @@ function EnhancedBuilderCanvasInner() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowTemplates(true)}
+                className="bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md border-slate-200 dark:border-white/10"
               >
                 <GitBranch className="h-4 w-4 mr-1" />
                 Templates
               </Button>
-              {/* <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowAiGenerator(true)}
-                title="Generate workflow with AI"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
-              >
-                <Sparkles className="h-4 w-4 mr-1" />
-                AI Generate
-              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleAutoArrange}
                 title="Auto-arrange layout"
+                className="bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md border-slate-200 dark:border-white/10"
               >
                 <Wand2 className="h-4 w-4 mr-1" />
                 Arrange
@@ -1460,6 +1453,7 @@ function EnhancedBuilderCanvasInner() {
                 size="sm"
                 onClick={() => setShowDataInspector(!showDataInspector)}
                 title="Data Inspector (Ctrl+I)"
+                className={showDataInspector ? "bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-700 dark:hover:bg-zinc-200" : "bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md border-slate-200 dark:border-white/10"}
               >
                 <Eye className="h-4 w-4 mr-1" />
                 Inspector
@@ -1469,22 +1463,16 @@ function EnhancedBuilderCanvasInner() {
                 size="sm"
                 onClick={() => setShowVariablesPanel(!showVariablesPanel)}
                 title="Variables Panel (Ctrl+E)"
+                className={showVariablesPanel ? "bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 hover:bg-zinc-700 dark:hover:bg-zinc-200" : "bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md border-slate-200 dark:border-white/10"}
               >
                 <Variable className="h-4 w-4 mr-1" />
                 Variables
               </Button>
-              {/* <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowValidation(true)}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Validate
-              </Button> */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowShortcuts(true)}
+                className="bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md border-slate-200 dark:border-white/10"
               >
                 <Keyboard className="h-4 w-4 mr-1" />
                 Shortcuts
@@ -1492,20 +1480,20 @@ function EnhancedBuilderCanvasInner() {
             </Panel>
 
             {/* Status Bar */}
-            <Panel position="bottom-right" className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 shadow-md border">
+            <Panel position="bottom-right" className="flex items-center gap-2 bg-white/80 dark:bg-[#13151a]/80 backdrop-blur-md rounded-lg px-3 py-2 shadow-md border border-slate-200 dark:border-white/10">
               {nodes.filter(n => n.selected).length > 0 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-0">
                   {nodes.filter(n => n.selected).length} selected
                 </Badge>
               )}
               {lastSaved && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-400">
                   <Clock className="h-3 w-3" />
                   Saved {Math.floor((Date.now() - lastSaved.getTime()) / 1000 / 60)}m ago
                 </div>
               )}
               {hasUnsavedChanges && (
-                <div className="flex items-center gap-1 text-xs text-yellow-600">
+                <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                   <AlertCircle className="h-3 w-3" />
                   Unsaved changes
                 </div>
@@ -1515,29 +1503,29 @@ function EnhancedBuilderCanvasInner() {
             {/* Empty State */}
             {nodes.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md pointer-events-auto">
-                  <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <GitBranch className="h-8 w-8 text-primary" />
+                <div className="bg-white/70 dark:bg-[#13151a]/70 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/50 dark:border-white/5 p-8 max-w-md pointer-events-auto text-center">
+                  <div className="h-16 w-16 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-blue-500/20">
+                    <GitBranch className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2 text-center">Build Your Workflow</h3>
-                  <p className="text-muted-foreground mb-4 text-center">
-                    Choose components from the library, start with a template, or let AI generate one for you
+                  <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">Build Your Workflow</h3>
+                  <p className="text-slate-500 dark:text-zinc-400 mb-8 leading-relaxed">
+                    Choose components from the library, start with a template, or let AI generate one for you.
                   </p>
-                  <div className="flex flex-col gap-2">
-                    <Button onClick={() => setShowTemplates(true)} className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+                  <div className="flex flex-col gap-3">
+                    <Button onClick={() => setShowTemplates(true)} className="w-full gap-2 bg-zinc-800 hover:bg-zinc-700 text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-zinc-950 font-bold h-11 shadow-lg">
                       <GitBranch className="h-4 w-4" />
                       Browse Templates
                     </Button>
-                    <div className="flex gap-2">
-                      <Button onClick={() => setShowLibrary(true)} variant="outline" className="flex-1">
+                    <div className="flex gap-3">
+                      <Button onClick={() => setShowLibrary(true)} variant="outline" className="flex-1 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 h-11">
                         Components
                       </Button>
                       <Button 
                         onClick={() => setShowAiGenerator(true)} 
                         variant="outline"
-                        className="flex-1 gap-2"
+                        className="flex-1 gap-2 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 h-11"
                       >
-                        <Sparkles className="h-4 w-4" />
+                        <Sparkles className="h-4 w-4 text-purple-500" />
                         AI Generate
                       </Button>
                     </div>

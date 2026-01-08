@@ -14,9 +14,9 @@ export function HeroSection() {
     <section className="relative overflow-hidden min-h-screen flex items-center justify-center pt-24 pb-32">
       {/* Animated Background - Optimized */}
       <AnimatedGridPattern
-        numSquares={20}
+        numSquares={15}
         maxOpacity={0.05}
-        duration={5}
+        duration={10}
         repeatDelay={1}
         className={cn(
           "[mask-image:radial-gradient(800px_circle_at_center,white,transparent)]",
@@ -25,7 +25,7 @@ export function HeroSection() {
       />
       
       {/* Static Glow Effect (No Animation) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/10 blur-[80px] rounded-full opacity-30 -z-10 pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-indigo-500/10 blur-[60px] rounded-full opacity-30 -z-10 pointer-events-none" />
 
       <div className="container px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
         

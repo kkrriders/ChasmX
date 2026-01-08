@@ -102,7 +102,7 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-border/40 bg-primary text-primary-foreground shadow-sm transition-all duration-300"
+        "sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-md text-foreground shadow-sm transition-all duration-300"
       )}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
@@ -113,16 +113,16 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
-          <h1 className="text-xl font-semibold tracking-tight">ChasmX</h1>
+          <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
         </div>
 
         <div className="flex-1 max-w-md mx-8 hidden md:block">
           <form onSubmit={handleSearch}>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary-foreground/60" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Search policies, workflows..."
-                className="w-full rounded-full bg-black/20 pl-12 pr-4 py-2 text-base text-primary-foreground placeholder:text-primary-foreground/60 border-transparent focus:bg-black/30 focus:ring-2 focus:ring-ring"
+                placeholder={searchPlaceholder}
+                className="w-full rounded-full bg-muted/50 pl-12 pr-4 py-2 text-base text-foreground placeholder:text-muted-foreground border-transparent focus:bg-background focus:ring-2 focus:ring-ring"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -136,7 +136,7 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
             onClick={() => (theme === "dark" ? setTheme("light") : setTheme("dark"))}
             variant="ghost"
             size="icon"
-            className="hover:bg-primary-foreground/10"
+            className="hover:bg-muted"
           >
             <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -145,7 +145,7 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
 
           <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <PopoverTrigger asChild>
-              <ModernButton variant="ghost" size="icon" className="relative hover:bg-primary-foreground/10">
+              <ModernButton variant="ghost" size="icon" className="relative hover:bg-muted">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
@@ -175,7 +175,7 @@ export function Header({ title, searchPlaceholder = "Search workflows, templates
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-offset-primary ring-primary-foreground/50">
+              <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-offset-2 ring-offset-background ring-muted">
                 <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
