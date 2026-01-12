@@ -26,7 +26,8 @@ class PresenceStatus(str, Enum):
 
 
 class CursorPosition(BaseModel):
-    """Cursor position in the workflow editor"""
+    """Cursor position in the work
+    low editor"""
     x: float = Field(..., description="X coordinate")
     y: float = Field(..., description="Y coordinate")
     node_id: Optional[str] = Field(None, description="Node being edited, if any")

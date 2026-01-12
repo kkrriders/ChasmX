@@ -28,7 +28,8 @@
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
       "Bash(wc:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": [],
     "ask": []

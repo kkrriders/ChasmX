@@ -1,8 +1,3 @@
-"""
-Team schemas for API requests and responses.
-
-This module defines Pydantic schemas for team-related API operations.
-"""
 
 from datetime import datetime
 from typing import Optional, List
@@ -10,9 +5,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from src.models.team import TeamRole, TeamInvitationStatus
 
 
-# ============================================================
-# TEAM MEMBER SCHEMAS
-# ============================================================
+
 
 class TeamMemberOut(BaseModel):
     """Team member response schema"""
@@ -75,9 +68,7 @@ class UpdateMemberPermissionsRequest(BaseModel):
     )
 
 
-# ============================================================
-# TEAM SCHEMAS
-# ============================================================
+
 
 class TeamCreate(BaseModel):
     """Schema for creating a new team"""
@@ -212,9 +203,7 @@ class TeamSummary(BaseModel):
     )
 
 
-# ============================================================
-# INVITATION SCHEMAS
-# ============================================================
+
 
 class TeamInvitationCreate(BaseModel):
     """Schema for creating a team invitation"""
@@ -243,6 +232,7 @@ class TeamInvitationOut(BaseModel):
     invited_by_name: str
     role: TeamRole
     status: TeamInvitationStatus
+    invitation_token: str
     created_at: datetime
     expires_at: datetime
     responded_at: Optional[datetime] = None
@@ -282,9 +272,7 @@ class AcceptInvitationRequest(BaseModel):
     )
 
 
-# ============================================================
-# WORKFLOW SHARING SCHEMAS
-# ============================================================
+
 
 class AddWorkflowToTeamRequest(BaseModel):
     """Request to add a workflow to team"""

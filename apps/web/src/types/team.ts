@@ -26,6 +26,20 @@ export interface Team extends TeamSummary {
   updated_at: string;
 }
 
+export interface TeamCreate {
+  name: string;
+  description?: string;
+  avatar_url?: string;
+  tags?: string[];
+}
+
+export interface TeamUpdate {
+  name?: string;
+  description?: string;
+  avatar_url?: string;
+  tags?: string[];
+}
+
 export interface TeamInvitation {
   _id: string;
   team_id: string;
@@ -35,7 +49,18 @@ export interface TeamInvitation {
   invited_by_name?: string;
   role: string;
   status: 'pending' | 'accepted' | 'declined' | 'expired';
+  invitation_token: string;
   created_at: string;
   expires_at: string;
   message?: string;
+}
+
+export interface TeamInvitationCreate {
+  email: string;
+  role: 'admin' | 'member' | 'viewer';
+  message?: string;
+}
+
+export interface UpdateMemberRoleRequest {
+  role: 'admin' | 'member' | 'viewer';
 }

@@ -23,13 +23,41 @@ import {
   Zap
 } from "lucide-react"
 import { motion } from "framer-motion"
-import { useTeams } from "@/hooks/use-teams"
+import { useTeams, useInvitations } from "@/hooks/use-teams"
 import { cn } from "@/lib/utils"
 import { formatDistanceToNow } from "date-fns"
+import { useRouter } from "next/navigation"
+import { CreateTeamDialog } from "@/components/teams/create-team-dialog"
+import { teamService } from "@/services/team"
+import { useToast } from "@/components/ui/use-toast"
 
 const TeamsPage = memo(function TeamsPage() {
-  const { teams, isLoading } = useTeams()
+  const { teams, isLoading, refresh } = useTeams()
+  const { invitations, isLoading: isLoadingInvites, refresh: refreshInvites } = useInvitations()
   const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const handleAcceptInvite = async (token: string) => {
+    try {
+      await teamService.acceptInvitation(token)
+      toast({ title: "Invitation accepted", description: "You have joined the team." })
+      refresh()
+      refreshInvites()
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to accept invitation", variant: "destructive" })
+    }
+  }
+
+  const handleDeclineInvite = async (id: string) => {
+    try {
+      await teamService.declineInvitation(id)
+      toast({ title: "Invitation declined" })
+      refreshInvites()
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to decline invitation", variant: "destructive" })
+    }
+  }
 
   // Mock members for now since the API endpoint for members is nested in team details
   // In a real implementation, we would fetch members for the selected team
@@ -93,10 +121,10 @@ const TeamsPage = memo(function TeamsPage() {
               />
               <MetricCard 
                 title="Pending Invites" 
-                value="0" 
+                value={invitations.length} 
                 icon={Mail} 
                 color="amber"
-                loading={isLoading} 
+                loading={isLoadingInvites} 
               />
             </div>
 
@@ -136,6 +164,7 @@ const TeamsPage = memo(function TeamsPage() {
                       teams.map((team) => (
                         <div 
                           key={team._id}
+                          onClick={() => router.push(`/teams/${team._id}`)}
                           className="group flex items-center justify-between p-4 rounded-xl border border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 hover:border-slate-300/50 dark:hover:border-white/10 transition-all cursor-pointer backdrop-blur-md"
                         >
                           <div className="flex items-center gap-4">
@@ -180,9 +209,7 @@ const TeamsPage = memo(function TeamsPage() {
                         <p className="text-slate-500 dark:text-gray-400 text-sm mb-6 max-w-sm mx-auto font-medium">
                           Create a team to start collaborating with others.
                         </p>
-                        <Button className="bg-zinc-800 text-white dark:bg-white dark:text-black hover:opacity-90">
-                          Create Team
-                        </Button>
+                        <CreateTeamDialog onTeamCreated={refresh} />
                       </div>
                     )}
                   </div>
@@ -196,6 +223,36 @@ const TeamsPage = memo(function TeamsPage() {
                 transition={{ delay: 0.2 }}
                 className="space-y-6"
               >
+                {/* Invitations List */}
+                {invitations.length > 0 && (
+                  <div className="bg-white/70 dark:bg-[#13151a]/70 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-[#2a2d35] p-6 shadow-sm">
+                    <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-blue-500" />
+                      Pending Invitations
+                    </h3>
+                    <div className="space-y-4">
+                      {invitations.map((invite) => (
+                        <div key={invite._id} className="p-3 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            Invited to <span className="font-bold">{invite.team_name}</span>
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Role: {invite.role}
+                          </p>
+                          <div className="flex gap-2 mt-3">
+                            <Button size="sm" className="w-full h-8 bg-blue-600 hover:bg-blue-500" onClick={() => handleAcceptInvite(invite.invitation_token)}>
+                              Accept
+                            </Button>
+                            <Button size="sm" variant="outline" className="w-full h-8" onClick={() => handleDeclineInvite(invite._id)}>
+                              Decline
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Quick Actions */}
                 <div className="bg-white/70 dark:bg-[#13151a]/70 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-[#2a2d35] p-6 shadow-sm">
                   <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
