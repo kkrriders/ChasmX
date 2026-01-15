@@ -7,6 +7,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Get the backend directory (two levels up from this file)
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_FILE = BACKEND_DIR / ".env"
+ENV_LOCAL_FILE = BACKEND_DIR / ".env.local"
+
+# Determine which env files to load (local takes priority)
+def get_env_files():
+    """Get list of env files to load, with .env.local taking priority."""
+    files = []
+    if ENV_LOCAL_FILE.exists():
+        files.append(str(ENV_LOCAL_FILE))
+    if ENV_FILE.exists():
+        files.append(str(ENV_FILE))
+    return files if files else [str(ENV_FILE)]
 
 class Settings(BaseSettings):
     """Unified application settings"""
@@ -26,6 +37,15 @@ class Settings(BaseSettings):
     # Password Settings
     MIN_PASSWORD_LENGTH: int = 8
     MAX_FAILED_ATTEMPTS: int = 5
+
+    # OTP Security Settings
+    MAX_OTP_ATTEMPTS: int = 3  # Lock account after 3 failed OTP attempts
+    OTP_LOCKOUT_MINUTES: int = 15  # Lock duration in minutes
+
+    # Request Size Limits (DoS Protection)
+    MAX_REQUEST_SIZE_BYTES: int = 1 * 1024 * 1024  # 1MB default
+    MAX_WORKFLOW_SIZE_BYTES: int = 5 * 1024 * 1024  # 5MB for workflows
+    MAX_WEBHOOK_SIZE_BYTES: int = 2 * 1024 * 1024  # 2MB for webhooks
 
     # CORS Settings - MUST be explicitly set in production
     # For development: use "http://localhost:3000,http://localhost:8000"
@@ -74,7 +94,7 @@ class Settings(BaseSettings):
     LLM_DEFAULT_MAX_TOKENS: int = 2048
 
     model_config = SettingsConfigDict(
-        env_file=str(ENV_FILE),
+        env_file=(str(ENV_LOCAL_FILE), str(ENV_FILE)),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

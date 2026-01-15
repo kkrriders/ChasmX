@@ -32,11 +32,15 @@ class QuotaService:
                 socket_connect_timeout=5
             )
             # Test connection
-            ping_result = self.redis_client.ping()
+            ping_result = await self.redis_client.ping()
             logger.info("Quota service connected to Redis")
         except Exception as e:
             logger.error(f"Failed to connect to Redis for quota service: {e}")
-            raise
+            if settings.ENV == "development":
+                logger.warning("Running without Redis for quota service (Development Mode)")
+                self.redis_client = None
+            else:
+                raise
     
     async def disconnect(self):
         """Disconnect from Redis"""

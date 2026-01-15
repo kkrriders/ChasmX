@@ -9,7 +9,7 @@ from slowapi.util import get_remote_address
 
 from src.utils.otp import generate_otp, verify_otp, update_user_otp
 from src.utils.email import send_otp_email, send_password_reset_email, send_password_changed_notification
-from src.utils.password_reset import generate_reset_token, get_reset_token_expiry
+from src.utils.password_reset import generate_reset_token, get_reset_token_expiry, hash_reset_token
 from src.schemas.otp import OTPVerify
 
 from src.core.database import get_database
@@ -128,7 +128,7 @@ async def login(
             detail="Invalid credentials"
         )
     
-    # Generate and send OTP
+    # Always send OTP for login verification
     try:
         code, hashed_otp = await generate_otp(user.email)
         if not await update_user_otp(user.email, hashed_otp, db):
@@ -136,15 +136,19 @@ async def login(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to save OTP"
             )
-        
+
         if not await send_otp_email(user.email, code):
             logger.error(f"Failed to send OTP email to {user.email}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to send OTP"
+                detail="Failed to send OTP email"
             )
-        
-        return {"message": "OTP sent for verification"}
+
+        logger.info(f"OTP sent to {user.email}")
+        return {"message": "OTP sent to your email", "otp_required": True}
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"OTP generation error: {str(e)}")
         raise HTTPException(
@@ -372,10 +376,13 @@ async def forgot_password(
             # Generate reset token
             reset_token = generate_reset_token()
             expires_at = get_reset_token_expiry()
-            
-            # Save reset token
-            if await set_password_reset_token(forgot_request.email, reset_token, expires_at, db):
-                # Send reset email
+
+            # Hash token for secure storage
+            hashed_token = hash_reset_token(reset_token)
+
+            # Save hashed token (never store plaintext)
+            if await set_password_reset_token(forgot_request.email, hashed_token, expires_at, db):
+                # Send plaintext token via email (user needs this)
                 await send_password_reset_email(forgot_request.email, reset_token)
                 logger.info(f"Password reset initiated for user: {forgot_request.email}")
             else:
@@ -413,9 +420,12 @@ async def reset_password(
                       500 for server errors
     """
     try:
-        # Find user by reset token
-        user = await get_user_by_reset_token(reset_request.token, db)
-        
+        # Hash the submitted token to look up in database
+        hashed_token = hash_reset_token(reset_request.token)
+
+        # Find user by hashed reset token
+        user = await get_user_by_reset_token(hashed_token, db)
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

@@ -13,6 +13,9 @@ from src.core.database import connect_to_mongo, close_mongo_connection, get_data
 from src.core.config import settings
 from src.middleware.rate_limiter import RateLimiterMiddleware
 from src.middleware.error_handler import setup_error_handlers, RequestIdMiddleware
+from src.middleware.request_size_limiter import RequestSizeLimiterMiddleware
+from src.middleware.origin_validator import OriginValidatorMiddleware
+from src.middleware.security_headers import SecurityHeadersMiddleware, CORPHeadersMiddleware
 from src.routes import auth_router, users_router, workflow_router
 from src.routes.ai import router as ai_router
 from src.routes.websocket import router as websocket_router
@@ -24,6 +27,8 @@ from src.routes.api_keys import router as api_keys_router
 from src.routes.analytics import router as analytics_router
 from src.routes.security import router as security_router
 from src.routes.teams import router as teams_router
+from src.routes.two_factor import router as two_factor_router
+from src.routes.notifications import router as notifications_router
 from src.services.ai_service_manager import ai_service_manager
 from src.services.scheduler_service import scheduler_service
 from src.services.quota_service import quota_service
@@ -64,6 +69,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add security headers middleware (XSS, clickjacking, etc.)
+app.add_middleware(SecurityHeadersMiddleware, environment=settings.ENV)
+
+# Add CORP headers middleware (Spectre protection)
+app.add_middleware(CORPHeadersMiddleware)
+
+# Add origin validation middleware (CSRF-like protection)
+app.add_middleware(OriginValidatorMiddleware, allowed_origins=settings.cors_origins_list)
+
+# Add request size limiting middleware (DoS protection)
+app.add_middleware(RequestSizeLimiterMiddleware)
 
 # Add rate limiting middleware
 app.add_middleware(RateLimiterMiddleware)
@@ -135,6 +152,8 @@ app.include_router(api_keys_router)
 app.include_router(analytics_router)
 app.include_router(security_router)
 app.include_router(teams_router)
+app.include_router(two_factor_router, prefix="/api", tags=["2fa"])
+app.include_router(notifications_router)
 
 @app.get("/")
 async def root():

@@ -10,8 +10,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from loguru import logger
 
 from src.auth.dependencies import get_current_user
+from src.core.database import get_database
 from src.models.user import User
 from src.models.team import TeamRole, TeamInvitationStatus
+from src.services.notification_service import get_notification_service
+from src.crud.user import get_user_by_email
 from src.schemas.team import (
     TeamCreate,
     TeamUpdate,
@@ -429,6 +432,7 @@ async def create_invitation(
     team_id: str,
     invitation_data: TeamInvitationCreate,
     current_user: Annotated[User, Depends(get_current_user)],
+    db=Depends(get_database),
 ) -> TeamInvitationOut:
     """
     Create a team invitation.
@@ -479,6 +483,23 @@ async def create_invitation(
             invited_by=current_user_id,
             invited_by_name=inviter_name,
             role=invitation_data.role,
+            message=invitation_data.message,
+        )
+
+        # Send notification to the invited user
+        notification_service = get_notification_service(db)
+
+        # Check if invited user exists in the system
+        invited_user = await get_user_by_email(invitation_data.email, db)
+        invited_user_id = str(invited_user.id) if invited_user and hasattr(invited_user, 'id') else None
+
+        await notification_service.notify_team_invitation(
+            user_id=invited_user_id,
+            user_email=invitation_data.email,
+            team_id=team_id,
+            team_name=team.name,
+            inviter_name=inviter_name,
+            invitation_token=str(invitation.id),
             message=invitation_data.message,
         )
 
@@ -596,6 +617,7 @@ async def get_my_invitations(
 async def accept_invitation(
     accept_data: AcceptInvitationRequest,
     current_user: Annotated[User, Depends(get_current_user)],
+    db=Depends(get_database),
 ) -> TeamOut:
     """
     Accept a team invitation.
@@ -662,6 +684,14 @@ async def accept_invitation(
 
         # Mark invitation as accepted
         await team_crud.accept_invitation(str(invitation.id), user_id)
+
+        # Notify the inviter that their invitation was accepted
+        notification_service = get_notification_service(db)
+        await notification_service.notify_team_invitation_accepted(
+            inviter_user_id=invitation.invited_by,
+            team_name=invitation.team_name,
+            accepted_by_name=display_name,
+        )
 
         return TeamOut(
             _id=str(team.id),

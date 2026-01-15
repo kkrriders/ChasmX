@@ -59,6 +59,7 @@ class RedisCache:
             )
         except Exception as e:
             logger.error(f"Failed to connect to Redis: {e}")
+            # Re-raise so callers (like AIServiceManager) can handle fallback
             raise
 
     async def disconnect(self):

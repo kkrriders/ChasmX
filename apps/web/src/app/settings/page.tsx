@@ -1,408 +1,254 @@
 "use client"
 
-import { memo, useState } from "react"
+import { memo, useEffect, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 
 import { MainLayout } from "@/components/layout/main-layout"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { SidebarNav } from "@/components/settings/sidebar-nav"
+import { ProfileSettings } from "@/components/settings/profile-settings"
+import { NotificationSettings } from "@/components/settings/notification-settings"
+import { SecuritySettings } from "@/components/settings/security-settings"
+import { AppearanceSettings } from "@/components/settings/appearance-settings"
+import { PrivacySettings } from "@/components/settings/privacy-settings"
+import { apiClient } from "@/lib/api"
+import { API_ENDPOINTS } from "@/lib/config"
+import { useToast } from "@/hooks/use-toast"
 import {
-  Settings,
   User,
   Bell,
   Shield,
   Palette,
   Database,
-  Mail,
-  Globe,
-  Save,
-  Key,
-  Lock,
-  CheckCircle2,
-  TrendingUp,
-  Activity,
-  Users,
-  Eye
+  Loader2,
+  ChevronRight
 } from "lucide-react"
 
 const SettingsPage = memo(function SettingsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
+  
+  // Tab state management
   const [activeTab, setActiveTab] = useState<'profile'|'notifications'|'security'|'appearance'|'privacy'>('profile')
+  
+  const sidebarNavItems = [
+    {
+      title: "Profile",
+      href: "profile",
+      icon: <User className="h-4 w-4" />,
+    },
+    {
+      title: "Notifications",
+      href: "notifications",
+      icon: <Bell className="h-4 w-4" />,
+    },
+    {
+      title: "Security",
+      href: "security",
+      icon: <Shield className="h-4 w-4" />,
+    },
+    {
+      title: "Appearance",
+      href: "appearance",
+      icon: <Palette className="h-4 w-4" />,
+    },
+    {
+      title: "Data & Privacy",
+      href: "privacy",
+      icon: <Database className="h-4 w-4" />,
+    },
+  ]
 
-  const saveChanges = () => {
-    // placeholder save - wire to API as needed
+  interface UserProfile {
+    id: string
+    email: string
+    full_name?: string
+    company?: string
+    created_at: string
+    is_2fa_enabled: boolean
+  }
+  
+  interface NotificationPreferences {
+    email_notifications: boolean
+    workflow_updates: boolean
+    execution_alerts: boolean
+    security_alerts: boolean
+  }
+
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [notifications, setNotifications] = useState<NotificationPreferences>({
+    email_notifications: true,
+    workflow_updates: true,
+    execution_alerts: true,
+    security_alerts: true,
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // Load initial data
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && sidebarNavItems.some(item => item.href === tabParam)) {
+      setActiveTab(tabParam as any)
+    }
+
+    const loadData = async () => {
+      try {
+        const [profileRes, notificationsRes] = await Promise.all([
+          apiClient.get<UserProfile>(API_ENDPOINTS.USER.PROFILE),
+          apiClient.get<NotificationPreferences>(API_ENDPOINTS.USER.NOTIFICATIONS)
+        ])
+        setProfile(profileRes.data)
+        setNotifications(notificationsRes.data)
+      } catch (error: any) {
+        toast({
+          title: "Error loading settings",
+          description: "Failed to load your account settings. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as any)
+    // Update URL without refresh
+    const url = new URL(window.location.href)
+    url.searchParams.set('tab', tab)
+    window.history.pushState({}, '', url)
+  }
+
+  const handleSaveProfile = async (data: any) => {
+    setSaving(true)
     try {
-      // perform save actions
-      // show toast if you have one - for now use console
-      console.info('Settings saved')
-      alert('Settings saved')
-    } catch (err) {
-      console.error('Save failed', err)
+      const response = await apiClient.put<UserProfile>(API_ENDPOINTS.USER.UPDATE, data)
+      setProfile(response.data)
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error updating profile",
+        description: error.response?.data?.detail || "Failed to update profile",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
     }
   }
 
-  const isActive = (tab: string) => activeTab === tab
+  const handleSaveNotifications = async (data: any) => {
+    setSaving(true)
+    try {
+      await apiClient.put(API_ENDPOINTS.USER.NOTIFICATIONS, data)
+      setNotifications(data)
+      toast({
+        title: "Preferences updated",
+        description: "Your notification preferences have been saved",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Error updating preferences",
+        description: error.response?.data?.detail || "Failed to update preferences",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
 
-  const SidebarButton = ({ tab, children, icon }: { tab: string; children: React.ReactNode; icon: React.ReactNode }) => (
-    <button onClick={() => setActiveTab(tab as any)} className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${isActive(tab) ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
-      {icon}
-      <span className="font-medium text-slate-900 dark:text-white">{children}</span>
-    </button>
-  )
+  const handleEnable2FA = async () => {
+     // This would trigger the 2FA flow, likely redirecting or opening a modal
+     // For now we'll route to a dedicated setup page or open the modal
+     // Since the previous implementation had a modal, we might want to bring that back or link to it
+     // But strictly following the "redesign" mandate, I'll keep it clean here.
+     // Assuming a route or a future implementation for the modal logic if needed.
+     // For this iteration, I'll stub it with a toast.
+     toast({
+        title: "Coming Soon",
+        description: "Enhanced 2FA setup flow is being updated.",
+     })
+  }
+
+  if (loading) {
+    return (
+      <AuthGuard>
+        <MainLayout title="Settings">
+          <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </MainLayout>
+      </AuthGuard>
+    )
+  }
 
   return (
     <AuthGuard>
-      <MainLayout title="Settings" searchPlaceholder="Search settings...">
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-          {/* Header */}
-          <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      Settings
-                    </h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                      Manage your account and application preferences
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">All settings synced</span>
-                  </div>
-                  <Button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium">
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </Button>
-                </div>
+      <MainLayout title="Settings" showHeader={false}>
+        {/* Custom Header with Breadcrumb feel */}
+        <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+           <div className="container flex h-14 items-center px-4 md:px-8 max-w-7xl mx-auto">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                 <span className="hover:text-foreground transition-colors cursor-pointer">Account</span>
+                 <ChevronRight className="h-4 w-4" />
+                 <span className="font-medium text-foreground">Settings</span>
               </div>
+           </div>
+        </div>
+
+        <div className="container px-4 md:px-8 py-8 max-w-7xl mx-auto">
+          <div className="space-y-0.5 mb-8">
+            <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+            <p className="text-muted-foreground">
+              Manage your account settings and set e-mail preferences.
+            </p>
+          </div>
+          <Separator className="my-6" />
+          
+          <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
+            <aside className="-mx-4 lg:w-1/5 lg:mx-0">
+              <SidebarNav 
+                items={sidebarNavItems} 
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+              />
+            </aside>
+            <div className="flex-1 lg:max-w-3xl">
+              {activeTab === 'profile' && (
+                <ProfileSettings 
+                  profile={profile} 
+                  onSave={handleSaveProfile} 
+                  saving={saving} 
+                />
+              )}
+              {activeTab === 'notifications' && (
+                <NotificationSettings 
+                  notifications={notifications} 
+                  onSave={handleSaveNotifications}
+                  saving={saving}
+                />
+              )}
+              {activeTab === 'security' && (
+                <SecuritySettings 
+                  profile={profile}
+                  onEnable2FA={handleEnable2FA}
+                />
+              )}
+              {activeTab === 'appearance' && (
+                <AppearanceSettings />
+              )}
+              {activeTab === 'privacy' && (
+                <PrivacySettings />
+              )}
             </div>
-          </header>
-
-          <main className="px-6 py-8 max-w-7xl mx-auto">
-            {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Settings Navigation */}
-              <div className="space-y-6">
-                {/* Settings Categories */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Settings</h2>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Configure your account</p>
-                  </div>
-                  <div className="p-6 space-y-2">
-                    <SidebarButton tab="profile" icon={<User className="w-5 h-5 text-blue-600 dark:text-blue-400" />}>Profile</SidebarButton>
-                    <SidebarButton tab="notifications" icon={<Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />}>Notifications</SidebarButton>
-                    <SidebarButton tab="security" icon={<Shield className="w-5 h-5 text-slate-600 dark:text-slate-400" />}>Security</SidebarButton>
-                    <SidebarButton tab="appearance" icon={<Palette className="w-5 h-5 text-slate-600 dark:text-slate-400" />}>Appearance</SidebarButton>
-                    <SidebarButton tab="privacy" icon={<Database className="w-5 h-5 text-slate-600 dark:text-slate-400" />}>Data & Privacy</SidebarButton>
-                  </div>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Account Status</h2>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">98%</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400">Profile Complete</div>
-                    </div>
-                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-full w-[98%] bg-green-500 rounded-full"></div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">Premium Plan</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400">Active until Dec 2025</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings Content */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Tabbed Content */}
-                {activeTab === 'profile' && (
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                          <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Profile Information</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Update your personal information</p>
-                        </div>
-                      </div>
-                      <div>
-                        <Button onClick={saveChanges} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">Save</Button>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName" className="text-sm font-medium text-slate-700 dark:text-slate-300">First Name</Label>
-                          <Input id="firstName" defaultValue="Alex" className="border-slate-200 dark:border-slate-700" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName" className="text-sm font-medium text-slate-700 dark:text-slate-300">Last Name</Label>
-                          <Input id="lastName" defaultValue="Johnson" className="border-slate-200 dark:border-slate-700" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 mt-6">
-                        <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                          <Input id="email" type="email" defaultValue="alex@example.com" className="pl-10 border-slate-200 dark:border-slate-700" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 mt-6">
-                        <Label htmlFor="company" className="text-sm font-medium text-slate-700 dark:text-slate-300">Company</Label>
-                        <Input id="company" defaultValue="Tech Corp" className="border-slate-200 dark:border-slate-700" />
-                      </div>
-
-                      <div className="space-y-2 mt-6">
-                        <Label htmlFor="bio" className="text-sm font-medium text-slate-700 dark:text-slate-300">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          placeholder="Tell us about yourself..."
-                          defaultValue="AI enthusiast and workflow automation specialist."
-                          className="border-slate-200 dark:border-slate-700 min-h-[100px]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'notifications' && (
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                          <Bell className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Notification Preferences</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Choose how you want to be notified</p>
-                        </div>
-                      </div>
-                      <div>
-                        <Button onClick={saveChanges} variant="outline">Save</Button>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="space-y-4">
-                        {[
-                          { title: "Email Notifications", desc: "Receive notifications via email", checked: true },
-                          { title: "Workflow Alerts", desc: "Get notified about workflow status changes", checked: true },
-                          { title: "Security Alerts", desc: "Important security notifications", checked: true },
-                          { title: "Marketing Updates", desc: "Product updates and feature announcements", checked: false },
-                        ].map((item, i) => (
-                          <div key={i} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors">
-                            <div>
-                              <h4 className="font-medium text-slate-900 dark:text-white">{item.title}</h4>
-                              <p className="text-sm text-slate-600 dark:text-slate-400">{item.desc}</p>
-                            </div>
-                            <Switch defaultChecked={item.checked} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'security' && (
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                          <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Security Settings</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Manage your account security</p>
-                        </div>
-                      </div>
-                      <div>
-                        <Button onClick={saveChanges} variant="outline">Save</Button>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">Current Password</Label>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                              <Input id="currentPassword" type="password" className="pl-10 border-slate-200 dark:border-slate-700" />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</Label>
-                              <Input id="newPassword" type="password" className="border-slate-200 dark:border-slate-700" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700 dark:text-slate-300">Confirm Password</Label>
-                              <Input id="confirmPassword" type="password" className="border-slate-200 dark:border-slate-700" />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-slate-900 dark:text-white">Two-Factor Authentication</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">Add an extra layer of security</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                Enabled
-                              </Badge>
-                              <Button variant="outline" size="sm">
-                                Manage
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                                <Key className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-slate-900 dark:text-white">API Keys</h4>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">Manage your API access tokens</p>
-                              </div>
-                            </div>
-                            <Button variant="outline" size="sm">
-                              <Key className="w-4 h-4 mr-2" />
-                              View Keys
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'appearance' && (
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                          <Palette className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Appearance</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Customize the look and feel</p>
-                        </div>
-                      </div>
-                      <div>
-                        <Button onClick={saveChanges} variant="outline">Save</Button>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="space-y-6">
-                        <div className="space-y-2">
-                          <Label htmlFor="theme" className="text-sm font-medium text-slate-700 dark:text-slate-300">Theme</Label>
-                          <Select defaultValue="system">
-                            <SelectTrigger id="theme" className="w-full border-slate-200 dark:border-slate-700">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="light">Light</SelectItem>
-                              <SelectItem value="dark">Dark</SelectItem>
-                              <SelectItem value="system">System</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="language" className="text-sm font-medium text-slate-700 dark:text-slate-300">Language</Label>
-                          <Select defaultValue="en">
-                            <SelectTrigger id="language" className="w-full border-slate-200 dark:border-slate-700">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="en">English</SelectItem>
-                              <SelectItem value="es">Spanish</SelectItem>
-                              <SelectItem value="fr">French</SelectItem>
-                              <SelectItem value="de">German</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                          <div>
-                            <h4 className="font-medium text-slate-900 dark:text-white">Compact Mode</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">Use a more compact layout</p>
-                          </div>
-                          <Switch />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'privacy' && (
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
-                          <Database className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Data & Privacy</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Manage your data and privacy settings</p>
-                        </div>
-                      </div>
-                      <div>
-                        <Button onClick={saveChanges} variant="outline">Save</Button>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="space-y-4">
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                          <h4 className="font-medium">Data Export</h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Download a copy of your data</p>
-                          <div className="mt-3">
-                            <Button variant="outline">Export Data</Button>
-                          </div>
-                        </div>
-
-                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                          <h4 className="font-medium">Delete Account</h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Permanently delete your account and data</p>
-                          <div className="mt-3">
-                            <Button variant="destructive">Delete Account</Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </main>
+          </div>
         </div>
       </MainLayout>
     </AuthGuard>

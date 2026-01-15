@@ -70,8 +70,15 @@ class APIClient {
       if (error instanceof Error) {
         // Don't log expected auth errors
         if (!error.message.includes('401') && !error.message.includes('Invalid or expired token')) {
-          // eslint-disable-next-line no-console
-          console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+          const isConnectionError = error.message.includes('fetch failed') || error.message.includes('Network request failed') || error.message.includes('ECONNREFUSED');
+          
+          if (isConnectionError) {
+            // eslint-disable-next-line no-console
+            console.error(`[api] connection failed to ${url}. Is the backend running? (${error.message})`)
+          } else {
+            // eslint-disable-next-line no-console
+            console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+          }
         }
         throw new Error(`Failed to fetch ${url}: ${error.message}`)
       }

@@ -29,7 +29,11 @@
       "Bash(npx tsc:*)",
       "Bash(wc:*)",
       "Bash(xargs cat:*)",
-      "Bash(gh repo view:*)"
+      "Bash(gh repo view:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(grep:*)",
+      "Bash(sort:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

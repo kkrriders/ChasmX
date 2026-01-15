@@ -14,7 +14,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     roles: List[str] = Field(default_factory=lambda: ["business_user"])
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -24,7 +24,13 @@ class UserCreate(BaseModel):
             }
         }
     )
-    
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Normalize email to lowercase to prevent duplicate registrations"""
+        return v.lower()
+
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
@@ -58,6 +64,12 @@ class UserLogin(BaseModel):
     """Schema for user login"""
     email: EmailStr
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Normalize email to lowercase for consistent lookups"""
+        return v.lower()
 
 class UserUpdate(BaseModel):
     """Schema for user profile update"""
@@ -157,6 +169,12 @@ class ChangePasswordRequest(BaseModel):
 class ForgotPasswordRequest(BaseModel):
     """Schema for initiating password reset"""
     email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Normalize email to lowercase for consistent lookups"""
+        return v.lower()
 
 class ResetPasswordRequest(BaseModel):
     """Schema for completing password reset with token"""

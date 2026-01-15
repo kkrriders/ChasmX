@@ -41,7 +41,7 @@ export const CustomNode = memo(({ data, selected, id }: NodeProps) => {
   }
   
   // Check if IconComponent is a valid React component
-  const isValidIcon = IconComponent && (typeof IconComponent === 'function' || typeof IconComponent === 'object')
+  const isValidIcon = IconComponent && (typeof IconComponent === 'function' || (typeof IconComponent === 'object' && '$$typeof' in IconComponent))
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelValue, setLabelValue] = useState(String(nodeData.label || ''))
   

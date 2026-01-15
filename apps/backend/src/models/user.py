@@ -21,14 +21,18 @@ class User(BaseModel):
     updated_at: Optional[datetime] = None
     otp_code: Optional[str] = None
     otp_expiry: Optional[datetime] = None
+    otp_failed_attempts: int = Field(default=0, ge=0)
+    otp_locked_until: Optional[datetime] = None
     
-    # Password reset fields
-    password_reset_token: Optional[str] = None
+    # 2FA flag
+    is_2fa_enabled: bool = Field(default=False)
+    
+    # Password reset fields (token is stored as SHA-256 hash for security)
+    password_reset_token: Optional[str] = None  # Hashed with SHA-256
     password_reset_expires: Optional[datetime] = None
     
     # Profile fields
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
+    full_name: Optional[str] = None
     company: Optional[str] = None
     bio: Optional[str] = None
     
@@ -39,8 +43,8 @@ class User(BaseModel):
                 "hashed_password": "hashed_string_here",
                 "roles": ["business_user"],
                 "failed_attempts": 0,
-                "first_name": "John",
-                "last_name": "Doe",
+                "is_2fa_enabled": False,
+                "full_name": "John Doe",
                 "company": "Acme Corp",
                 "bio": "Software engineer with 5+ years experience"
             }
