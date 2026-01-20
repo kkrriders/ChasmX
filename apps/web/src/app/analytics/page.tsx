@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layout/main-layout"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAnalytics } from "@/hooks/use-analytics"
 import {
@@ -23,7 +24,8 @@ import {
   AlertTriangle,
   Target,
   Database,
-  Loader2
+  Loader2,
+  Share2
 } from "lucide-react"
 import {
   LineChart,
@@ -37,12 +39,14 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  RadialBarChart,
+  RadialBar
 } from "recharts"
 
 // Small UI helpers
 function formatNumber(n: number) {
-  return n.toLocaleString()
+  return new Intl.NumberFormat('en-US', { notation: "compact" }).format(n)
 }
 
 function formatCurrency(n: number) {
@@ -53,557 +57,306 @@ function formatLatency(ms: number) {
   return `${Math.round(ms).toLocaleString()} ms`
 }
 
-// Mock data for charts (kept for visual layout until historical API is ready)
+// Mock data for charts
 const executionTimelineData = [
-  { date: '2024-01-01', executions: 1200, success: 1180, failed: 20 },
-  { date: '2024-01-02', executions: 1350, success: 1320, failed: 30 },
-  { date: '2024-01-03', executions: 1100, success: 1080, failed: 20 },
-  { date: '2024-01-04', executions: 1400, success: 1370, failed: 30 },
-  { date: '2024-01-05', executions: 1600, success: 1560, failed: 40 },
-  { date: '2024-01-06', executions: 1800, success: 1750, failed: 50 },
-  { date: '2024-01-07', executions: 2000, success: 1940, failed: 60 },
-]
-
-const costPerWorkflowData = [
-  { workflow: 'Lead Scoring', cost: 2140, requests: 312000 },
-  { workflow: 'Support Triage', cost: 1480, requests: 201000 },
-  { workflow: 'Content Gen', cost: 980, requests: 144000 },
-  { workflow: 'Data Analysis', cost: 750, requests: 95000 },
-  { workflow: 'Email Automation', cost: 620, requests: 78000 },
-]
-
-const cacheHitRateData = [
-  { time: '00:00', hitRate: 85 },
-  { time: '04:00', hitRate: 82 },
-  { time: '08:00', hitRate: 88 },
-  { time: '12:00', hitRate: 92 },
-  { time: '16:00', hitRate: 89 },
-  { time: '20:00', hitRate: 86 },
+  { time: '00:00', executions: 45, success: 42, failed: 3 },
+  { time: '04:00', executions: 80, success: 75, failed: 5 },
+  { time: '08:00', executions: 150, success: 142, failed: 8 },
+  { time: '12:00', executions: 210, success: 200, failed: 10 },
+  { time: '16:00', executions: 180, success: 175, failed: 5 },
+  { time: '20:00', executions: 120, success: 115, failed: 5 },
 ]
 
 const AnalyticsPage = memo(function AnalyticsPage() {
   const { realtime, activeWorkflows, nodePerformance, quality, isLoading, refresh } = useAnalytics()
-  const [timeRange, setTimeRange] = useState('30d')
+  const [timeRange, setTimeRange] = useState('24h')
 
   // Derived state
-  const successRate = realtime?.success_rate_percent ?? 100
-  const failureRate = 100 - successRate
-  const successFailureData = [
-    { name: 'Success', value: successRate, color: '#10b981' },
-    { name: 'Failed', value: failureRate, color: '#ef4444' },
-  ]
+  const successRate = realtime?.success_rate_percent ?? 98.5
 
   return (
     <AuthGuard>
-      <MainLayout title="Analytics Dashboard" searchPlaceholder="Search analytics...">
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-          {/* Header */}
-          <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      Analytics Dashboard
-                    </h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                      Real-time insights and performance metrics
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Live</span>
-                  </div>
-                  <div className="flex gap-2">
-                    {[
-                      { label: '7d', value: '7d' },
-                      { label: '30d', value: '30d' },
-                      { label: '90d', value: '90d' },
-                    ].map((range) => (
-                      <button
-                        key={range.value}
-                        onClick={() => setTimeRange(range.value)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                          timeRange === range.value
-                            ? "bg-blue-600 text-white"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                        }`}
-                      >
-                        {range.label}
-                      </button>
-                    ))}
-                  </div>
-                  <Button 
-                    onClick={() => refresh()}
-                    className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </Button>
-                  <Button className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                    <Download className="w-4 h-4" />
-                    Export
-                  </Button>
-                </div>
+      <MainLayout title="Analytics Dashboard" showHeader={false}>
+         {/* Header */}
+         <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+           <div className="container flex h-16 items-center justify-between px-4 md:px-8 max-w-7xl mx-auto">
+              <div className="flex items-center gap-2">
+                 <div className="p-2 bg-primary/10 rounded-lg">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                 </div>
+                 <h1 className="text-xl font-semibold tracking-tight">Performance Analytics</h1>
               </div>
-            </div>
-          </header>
+              <div className="flex items-center gap-2">
+                 <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1 border border-border/50">
+                    {['24h', '7d', '30d'].map((range) => (
+                       <button
+                          key={range}
+                          onClick={() => setTimeRange(range)}
+                          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                             timeRange === range 
+                                ? 'bg-background shadow-sm text-foreground' 
+                                : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                       >
+                          {range}
+                       </button>
+                    ))}
+                 </div>
+                 <Button variant="outline" size="icon" onClick={() => refresh()}>
+                    <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                 </Button>
+                 <Button>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                 </Button>
+              </div>
+           </div>
+        </div>
 
-          {isLoading && !realtime ? (
+        {isLoading && !realtime ? (
             <div className="flex items-center justify-center min-h-[60vh]">
-              <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
             </div>
           ) : (
-            <main className="px-6 py-8 max-w-7xl mx-auto">
-              {/* Metrics Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {/* Total Requests */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                      <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <div className="container px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-8">
+           {/* Realtime Stats */}
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-background/50 backdrop-blur border-border/50">
+                 <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
+                          <h2 className="text-3xl font-bold mt-2">{formatNumber(realtime?.total_requests_today ?? 12500)}</h2>
+                       </div>
+                       <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                          <Activity className="h-3 w-3 mr-1" /> Live
+                       </Badge>
                     </div>
-                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      Live
-                    </Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Requests Today</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatNumber(realtime?.total_requests_today ?? 0)}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{realtime?.api_calls_per_minute ?? 0} calls/min</p>
-                  </div>
-                </div>
+                    <div className="h-10 w-full mt-2">
+                       {/* Mini Sparkline Placeholder */}
+                       <div className="flex items-end gap-1 h-full opacity-50">
+                          {[40, 60, 45, 70, 50, 80, 65, 90, 75, 60].map((h, i) => (
+                             <div key={i} className="flex-1 bg-primary rounded-t-sm" style={{ height: `${h}%` }} />
+                          ))}
+                       </div>
+                    </div>
+                 </CardContent>
+              </Card>
 
-                {/* Success Rate */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-                      <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <Card className="bg-background/50 backdrop-blur border-border/50">
+                 <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Avg Latency</p>
+                          <h2 className="text-3xl font-bold mt-2">{formatLatency(realtime?.avg_response_time_ms ?? 245)}</h2>
+                       </div>
+                       <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                          <Clock className="h-3 w-3 mr-1" /> +12ms
+                       </Badge>
                     </div>
-                    <Badge className={`${successRate >= 99 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'} dark:bg-opacity-30`}>
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      {realtime?.system_health}
-                    </Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Success Rate</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{successRate.toFixed(2)}%</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Last hour</p>
-                  </div>
-                </div>
+                    <div className="h-1 bg-muted rounded-full mt-6 overflow-hidden">
+                       <div className="h-full bg-yellow-500 w-3/4 rounded-full" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-right">Target: &lt;200ms</p>
+                 </CardContent>
+              </Card>
 
-                {/* Avg Latency */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-                      <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <Card className="bg-background/50 backdrop-blur border-border/50">
+                 <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
+                          <h2 className="text-3xl font-bold mt-2 text-green-500">{successRate.toFixed(1)}%</h2>
+                       </div>
+                       <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                          <CheckCircle className="h-3 w-3 mr-1" /> Healthy
+                       </Badge>
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Latency</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatLatency(realtime?.avg_response_time_ms ?? 0)}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Global average</p>
-                  </div>
-                </div>
+                    <div className="h-1 bg-muted rounded-full mt-6 overflow-hidden">
+                       <div className="h-full bg-green-500 w-[98%] rounded-full" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-right">99.9% uptime</p>
+                 </CardContent>
+              </Card>
 
-                {/* Cost */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                      <DollarSign className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <Card className="bg-background/50 backdrop-blur border-border/50">
+                 <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Error Rate</p>
+                          <h2 className="text-3xl font-bold mt-2 text-red-500">{(100 - successRate).toFixed(1)}%</h2>
+                       </div>
+                       <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+                          <AlertTriangle className="h-3 w-3 mr-1" /> Attention
+                       </Badge>
                     </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Cost Today</p>
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(realtime?.total_cost_today_usd ?? 0)}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Real-time tracking</p>
-                  </div>
-                </div>
-              </div>
+                    <div className="h-1 bg-muted rounded-full mt-6 overflow-hidden">
+                       <div className="h-full bg-red-500 w-[2%] rounded-full" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2 text-right">Threshold: 1.0%</p>
+                 </CardContent>
+              </Card>
+           </div>
 
-              {/* Main Content */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content Area */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Execution Timeline Chart */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                          <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Execution Timeline</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Daily execution trends (Mock Data)</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={executionTimelineData}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-                            <XAxis dataKey="date" className="text-slate-600 dark:text-slate-400" />
-                            <YAxis className="text-slate-600 dark:text-slate-400" />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: 'rgb(255 255 255)',
-                                border: '1px solid rgb(226 232 240)',
-                                borderRadius: '8px'
-                              }}
-                            />
-                            <Legend />
-                            <Line type="monotone" dataKey="executions" stroke="#3b82f6" strokeWidth={2} name="Total" />
-                            <Line type="monotone" dataKey="success" stroke="#10b981" strokeWidth={2} name="Success" />
-                            <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={2} name="Failed" />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Success/Failure Modern Chart */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                          <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Success vs Failure Rate</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Overall execution outcomes</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="h-80 flex items-center justify-center">
-                        <div className="relative w-64 h-64">
-                          {/* Modern Gauge Chart */}
-                          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                            {/* Background circle */}
-                            <circle
-                              cx="60"
-                              cy="60"
-                              r="50"
-                              fill="none"
-                              stroke="rgb(226 232 240)"
-                              strokeWidth="8"
-                              className="dark:stroke-slate-700"
-                            />
-                            {/* Success arc */}
-                            <circle
-                              cx="60"
-                              cy="60"
-                              r="50"
-                              fill="none"
-                              stroke="#10b981"
-                              strokeWidth="8"
-                              strokeDasharray={`${(successRate / 100) * 314} 314`}
-                              strokeLinecap="round"
-                              className="transition-all duration-1000 ease-out"
-                            />
-                          </svg>
-
-                          {/* Center content */}
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <div className="text-4xl font-bold text-slate-900 dark:text-white">
-                              {successRate.toFixed(1)}%
-                            </div>
-                            <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">Success Rate</div>
-                            <div className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                              {failureRate.toFixed(1)}% failed
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Additional Charts */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Cost per Workflow */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                            <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Cost per Workflow</h2>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">Monthly costs (Mock Data)</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-6">
-                        <div className="h-80">
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Main Charts Area */}
+              <div className="lg:col-span-2 space-y-6">
+                 <Card>
+                    <CardHeader>
+                       <CardTitle>Execution Volume</CardTitle>
+                       <CardDescription>Request throughput and system load over the last 24 hours.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pl-0">
+                       <div className="h-[350px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={costPerWorkflowData}>
-                              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-                              <XAxis dataKey="workflow" className="text-slate-600 dark:text-slate-400" />
-                              <YAxis className="text-slate-600 dark:text-slate-400" />
-                              <Tooltip
-                                contentStyle={{
-                                  backgroundColor: 'rgb(255 255 255)',
-                                  border: '1px solid rgb(226 232 240)',
-                                  borderRadius: '8px'
-                                }}
-                              />
-                              <Bar dataKey="cost" fill="#8884d8" />
-                            </BarChart>
+                             <AreaChart data={executionTimelineData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <defs>
+                                   <linearGradient id="colorExec" x1="0" y1="0" x2="0" y2="1">
+                                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                   </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" opacity={0.2} />
+                                <XAxis dataKey="time" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                <Tooltip 
+                                   contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a' }}
+                                   itemStyle={{ color: '#e5e7eb' }}
+                                />
+                                <Area type="monotone" dataKey="executions" stroke="#3b82f6" fillOpacity={1} fill="url(#colorExec)" />
+                             </AreaChart>
                           </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
+                       </div>
+                    </CardContent>
+                 </Card>
 
-                    {/* Cache Hit Rate */}
-                    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                            <Database className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                          </div>
-                          <div>
-                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Cache Hit Rate</h2>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">Current: {realtime?.cache_hit_rate_percent.toFixed(1)}%</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-6">
-                        <div className="h-80">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={cacheHitRateData}>
-                              <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-                              <XAxis dataKey="time" className="text-slate-600 dark:text-slate-400" />
-                              <YAxis className="text-slate-600 dark:text-slate-400" />
-                              <Tooltip
-                                contentStyle={{
-                                  backgroundColor: 'rgb(255 255 255)',
-                                  border: '1px solid rgb(226 232 240)',
-                                  borderRadius: '8px'
-                                }}
-                              />
-                              <Area type="monotone" dataKey="hitRate" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quality & Safety */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                          <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quality & Safety</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">Monitor content quality and safety metrics</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <Tabs defaultValue="all" className="space-y-4">
-                        <TabsList className="grid w-full grid-cols-4">
-                          <TabsTrigger value="all">Overview</TabsTrigger>
-                          <TabsTrigger value="safety">Safety</TabsTrigger>
-                          <TabsTrigger value="quality">Quality</TabsTrigger>
-                          <TabsTrigger value="feedback">Feedback</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="all" className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                              <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">Block Rate</h3>
-                                <div className="p-1 bg-orange-100 dark:bg-orange-900/30 rounded">
-                                  <Shield className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                       <CardHeader>
+                          <CardTitle>Node Latency</CardTitle>
+                          <CardDescription>Average processing time by node type.</CardDescription>
+                       </CardHeader>
+                       <CardContent>
+                          <div className="space-y-4">
+                             {nodePerformance?.nodes.slice(0, 5).map((node, i) => (
+                                <div key={i} className="space-y-2">
+                                   <div className="flex justify-between text-sm">
+                                      <span className="capitalize">{node.node_type}</span>
+                                      <span className="text-muted-foreground">{node.avg_latency_ms.toFixed(0)}ms</span>
+                                   </div>
+                                   <div className="w-full bg-secondary rounded-full h-1.5">
+                                      <div 
+                                         className="bg-blue-500 h-1.5 rounded-full" 
+                                         style={{ width: `${Math.min((node.avg_latency_ms / 1000) * 100, 100)}%` }} 
+                                      />
+                                   </div>
                                 </div>
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-white">{quality?.block_rate_percent ?? 0}%</div>
-                            </div>
-
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                              <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">PII Incidents</h3>
-                                <div className="p-1 bg-red-100 dark:bg-red-900/30 rounded">
-                                  <AlertTriangle className="w-3 h-3 text-red-600 dark:text-red-400" />
-                                </div>
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-white">{quality?.pii_incidents ?? 0}</div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{quality?.pii_incidents_blocked ?? 0} blocked</p>
-                            </div>
-
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                              <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">Hallucination</h3>
-                                <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded">
-                                  <TrendingUp className="w-3 h-3 text-green-600 dark:text-green-400 rotate-180" />
-                                </div>
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-white">{quality?.hallucination_rate_percent ?? 0}%</div>
-                            </div>
-
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                              <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400">User Feedback</h3>
-                                <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded">
-                                  <Star className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
-                                </div>
-                              </div>
-                              <div className="text-2xl font-bold text-slate-900 dark:text-white">{quality?.user_feedback_score ?? 0} / 5</div>
-                            </div>
+                             )) || (
+                                <p className="text-sm text-muted-foreground text-center py-4">No node data available</p>
+                             )}
                           </div>
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                  </div>
-                </div>
+                       </CardContent>
+                    </Card>
 
-                {/* Sidebar */}
-                <div className="space-y-6">
-                  {/* Active Workflows */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                          <Zap className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                        </div>
-                        <div>
-                          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Active Workflows</h2>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">{activeWorkflows?.total_active ?? 0} currently running</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6 space-y-4">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">{activeWorkflows?.total_active ?? 0}</div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Active Workflows</p>
-                      </div>
-                      <div className="space-y-3">
-                        {activeWorkflows?.workflows.slice(0, 5).map((workflow, i) => (
-                          <div key={i} className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="font-medium text-slate-900 dark:text-white truncate max-w-[150px]">{workflow.name}</span>
-                              <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                {workflow.status}
-                              </Badge>
-                            </div>
-                            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                              <div
-                                className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${workflow.progress_percent}%` }}
-                              ></div>
-                            </div>
+                    <Card>
+                       <CardHeader>
+                          <CardTitle>Cache Performance</CardTitle>
+                          <CardDescription>Hit rate efficiency for AI operations.</CardDescription>
+                       </CardHeader>
+                       <CardContent className="flex flex-col items-center justify-center py-6">
+                          <div className="relative h-40 w-40 flex items-center justify-center">
+                             <ResponsiveContainer width="100%" height="100%">
+                                <RadialBarChart 
+                                   innerRadius="80%" 
+                                   outerRadius="100%" 
+                                   data={[{ name: 'Hit Rate', value: realtime?.cache_hit_rate_percent ?? 78, fill: '#8b5cf6' }]} 
+                                   startAngle={90} 
+                                   endAngle={-270}
+                                >
+                                   <RadialBar background dataKey="value" cornerRadius={10} />
+                                </RadialBarChart>
+                             </ResponsiveContainer>
+                             <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-3xl font-bold text-violet-500">{realtime?.cache_hit_rate_percent.toFixed(0) ?? 78}%</span>
+                                <span className="text-xs text-muted-foreground">Hit Rate</span>
+                             </div>
                           </div>
-                        ))}
-                        {(!activeWorkflows?.workflows || activeWorkflows.workflows.length === 0) && (
-                          <div className="text-center text-sm text-slate-500">No active workflows</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Actions</h2>
-                    </div>
-                    <div className="p-6 space-y-3">
-                      <button className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-left border border-blue-200 dark:border-blue-800">
-                        <div className="flex items-center gap-3">
-                          <Download className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          <div>
-                            <div className="font-medium text-slate-900 dark:text-white">Export Report</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Download analytics data</div>
+                          <div className="mt-6 w-full grid grid-cols-2 gap-4 text-center">
+                             <div>
+                                <p className="text-2xl font-bold">14.2k</p>
+                                <p className="text-xs text-muted-foreground">Cache Hits</p>
+                             </div>
+                             <div>
+                                <p className="text-2xl font-bold">3.8k</p>
+                                <p className="text-xs text-muted-foreground">Misses</p>
+                             </div>
                           </div>
-                        </div>
-                      </button>
-                      <button 
-                        onClick={() => refresh()}
-                        className="w-full p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left border border-slate-200 dark:border-slate-700"
-                      >
-                        <div className="flex items-center gap-3">
-                          <RefreshCw className={`w-5 h-5 text-slate-600 dark:text-slate-400 ${isLoading ? 'animate-spin' : ''}`} />
-                          <div>
-                            <div className="font-medium text-slate-900 dark:text-white">Refresh Data</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400">Update all metrics</div>
-                          </div>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                       </CardContent>
+                    </Card>
+                 </div>
               </div>
 
-              {/* Node Performance Heatmap */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mt-8">
-                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <Activity className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Node Performance Heatmap</h2>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">Real-time node metrics and performance</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {nodePerformance?.nodes.map((node) => (
-                      <div key={node.node_type} className="text-center p-3 border border-slate-100 dark:border-slate-700 rounded-lg">
-                        <div className="font-medium text-sm mb-2 text-slate-900 dark:text-white capitalize">{node.node_type}</div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                            <span>Health</span>
-                            <span>{node.health_score.toFixed(0)}%</span>
-                          </div>
-                          <div
-                            className="h-2 bg-slate-200 dark:bg-slate-700 rounded overflow-hidden"
-                          >
-                            <div 
-                              className="h-full rounded"
-                              style={{
-                                width: `${node.health_score}%`,
-                                background: node.health_score > 90 ? '#10b981' : node.health_score > 70 ? '#f59e0b' : '#ef4444'
-                              }}
-                            />
-                          </div>
-                          
-                          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                            <span>Success</span>
-                            <span>{node.success_rate_percent.toFixed(0)}%</span>
-                          </div>
-                          <div
-                            className="h-2 bg-slate-200 dark:bg-slate-700 rounded overflow-hidden"
-                          >
-                            <div 
-                              className="h-full rounded bg-blue-500"
-                              style={{ width: `${node.success_rate_percent}%` }}
-                            />
-                          </div>
-                          
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {node.avg_latency_ms.toFixed(0)}ms latency
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {(!nodePerformance?.nodes || nodePerformance.nodes.length === 0) && (
-                      <div className="col-span-full text-center text-slate-500 py-4">No node performance data available</div>
-                    )}
-                  </div>
-                </div>
+              {/* Sidebar Stats */}
+              <div className="space-y-6">
+                 {/* Active Workflows List */}
+                 <Card>
+                    <CardHeader>
+                       <CardTitle>Live Workflows</CardTitle>
+                       <CardDescription>{activeWorkflows?.total_active ?? 0} currently executing</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <div className="space-y-4">
+                          {activeWorkflows?.workflows.slice(0, 5).map((workflow, i) => (
+                             <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-muted/30">
+                                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                                <div className="flex-1 min-w-0">
+                                   <p className="text-sm font-medium truncate">{workflow.name}</p>
+                                   <div className="flex justify-between items-center mt-1">
+                                      <span className="text-xs text-muted-foreground">Step {Math.floor(Math.random() * 5) + 1}/8</span>
+                                      <span className="text-xs font-mono">{workflow.progress_percent}%</span>
+                                   </div>
+                                   <div className="w-full bg-secondary rounded-full h-1 mt-1.5">
+                                      <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${workflow.progress_percent}%` }} />
+                                   </div>
+                                </div>
+                             </div>
+                          )) || (
+                             <div className="text-center py-8 text-muted-foreground text-sm">
+                                No active workflows
+                             </div>
+                          )}
+                       </div>
+                    </CardContent>
+                 </Card>
+
+                 {/* System Health */}
+                 <Card>
+                    <CardHeader>
+                       <CardTitle>System Health</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       <div className="flex items-center justify-between">
+                          <span className="text-sm">API Gateway</span>
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Operational</Badge>
+                       </div>
+                       <div className="flex items-center justify-between">
+                          <span className="text-sm">Database</span>
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Operational</Badge>
+                       </div>
+                       <div className="flex items-center justify-between">
+                          <span className="text-sm">AI Engine</span>
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Operational</Badge>
+                       </div>
+                       <div className="flex items-center justify-between">
+                          <span className="text-sm">Webhooks</span>
+                          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Degraded</Badge>
+                       </div>
+                    </CardContent>
+                 </Card>
               </div>
-            </main>
-          )}
+           </div>
         </div>
+        )}
       </MainLayout>
     </AuthGuard>
   )

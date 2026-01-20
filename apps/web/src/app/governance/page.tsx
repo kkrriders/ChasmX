@@ -1,459 +1,309 @@
 "use client"
 
 import { memo, useState } from "react"
+import { motion } from "framer-motion"
 import { MainLayout } from "@/components/layout/main-layout"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Progress } from "@/components/ui/progress"
 import {
   Shield,
   AlertTriangle,
   Database,
   Lock,
   Plus,
-  CheckCircle,
+  CheckCircle2,
   Clock,
-  TrendingUp,
   FileText,
   Settings,
   Users,
-  Eye,
-  Edit,
-  Activity,
-  Target,
-  Zap,
+  Search,
   Filter,
-  Search
+  MoreVertical,
+  Activity,
+  FileKey
 } from "lucide-react"
 
 const GovernancePage = memo(function GovernancePage() {
-  const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("controls")
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  }
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  }
 
   return (
     <AuthGuard>
-      <MainLayout title="Governance Center" searchPlaceholder="Search governance...">
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-          {/* Header */}
-          <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                      Governance Center
-                    </h1>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                      Manage policies and compliance controls
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">All controls active</span>
-                  </div>
-                  <Button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium">
-                    <Plus className="w-4 h-4" />
-                    New Control
-                  </Button>
-                </div>
+      <MainLayout title="Governance" showHeader={false}>
+         {/* Header */}
+         <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+           <div className="container flex h-16 items-center justify-between px-4 md:px-8 max-w-7xl mx-auto">
+              <div className="flex items-center gap-2">
+                 <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="h-5 w-5 text-primary" />
+                 </div>
+                 <h1 className="text-xl font-semibold tracking-tight">Governance Center</h1>
               </div>
-            </div>
-          </header>
-
-          <main className="px-6 py-8 max-w-7xl mx-auto">
-            {/* Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {/* Controls */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                    <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    <TrendingUp className="w-3 h-3 mr-1" />
-                    +3
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Controls</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">24</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">18 compliant</p>
-                </div>
+              <div className="flex items-center gap-2">
+                 <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/20 mr-2">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-xs font-medium text-green-500">System Compliant</span>
+                 </div>
+                 <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Policy
+                 </Button>
               </div>
+           </div>
+        </div>
 
-              {/* Risks */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-                    <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    High: 2
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Risks</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">7</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">2 high priority</p>
-                </div>
-              </div>
+        <div className="container px-4 md:px-8 py-8 max-w-7xl mx-auto space-y-8">
+           {/* Stats Row */}
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-gradient-to-br from-blue-500/5 to-transparent border-blue-500/20">
+                 <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Active Controls</p>
+                          <h2 className="text-3xl font-bold mt-2 text-blue-500">24</h2>
+                       </div>
+                       <div className="h-10 w-10 bg-blue-500/10 rounded-full flex items-center justify-center">
+                          <Shield className="h-5 w-5 text-blue-500" />
+                       </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                       <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-0">100% Active</Badge>
+                       <span>Last checked 2m ago</span>
+                    </div>
+                 </CardContent>
+              </Card>
 
-              {/* Models */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                    <Database className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                    Pending: 3
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Models</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">12</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">3 pending review</p>
-                </div>
-              </div>
+              <Card className="bg-gradient-to-br from-orange-500/5 to-transparent border-orange-500/20">
+                 <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Risk Alerts</p>
+                          <h2 className="text-3xl font-bold mt-2 text-orange-500">3</h2>
+                       </div>
+                       <div className="h-10 w-10 bg-orange-500/10 rounded-full flex items-center justify-center">
+                          <AlertTriangle className="h-5 w-5 text-orange-500" />
+                       </div>
+                    </div>
+                     <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                       <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 border-0">2 High</Badge>
+                       <span>Requires attention</span>
+                    </div>
+                 </CardContent>
+              </Card>
 
-              {/* Datasets */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-                    <Lock className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    Restricted: 5
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Datasets</p>
-                  <p className="text-3xl font-bold text-slate-900 dark:text-white">35</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">5 restricted</p>
-                </div>
-              </div>
-            </div>
+              <Card>
+                 <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Pending Approvals</p>
+                          <h2 className="text-3xl font-bold mt-2">12</h2>
+                       </div>
+                       <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center">
+                          <FileText className="h-5 w-5 text-muted-foreground" />
+                       </div>
+                    </div>
+                     <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+                       <span>Model deployments & access</span>
+                    </div>
+                 </CardContent>
+              </Card>
 
-            {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Content Area */}
+              <Card>
+                 <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                       <div>
+                          <p className="text-sm font-medium text-muted-foreground">Compliance Score</p>
+                          <h2 className="text-3xl font-bold mt-2">98%</h2>
+                       </div>
+                       <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center">
+                          <Activity className="h-5 w-5 text-muted-foreground" />
+                       </div>
+                    </div>
+                    <div className="mt-4 w-full bg-secondary rounded-full h-1.5">
+                       <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '98%' }} />
+                    </div>
+                 </CardContent>
+              </Card>
+           </div>
+
+           {/* Main Content Area */}
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
-                {/* Controls Management */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                        <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Controls Management</h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">Configure and monitor governance controls</p>
-                      </div>
+                 <Tabs defaultValue="controls" className="w-full">
+                    <div className="flex items-center justify-between mb-4">
+                       <TabsList className="bg-muted/50 p-1">
+                          <TabsTrigger value="controls">Controls</TabsTrigger>
+                          <TabsTrigger value="approvals">Approvals</TabsTrigger>
+                          <TabsTrigger value="activity">Activity Log</TabsTrigger>
+                       </TabsList>
+                       <div className="relative w-full max-w-xs hidden sm:block">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input placeholder="Filter items..." className="pl-9 h-9 bg-muted/50 border-border/50" />
+                       </div>
                     </div>
-                  </div>
-                  <div className="p-6">
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                      <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="controls">Controls</TabsTrigger>
-                        <TabsTrigger value="approvals">Approvals</TabsTrigger>
-                        <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
-                        <TabsTrigger value="compliance">Compliance</TabsTrigger>
-                      </TabsList>
 
-                      <TabsContent value="controls" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {[
-                            { name: "Content Safety", status: "Active", risk: "Low", lastCheck: "2 min ago" },
-                            { name: "PII Detection", status: "Active", risk: "Medium", lastCheck: "5 min ago" },
-                            { name: "Bias Monitoring", status: "Active", risk: "Low", lastCheck: "1 min ago" },
-                            { name: "Output Validation", status: "Active", risk: "High", lastCheck: "3 min ago" },
-                          ].map((control, i) => (
-                            <div key={i} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="font-medium text-slate-900 dark:text-white">{control.name}</h4>
-                                <Badge className={`${
-                                  control.status === 'Active'
-                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                }`}>
-                                  {control.status}
-                                </Badge>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-600 dark:text-slate-400">Risk Level:</span>
-                                  <Badge variant="outline" className={`${
-                                    control.risk === 'High'
-                                      ? 'border-red-200 text-red-700 dark:border-red-800 dark:text-red-400'
-                                      : control.risk === 'Medium'
-                                      ? 'border-orange-200 text-orange-700 dark:border-orange-800 dark:text-orange-400'
-                                      : 'border-green-200 text-green-700 dark:border-green-800 dark:text-green-400'
-                                  }`}>
-                                    {control.risk}
-                                  </Badge>
+                    <TabsContent value="controls" className="mt-0 space-y-4">
+                       {[
+                          { name: "PII Detection", description: "Scans outputs for personally identifiable information", status: "Active", risk: "Low", lastCheck: "Now" },
+                          { name: "Content Safety", description: "Filters NSFW and harmful content generation", status: "Active", risk: "Medium", lastCheck: "5m ago" },
+                          { name: "Model Bias", description: "Monitors response distribution for demographic bias", status: "Active", risk: "Low", lastCheck: "1h ago" },
+                          { name: "Data Residency", description: "Ensures data stays within configured regions", status: "Active", risk: "High", lastCheck: "10m ago" },
+                       ].map((control, i) => (
+                          <Card key={i} className="group hover:border-primary/50 transition-all duration-200">
+                             <div className="p-4 flex items-center justify-between">
+                                <div className="flex items-start gap-4">
+                                   <div className={`mt-1 p-2 rounded-lg ${control.status === 'Active' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                                      <Shield className="h-4 w-4" />
+                                   </div>
+                                   <div>
+                                      <h4 className="font-medium text-sm flex items-center gap-2">
+                                         {control.name}
+                                         <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal">{control.lastCheck}</Badge>
+                                      </h4>
+                                      <p className="text-xs text-muted-foreground mt-1">{control.description}</p>
+                                   </div>
                                 </div>
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-slate-600 dark:text-slate-400">Last Check:</span>
-                                  <span className="text-slate-900 dark:text-white">{control.lastCheck}</span>
+                                <div className="flex items-center gap-4">
+                                   <div className="text-right">
+                                      <span className="text-xs text-muted-foreground block">Risk Level</span>
+                                      <span className={`text-xs font-medium ${
+                                         control.risk === 'High' ? 'text-red-500' :
+                                         control.risk === 'Medium' ? 'text-orange-500' : 'text-green-500'
+                                      }`}>{control.risk}</span>
+                                   </div>
+                                   <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Settings className="h-4 w-4" />
+                                   </Button>
                                 </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </TabsContent>
+                             </div>
+                          </Card>
+                       ))}
+                    </TabsContent>
 
-                      <TabsContent value="approvals" className="space-y-4">
-                        <div className="space-y-4">
-                          {[
-                            { id: "APP-2025-001", type: "Model Deployment", requester: "Sarah Chen", status: "Pending", priority: "High" },
-                            { id: "APP-2025-002", type: "Dataset Access", requester: "Mike Rodriguez", status: "Approved", priority: "Medium" },
-                            { id: "APP-2025-003", type: "Policy Update", requester: "Alex Johnson", status: "Rejected", priority: "Low" },
-                          ].map((approval, i) => (
-                            <div key={i} className="p-4 border border-slate-200 dark:border-slate-700 rounded-lg">
-                              <div className="flex items-center justify-between mb-3">
-                                <div>
-                                  <h4 className="font-medium text-slate-900 dark:text-white">{approval.type}</h4>
-                                  <p className="text-sm text-slate-600 dark:text-slate-400">ID: {approval.id}</p>
+                    <TabsContent value="approvals" className="mt-0 space-y-4">
+                       {[
+                          { type: "Model Access", user: "Sarah Chen", resource: "GPT-4-32k", time: "2h ago", status: "Pending" },
+                          { type: "Dataset Export", user: "Mike Ross", resource: "Customer_Emails_2024", time: "5h ago", status: "Reviewing" },
+                          { type: "API Key", user: "Integration Bot", resource: "Production Key", time: "1d ago", status: "Approved" },
+                       ].map((item, i) => (
+                          <Card key={i}>
+                             <div className="p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                   <div className="h-10 w-10 bg-muted rounded-full flex items-center justify-center">
+                                      <Users className="h-4 w-4 text-muted-foreground" />
+                                   </div>
+                                   <div>
+                                      <h4 className="font-medium text-sm">{item.type}</h4>
+                                      <p className="text-xs text-muted-foreground">Requested by <span className="text-foreground font-medium">{item.user}</span> for {item.resource}</p>
+                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <Badge className={`${
-                                    approval.priority === 'High'
-                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                      : approval.priority === 'Medium'
-                                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                      : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                  }`}>
-                                    {approval.priority}
-                                  </Badge>
-                                  <Badge className={`${
-                                    approval.status === 'Approved'
-                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                      : approval.status === 'Rejected'
-                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                  }`}>
-                                    {approval.status}
-                                  </Badge>
+                                <div className="flex items-center gap-3">
+                                   <span className="text-xs text-muted-foreground">{item.time}</span>
+                                   <Badge variant={item.status === 'Approved' ? 'default' : 'secondary'}>
+                                      {item.status}
+                                   </Badge>
+                                   <Button variant="outline" size="sm" className="h-8">Review</Button>
                                 </div>
-                              </div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-600 dark:text-slate-400">Requested by: {approval.requester}</span>
-                                <div className="flex gap-2">
-                                  {approval.status === 'Pending' && (
-                                    <>
-                                      <Button size="sm" variant="outline">Review</Button>
-                                      <Button size="sm">Approve</Button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </TabsContent>
+                             </div>
+                          </Card>
+                       ))}
+                    </TabsContent>
 
-                      <TabsContent value="monitoring" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-4">
-                            <h4 className="font-medium text-slate-900 dark:text-white">Real-time Alerts</h4>
-                            <div className="space-y-3">
-                              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                  <span className="text-sm font-medium text-red-900 dark:text-red-200">High Risk Detected</span>
+                    <TabsContent value="activity" className="mt-0">
+                       <Card>
+                          <div className="divide-y divide-border/50">
+                             {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                                   <div className="flex items-center gap-3">
+                                      <Activity className="h-4 w-4 text-muted-foreground" />
+                                      <div className="text-sm">
+                                         <span className="font-medium">Policy Updated</span>
+                                         <span className="text-muted-foreground mx-2">•</span>
+                                         <span className="text-muted-foreground">Content Safety threshold changed to High</span>
+                                      </div>
+                                   </div>
+                                   <span className="text-xs text-muted-foreground">Oct 24, 2:30 PM</span>
                                 </div>
-                                <p className="text-xs text-red-700 dark:text-red-300">PII detected in model output</p>
-                                <p className="text-xs text-red-600 dark:text-red-400 mt-1">2 minutes ago</p>
-                              </div>
-                              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                                  <span className="text-sm font-medium text-orange-900 dark:text-orange-200">Policy Violation</span>
-                                </div>
-                                <p className="text-xs text-orange-700 dark:text-orange-300">Content safety threshold exceeded</p>
-                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">5 minutes ago</p>
-                              </div>
-                            </div>
+                             ))}
                           </div>
-                          <div className="space-y-4">
-                            <h4 className="font-medium text-slate-900 dark:text-white">Compliance Status</h4>
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                <span className="text-sm text-green-900 dark:text-green-200">GDPR Compliance</span>
-                                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              </div>
-                              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                <span className="text-sm text-green-900 dark:text-green-200">SOX Compliance</span>
-                                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              </div>
-                              <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                                <span className="text-sm text-yellow-900 dark:text-yellow-200">CCPA Compliance</span>
-                                <Clock className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="compliance" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <div className="text-center">
-                              <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">98.5%</div>
-                              <div className="text-sm text-slate-600 dark:text-slate-400">Overall Compliance</div>
-                            </div>
-                          </div>
-                          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <div className="text-center">
-                              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-1">24</div>
-                              <div className="text-sm text-slate-600 dark:text-slate-400">Active Frameworks</div>
-                            </div>
-                          </div>
-                          <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <div className="text-center">
-                              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-1">156</div>
-                              <div className="text-sm text-slate-600 dark:text-slate-400">Audit Logs</div>
-                            </div>
-                          </div>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                  </div>
-                </div>
+                       </Card>
+                    </TabsContent>
+                 </Tabs>
               </div>
 
-              {/* Sidebar */}
               <div className="space-y-6">
-                {/* Quick Actions */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Quick Actions</h2>
-                  </div>
-                  <div className="p-6 space-y-3">
-                    <button className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors text-left border border-blue-200 dark:border-blue-800">
-                      <div className="flex items-center gap-3">
-                        <Plus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <div>
-                          <div className="font-medium text-slate-900 dark:text-white">Add New Control</div>
-                          <div className="text-xs text-slate-600 dark:text-slate-400">Create governance rule</div>
-                        </div>
-                      </div>
-                    </button>
-                    <button className="w-full p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        <div>
-                          <div className="font-medium text-slate-900 dark:text-white">Generate Report</div>
-                          <div className="text-xs text-slate-600 dark:text-slate-400">Compliance audit report</div>
-                        </div>
-                      </div>
-                    </button>
-                    <button className="w-full p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-3">
-                        <Settings className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                        <div>
-                          <div className="font-medium text-slate-900 dark:text-white">Configure Alerts</div>
-                          <div className="text-xs text-slate-600 dark:text-slate-400">Set up notifications</div>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                </div>
+                 {/* Quick Actions */}
+                 <Card>
+                    <CardHeader>
+                       <CardTitle className="text-base">Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                       <Button variant="outline" className="w-full justify-start h-11">
+                          <Plus className="mr-2 h-4 w-4 text-primary" />
+                          Add Control
+                       </Button>
+                       <Button variant="outline" className="w-full justify-start h-11">
+                          <FileText className="mr-2 h-4 w-4 text-primary" />
+                          Generate Audit Report
+                       </Button>
+                       <Button variant="outline" className="w-full justify-start h-11">
+                          <Settings className="mr-2 h-4 w-4 text-primary" />
+                          Configure Alerts
+                       </Button>
+                    </CardContent>
+                 </Card>
 
-                {/* Risk Summary */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Risk Summary</h2>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">Critical</span>
-                        <span className="text-sm font-bold text-red-600 dark:text-red-400">2</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div className="bg-red-500 h-2 rounded-full w-1/4"></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">High</span>
-                        <span className="text-sm font-bold text-orange-600 dark:text-orange-400">5</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div className="bg-orange-500 h-2 rounded-full w-1/2"></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">Medium</span>
-                        <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">12</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div className="bg-yellow-500 h-2 rounded-full w-3/4"></div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-900 dark:text-white">Low</span>
-                        <span className="text-sm font-bold text-green-600 dark:text-green-400">8</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div className="bg-green-500 h-2 rounded-full w-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Activity */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Activity</h2>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">Control Activated</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">PII Detection control enabled</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500">2 minutes ago</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                        <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">Approval Requested</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">New model deployment review</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500">5 minutes ago</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                        <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">Risk Alert</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">Policy violation detected</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-500">8 minutes ago</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                 {/* Compliance Frameworks */}
+                 <Card>
+                    <CardHeader>
+                       <CardTitle className="text-base">Frameworks</CardTitle>
+                       <CardDescription>Active compliance standards</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                             <CheckCircle2 className="h-4 w-4 text-green-500" />
+                             <span className="text-sm font-medium">GDPR</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Compliant</Badge>
+                       </div>
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                             <CheckCircle2 className="h-4 w-4 text-green-500" />
+                             <span className="text-sm font-medium">SOC 2</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Compliant</Badge>
+                       </div>
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                             <Clock className="h-4 w-4 text-yellow-500" />
+                             <span className="text-sm font-medium">HIPAA</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs border-yellow-500/30 text-yellow-500 bg-yellow-500/5">In Review</Badge>
+                       </div>
+                    </CardContent>
+                 </Card>
               </div>
-            </div>
-          </main>
+           </div>
         </div>
       </MainLayout>
     </AuthGuard>

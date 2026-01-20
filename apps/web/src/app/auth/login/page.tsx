@@ -47,7 +47,7 @@ const LoginContent = memo(function LoginContent() {
       if (result.success && result.otpRequired) {
         router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
       } else if (result.success) {
-        router.push("/acp-aap")
+        router.push("/dashboard")
       } else {
         setError(result.error || "Login failed. Please check your credentials.")
       }

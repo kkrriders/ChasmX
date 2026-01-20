@@ -33,7 +33,7 @@ import {
 const mainNavigation = [
   {
     name: "Dashboard",
-    href: "/acp-aap",
+    href: "/dashboard",
     icon: LayoutDashboard,
     badge: null,
     description: "Overview and insights",

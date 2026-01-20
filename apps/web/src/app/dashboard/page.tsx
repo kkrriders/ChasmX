@@ -18,7 +18,7 @@ import {
   Clock,
   ArrowUpRight,
   Shield,
-  Search
+  LayoutDashboard
 } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -27,7 +27,8 @@ import { AuthGuard } from "@/components/auth/auth-guard"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,16 +61,16 @@ interface StatCardProps {
 function StatCard({ icon: Icon, title, value, subtitle, change, badge, gradientFrom, gradientTo, loading }: StatCardProps) {
   if (loading) {
     return (
-      <Card className="border-border/50 shadow-sm bg-card/50">
+      <Card className="border-white/5 bg-zinc-900/50 backdrop-blur-md">
         <CardContent className="p-6">
           <div className="flex justify-between mb-4">
-            <Skeleton className="h-10 w-10 rounded-xl" />
-            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-10 w-10 rounded-xl bg-white/5" />
+            <Skeleton className="h-5 w-16 rounded-full bg-white/5" />
           </div>
           <div className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-8 w-16" />
-            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-4 w-24 bg-white/5" />
+            <Skeleton className="h-8 w-16 bg-white/5" />
+            <Skeleton className="h-3 w-32 bg-white/5" />
           </div>
         </CardContent>
       </Card>
@@ -82,41 +83,41 @@ function StatCard({ icon: Icon, title, value, subtitle, change, badge, gradientF
       animate={{ opacity: 1, y: 0 }}
       className="group"
     >
-      <div className="bg-white dark:bg-[#13151a] rounded-xl p-6 border border-slate-200 dark:border-[#2a2d35] hover:border-slate-300 dark:hover:border-[#3a3d45] hover:shadow-lg dark:hover:shadow-[0_0_30px_-10px_rgba(0,0,0,0.5)] transition-all duration-300 relative overflow-hidden">
+      <div className="bg-zinc-900/50 backdrop-blur-md rounded-xl p-6 border border-white/5 hover:border-white/10 hover:bg-zinc-900/80 transition-all duration-300 relative overflow-hidden group">
         {/* Hover Glow */}
         <div className={cn(
-          "absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br opacity-0 group-hover:opacity-20 transition-opacity duration-500 blur-3xl pointer-events-none",
+          "absolute -top-10 -right-10 w-40 h-40 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-3xl pointer-events-none",
           gradientFrom,
           gradientTo
         )} />
         
         <div className="flex items-center justify-between mb-4 relative z-10">
           <div className={cn(
-            "p-3 rounded-xl shadow-lg shadow-black/5 dark:shadow-black/20 text-white bg-gradient-to-br",
+            "p-3 rounded-xl border border-white/10 text-white bg-gradient-to-br shadow-inner",
             gradientFrom,
             gradientTo
           )}>
             <Icon className="w-5 h-5" />
           </div>
           {badge && (
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-0 font-semibold">
+            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
               {badge}
             </Badge>
           )}
         </div>
         <div className="space-y-1 relative z-10">
-          <p className="text-sm font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide">{title}</p>
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{title}</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">{value}</p>
+            <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
             {change && (
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center">
+              <span className="text-xs font-bold text-emerald-400 flex items-center">
                 <ArrowUpRight className="w-3 h-3 mr-0.5" />
                 {change}
               </span>
             )}
           </div>
           {subtitle && (
-            <p className="text-xs text-slate-400 dark:text-gray-500 font-medium">{subtitle}</p>
+            <p className="text-xs text-zinc-500 font-medium">{subtitle}</p>
           )}
         </div>
       </div>
@@ -132,21 +133,20 @@ function QuickActionCard({ icon: Icon, title, description, badge, onClick, gradi
       onClick={onClick}
       className={cn(
         "relative overflow-hidden text-left p-5 rounded-xl border transition-all duration-300 group w-full",
-        "bg-white dark:bg-[#13151a]",
-        "border-slate-200 dark:border-[#2a2d35]",
-        "hover:border-slate-300 dark:hover:border-[#3a3d45]",
-        "hover:shadow-md dark:hover:shadow-[0_0_20px_-5px_rgba(0,0,0,0.3)]"
+        "bg-zinc-900/50 backdrop-blur-md",
+        "border-white/5",
+        "hover:border-white/10 hover:bg-zinc-900/80"
       )}
     >
       <div className={cn(
-        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300",
-        gradient ? "from-blue-500 to-purple-500" : "from-gray-500 to-slate-500"
+        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300",
+        gradient ? "from-blue-600/20 to-purple-600/20" : "from-zinc-700/20 to-zinc-600/20"
       )} />
 
       <div className="flex items-start justify-between mb-3 relative z-10">
         <div className={cn(
-          "p-2.5 rounded-lg text-white shadow-lg transition-transform duration-300 group-hover:scale-110",
-          gradient ? "bg-gradient-to-br from-blue-500 to-indigo-600" : "bg-gradient-to-br from-slate-700 to-slate-900 dark:from-slate-800 dark:to-black"
+          "p-2.5 rounded-lg text-white shadow-lg transition-transform duration-300 group-hover:scale-110 border border-white/10",
+          gradient ? "bg-gradient-to-br from-blue-600 to-indigo-600" : "bg-zinc-800"
         )}>
           <Icon className="w-5 h-5" />
         </div>
@@ -156,8 +156,8 @@ function QuickActionCard({ icon: Icon, title, description, badge, onClick, gradi
           </Badge>
         )}
       </div>
-      <h3 className="font-bold text-slate-900 dark:text-white mb-1 relative z-10">{title}</h3>
-      <p className="text-xs text-slate-500 dark:text-gray-400 font-medium relative z-10">{description}</p>
+      <h3 className="font-bold text-white mb-1 relative z-10">{title}</h3>
+      <p className="text-xs text-zinc-400 font-medium relative z-10">{description}</p>
     </motion.button>
   )
 }
@@ -167,41 +167,41 @@ function WorkflowCard({ workflow }: { workflow: any }) {
   return (
     <div 
       onClick={() => router.push(`/workflows?id=${workflow.id}`)}
-      className="group flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-[#2a2d35] bg-white dark:bg-[#13151a] hover:bg-slate-50 dark:hover:bg-[#1a1d24] hover:border-slate-300 dark:hover:border-[#3a3d45] transition-all cursor-pointer relative overflow-hidden"
+      className="group flex items-center justify-between p-4 rounded-xl border border-white/5 bg-zinc-900/30 hover:bg-zinc-900/60 hover:border-white/10 transition-all cursor-pointer relative overflow-hidden"
     >
       {/* Side Accent */}
       <div className={cn(
         "absolute left-0 top-0 bottom-0 w-1 transition-all duration-300",
-        workflow.status === 'active' ? "bg-emerald-500 opacity-0 group-hover:opacity-100" : "bg-slate-500 opacity-0"
+        workflow.status === 'active' ? "bg-emerald-500 opacity-0 group-hover:opacity-100" : "bg-zinc-500 opacity-0"
       )} />
 
       <div className="flex items-center gap-4">
         <div className={cn(
-          "p-2.5 rounded-lg transition-all shadow-sm",
+          "p-2.5 rounded-lg transition-all shadow-sm border border-white/5",
           workflow.status === 'active' 
-            ? "bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20" 
-            : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-gray-400"
+            ? "bg-emerald-500/10 text-emerald-400" 
+            : "bg-zinc-800/50 text-zinc-400"
         )}>
           <Workflow className="w-5 h-5" />
         </div>
         <div>
-          <h4 className="font-bold text-slate-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+          <h4 className="font-bold text-white text-sm group-hover:text-blue-400 transition-colors">
             {workflow.name}
           </h4>
           <div className="flex items-center gap-3 mt-1">
-            <span className="text-xs text-slate-500 dark:text-gray-500 font-medium flex items-center gap-1">
+            <span className="text-xs text-zinc-500 font-medium flex items-center gap-1">
               <Clock className="w-3 h-3" />
               {formatDistanceToNow(new Date(workflow.updated_at), { addSuffix: true })}
             </span>
             <div className="flex items-center gap-1.5">
-              <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_5px_currentColor]", workflow.status === 'active' ? 'bg-emerald-500 text-emerald-500' : 'bg-slate-400 text-slate-400')} />
-              <span className="text-xs text-slate-600 dark:text-gray-400 font-medium capitalize">{workflow.status}</span>
+              <span className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_5px_currentColor]", workflow.status === 'active' ? 'bg-emerald-500 text-emerald-500' : 'bg-zinc-500 text-zinc-500')} />
+              <span className="text-xs text-zinc-400 font-medium capitalize">{workflow.status}</span>
             </div>
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-gray-400">
+        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-zinc-400">
           <Settings className="w-4 h-4" />
         </Button>
       </div>
@@ -211,20 +211,20 @@ function WorkflowCard({ workflow }: { workflow: any }) {
 
 function TeamCard({ team }: { team: any }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-[#3a3d45] hover:bg-slate-50 dark:hover:bg-[#1a1d24] transition-all cursor-pointer group">
+    <div className="flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-white/10 hover:bg-white/5 transition-all cursor-pointer group">
       <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+        <Avatar className="h-10 w-10 rounded-xl border border-white/10 shadow-sm">
           <AvatarImage src={team.avatar_url} />
-          <AvatarFallback className="rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 text-blue-700 dark:text-blue-300 font-bold text-xs">
+          <AvatarFallback className="rounded-xl bg-gradient-to-br from-blue-900/40 to-indigo-900/40 text-blue-300 font-bold text-xs">
             {team.name.substring(0, 2).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{team.name}</h4>
-          <p className="text-xs text-slate-500 dark:text-gray-500 font-medium">{team.member_count} members • {team.workflow_count} flows</p>
+          <h4 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">{team.name}</h4>
+          <p className="text-xs text-zinc-500 font-medium">{team.member_count} members • {team.workflow_count} flows</p>
         </div>
       </div>
-      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 opacity-0 group-hover:opacity-100 transition-opacity">
         <MoreVertical className="w-4 h-4" />
       </Button>
     </div>
@@ -233,42 +233,24 @@ function TeamCard({ team }: { team: any }) {
 
 function InvitationCard({ invitation }: { invitation: any }) {
   return (
-    <div className="bg-white dark:bg-[#13151a] rounded-xl p-4 border border-slate-200 dark:border-[#2a2d35] shadow-sm mb-3 group hover:border-slate-300 dark:hover:border-[#3a3d45] transition-colors">
+    <div className="bg-zinc-900/50 rounded-xl p-4 border border-white/5 shadow-sm mb-3 group hover:border-white/10 transition-colors">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
             {invitation.team_name.substring(0, 1).toUpperCase()}
           </div>
-          <span className="text-sm font-bold text-slate-900 dark:text-white">{invitation.team_name}</span>
+          <span className="text-sm font-bold text-white">{invitation.team_name}</span>
         </div>
-        <Badge variant="outline" className="text-[10px] border-slate-200 dark:border-white/10 text-slate-500 dark:text-gray-400 font-medium">
+        <Badge variant="outline" className="text-[10px] border-white/10 text-zinc-400 font-medium">
           {invitation.role}
         </Badge>
       </div>
-      <p className="text-xs text-slate-500 dark:text-gray-400 mb-4 font-medium">
-        Invited by <span className="text-slate-700 dark:text-slate-200 font-bold">{invitation.invited_by_name || 'Admin'}</span>
+      <p className="text-xs text-zinc-400 mb-4 font-medium">
+        Invited by <span className="text-zinc-200 font-bold">{invitation.invited_by_name || 'Admin'}</span>
       </p>
       <div className="flex gap-2">
         <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-500 h-8 text-xs font-semibold shadow-md shadow-blue-500/20 text-white border-0">Accept</Button>
-        <Button size="sm" variant="outline" className="w-full h-8 text-xs border-slate-200 dark:border-white/10 bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 font-medium">Decline</Button>
-      </div>
-    </div>
-  )
-}
-
-function StatusIndicator({ label, status, icon: Icon }: any) {
-  const isOperational = status === 'operational'
-  return (
-    <div className="flex items-center justify-between py-2.5">
-      <div className="flex items-center gap-2.5">
-        <Icon className={cn("w-4 h-4", isOperational ? "text-slate-400 dark:text-gray-500" : "text-amber-500")} />
-        <span className="text-sm font-medium text-slate-600 dark:text-gray-300">{label}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className={cn("w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor]", isOperational ? "bg-emerald-500 text-emerald-500" : "bg-amber-500 text-amber-500")} />
-        <span className={cn("text-xs font-bold", isOperational ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600")}>
-          {isOperational ? 'Operational' : 'Issues'}
-        </span>
+        <Button size="sm" variant="outline" className="w-full h-8 text-xs border-white/10 bg-transparent hover:bg-white/5 font-medium">Decline</Button>
       </div>
     </div>
   )
@@ -283,6 +265,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true)
+    document.documentElement.classList.add('dark')
   }, [])
   
   // Data Hooks
@@ -305,42 +288,39 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <MainLayout title="Dashboard" searchPlaceholder="Search workflows, teams, settings...">
-        <div className="relative min-h-full bg-slate-50 dark:bg-black transition-colors duration-300">
-          {/* Background Gradients - Visible in BOTH modes for glass effect */}
-          {/* Light Mode Gradients - Subtle */}
-          <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-50/50 via-purple-50/20 to-transparent dark:hidden pointer-events-none" />
+        <div className="relative min-h-full bg-[#09090b] text-white transition-colors duration-300 overflow-hidden">
+          {/* Background Orbs */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full -z-10" />
+          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-600/5 blur-[120px] rounded-full -z-10" />
           
-          {/* Dark Mode - Solid Black Background */}
-          
-          <div className="relative p-6 space-y-8 max-w-[1600px] mx-auto">
+          <div className="relative px-8 py-8 space-y-8 max-w-[1600px] mx-auto">
             
-            {/* Welcome Section */}
+            {/* Welcome Section - Aligned with WorkflowsClient */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                  {greeting}, {mounted && user?.firstName ? user.firstName : 'Builder'}
-                </h1>
-                <p className="text-slate-500 dark:text-gray-400 mt-1 text-lg font-medium">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <LayoutDashboard className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
+                    {greeting}, {mounted && user?.firstName ? user.firstName : 'Builder'}
+                  </h1>
+                </div>
+                <p className="text-zinc-500 mt-1 text-sm font-medium pl-[52px]">
                   Your intelligent workflow command center.
                 </p>
               </div>
+
               <div className="flex items-center gap-3">
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#13151a] rounded-full border border-slate-200 dark:border-[#2a2d35] shadow-sm">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-                  <span className="text-xs font-bold text-slate-600 dark:text-gray-300 uppercase tracking-wide">
-                    System Operational
-                  </span>
-                </div>
                 <Button 
                   onClick={() => router.push('/workflows/new')} 
                   className={cn(
                     "relative overflow-hidden shadow-xl border-0 font-bold transition-all px-6 py-6 rounded-2xl group active:scale-95",
-                    "bg-zinc-800/80 hover:bg-zinc-800 text-white backdrop-blur-md border border-white/10", // Light Glass
-                    "dark:bg-white/10 dark:hover:bg-white/20 dark:text-white dark:border-white/20 dark:backdrop-blur-md" // Dark Glass
+                    "bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
                   )}
                 >
                   <Plus className="w-5 h-5 mr-2 transition-transform group-hover:rotate-90 duration-300" />
@@ -356,8 +336,8 @@ export default function DashboardPage() {
                 title="Total Workflows"
                 value={workflows.length}
                 change={isWorkflowsLoading ? undefined : "+2 this week"}
-                gradientFrom="from-blue-500"
-                gradientTo="to-indigo-600"
+                gradientFrom="from-blue-600/20"
+                gradientTo="to-indigo-600/20"
                 loading={isWorkflowsLoading}
               />
               <StatCard
@@ -365,8 +345,8 @@ export default function DashboardPage() {
                 title="Executions Today"
                 value={realtime?.total_requests_today || 0}
                 subtitle={`${realtime?.api_calls_per_minute || 0}/min live`}
-                gradientFrom="from-violet-500"
-                gradientTo="to-purple-600"
+                gradientFrom="from-violet-600/20"
+                gradientTo="to-purple-600/20"
                 loading={isAnalyticsLoading}
               />
               <StatCard
@@ -374,8 +354,8 @@ export default function DashboardPage() {
                 title="Active Teams"
                 value={teams.length}
                 subtitle={`${teams.reduce((acc, t) => acc + t.member_count, 0)} total members`}
-                gradientFrom="from-amber-400"
-                gradientTo="to-orange-500"
+                gradientFrom="from-amber-500/20"
+                gradientTo="to-orange-500/20"
                 loading={isTeamsLoading}
               />
               <StatCard
@@ -383,8 +363,8 @@ export default function DashboardPage() {
                 title="Success Rate"
                 value={`${realtime?.success_rate_percent.toFixed(1) || 100}%`}
                 badge="Excellent"
-                gradientFrom="from-emerald-400"
-                gradientTo="to-green-600"
+                gradientFrom="from-emerald-500/20"
+                gradientTo="to-green-600/20"
                 loading={isAnalyticsLoading}
               />
             </div>
@@ -400,7 +380,7 @@ export default function DashboardPage() {
                 
                 {/* A. Quick Actions */}
                 <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                     <Zap className="w-5 h-5 text-amber-500" />
                     Quick Actions
                   </h2>
@@ -429,13 +409,13 @@ export default function DashboardPage() {
                 </div>
 
                 {/* B. Recent Workflows */}
-                <div className="bg-white dark:bg-[#13151a] rounded-2xl border border-slate-200 dark:border-[#2a2d35] shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-slate-200 dark:border-[#2a2d35] flex items-center justify-between">
+                <div className="bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 shadow-sm overflow-hidden">
+                  <div className="p-6 border-b border-white/5 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">Recent Workflows</h2>
-                      <p className="text-sm text-slate-500 dark:text-gray-400 font-medium">Your recently modified automations</p>
+                      <h2 className="text-lg font-bold text-white">Recent Workflows</h2>
+                      <p className="text-sm text-zinc-400 font-medium">Your recently modified automations</p>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => router.push('/workflows')} className="hover:bg-slate-100 dark:hover:bg-white/5 font-medium">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/workflows')} className="hover:bg-white/5 font-medium text-zinc-300 hover:text-white">
                       View All
                     </Button>
                   </div>
@@ -443,10 +423,10 @@ export default function DashboardPage() {
                     {isWorkflowsLoading ? (
                       Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className="flex items-center gap-4 p-4">
-                          <Skeleton className="h-10 w-10 rounded-lg" />
+                          <Skeleton className="h-10 w-10 rounded-lg bg-white/5" />
                           <div className="space-y-2 flex-1">
-                            <Skeleton className="h-4 w-1/3" />
-                            <Skeleton className="h-3 w-1/4" />
+                            <Skeleton className="h-4 w-1/3 bg-white/5" />
+                            <Skeleton className="h-3 w-1/4 bg-white/5" />
                           </div>
                         </div>
                       ))
@@ -456,11 +436,11 @@ export default function DashboardPage() {
                       ))
                     ) : (
                       <div className="text-center py-16">
-                        <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-4">
-                          <Workflow className="w-8 h-8 text-slate-400 dark:text-gray-500" />
+                        <div className="bg-white/5 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-4">
+                          <Workflow className="w-8 h-8 text-zinc-500" />
                         </div>
-                        <h3 className="text-slate-900 dark:text-white font-bold text-lg">No workflows yet</h3>
-                        <p className="text-slate-500 dark:text-gray-400 text-sm mb-6 max-w-sm mx-auto font-medium">Create your first automation to see it here.</p>
+                        <h3 className="text-white font-bold text-lg">No workflows yet</h3>
+                        <p className="text-zinc-500 text-sm mb-6 max-w-sm mx-auto font-medium">Create your first automation to see it here.</p>
                         <Button onClick={() => router.push('/workflows/new')} className="bg-blue-600 text-white hover:bg-blue-500 font-bold">Create Workflow</Button>
                       </div>
                     )}
@@ -474,17 +454,22 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="space-y-8"
+                className="space-y-8 flex flex-col h-full"
               >
                 
-                {/* A. Team Overview */}
-                <div className="bg-white dark:bg-[#13151a] rounded-2xl border border-slate-200 dark:border-[#2a2d35] p-6 shadow-sm">
+                {/* A. Activity Feed */}
+                <div className="flex-1 min-h-[300px]">
+                  <ActivityFeed />
+                </div>
+
+                {/* B. Team Overview */}
+                <div className="bg-zinc-900/50 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-sm">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Users className="w-4 h-4 text-slate-400 dark:text-gray-500" />
+                    <h3 className="font-bold text-white flex items-center gap-2">
+                      <Users className="w-4 h-4 text-zinc-500" />
                       Your Teams
                     </h3>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-white/5">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/5 text-zinc-400">
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
@@ -493,10 +478,10 @@ export default function DashboardPage() {
                     {isTeamsLoading ? (
                       Array.from({ length: 2 }).map((_, i) => (
                         <div key={i} className="flex items-center gap-3 p-2">
-                          <Skeleton className="h-9 w-9 rounded-lg" />
+                          <Skeleton className="h-9 w-9 rounded-lg bg-white/5" />
                           <div className="space-y-1 flex-1">
-                            <Skeleton className="h-3 w-20" />
-                            <Skeleton className="h-2 w-16" />
+                            <Skeleton className="h-3 w-20 bg-white/5" />
+                            <Skeleton className="h-2 w-16 bg-white/5" />
                           </div>
                         </div>
                       ))
@@ -505,23 +490,23 @@ export default function DashboardPage() {
                         <TeamCard key={team._id} team={team} />
                       ))
                     ) : (
-                      <div className="text-center py-8 text-sm text-slate-500 dark:text-gray-500 font-medium">
+                      <div className="text-center py-8 text-sm text-zinc-500 font-medium">
                         No teams found. <br /> Create one to collaborate.
                       </div>
                     )}
                   </div>
                   
-                  <Button className="w-full mt-6 border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-300 font-medium" variant="outline" onClick={() => router.push('/teams')}>
+                  <Button className="w-full mt-6 border-white/10 hover:bg-white/5 text-zinc-300 font-medium" variant="outline" onClick={() => router.push('/teams')}>
                     View All Teams
                   </Button>
                 </div>
 
-                {/* B. Pending Invitations */}
+                {/* C. Pending Invitations */}
                 {invitations.length > 0 && (
-                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-500/10 dark:to-blue-500/10 rounded-2xl border border-indigo-100 dark:border-indigo-500/20 p-6">
+                  <div className="bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-2xl border border-indigo-500/20 p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <Mail className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                      <h3 className="font-bold text-slate-900 dark:text-white">Invitations</h3>
+                      <Mail className="w-5 h-5 text-indigo-400" />
+                      <h3 className="font-bold text-white">Invitations</h3>
                       <Badge className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold">{invitations.length}</Badge>
                     </div>
                     <div className="space-y-3">
@@ -531,36 +516,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 )}
-
-                {/* C. System Status */}
-                <div className="bg-white dark:bg-[#13151a] rounded-2xl border border-slate-200 dark:border-[#2a2d35] p-6 shadow-sm">
-                  <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-slate-400 dark:text-gray-500" />
-                    System Status
-                  </h3>
-                  <div className="space-y-1">
-                    <StatusIndicator
-                      label="Workflow Engine"
-                      status="operational"
-                      icon={Zap}
-                    />
-                    <StatusIndicator
-                      label="API Gateway"
-                      status="operational"
-                      icon={Database}
-                    />
-                    <StatusIndicator
-                      label="Analytics"
-                      status="operational"
-                      icon={BarChart3}
-                    />
-                  </div>
-                  <div className="mt-6 pt-4 border-t border-slate-200 dark:border-[#2a2d35]">
-                    <a href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center font-bold">
-                      View Status Page <ArrowUpRight className="w-3 h-3 ml-1" />
-                    </a>
-                  </div>
-                </div>
 
               </motion.div>
             </div>

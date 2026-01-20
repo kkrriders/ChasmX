@@ -57,7 +57,7 @@ export function CommandPalette() {
       id: "nav-dashboard",
       label: "Go to Dashboard",
       icon: <Home className="h-4 w-4" />,
-      action: () => router.push("/acp-aap"),
+      action: () => router.push("/dashboard"),
       group: "Navigation",
       keywords: ["home", "dashboard"],
     },

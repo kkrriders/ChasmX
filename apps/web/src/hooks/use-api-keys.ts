@@ -35,10 +35,17 @@ export function useAPIKeys() {
     try {
       setLoading(true)
       const response = await apiClient.get<APIKey[]>(API_ENDPOINTS.API_KEYS.LIST)
-      setApiKeys(response.data)
+      if (Array.isArray(response.data)) {
+        setApiKeys(response.data)
+      } else {
+        // Fallback or handle paginated response if applicable
+        setApiKeys([]) 
+        console.warn("Unexpected API response structure for API keys:", response.data)
+      }
       setError(null)
     } catch (err: any) {
       setError(err.response?.data?.detail || "Failed to load API keys")
+      setApiKeys([]) // Ensure it's empty on error
     } finally {
       setLoading(false)
     }

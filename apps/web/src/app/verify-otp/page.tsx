@@ -45,7 +45,7 @@ function VerifyOtpContent() {
       const result = await verifyOTP(email, otp)
 
       if (result.success) {
-        router.push('/acp-aap')
+        router.push('/dashboard')
       } else {
         setError(result.error || 'Invalid verification code.')
       }

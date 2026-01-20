@@ -62,7 +62,7 @@ const SignupContent = memo(function SignupContent() {
       if (result.success && result.requiresLogin) {
         router.push(`/auth/login?email=${encodeURIComponent(formData.email)}`)
       } else if (result.success) {
-        router.push("/acp-aap")
+        router.push("/dashboard")
       } else {
         setError(result.error || "Signup failed. Please try again.")
       }

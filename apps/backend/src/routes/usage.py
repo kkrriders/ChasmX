@@ -118,6 +118,47 @@ async def get_daily_usage(
         )
 
 
+@router.get("/budgets", response_model=List[dict])
+async def list_budgets(
+    scope_type: Optional[str] = Query(None, description="Filter by scope type"),
+    scope_id: Optional[str] = Query(None, description="Filter by scope ID"),
+    active_only: bool = Query(True, description="Only return active budgets")
+):
+    """
+    List usage budgets.
+    """
+    try:
+        query = {}
+        if scope_type:
+            query["scope_type"] = scope_type
+        if scope_id:
+            query["scope_id"] = scope_id
+        if active_only:
+            query["is_active"] = True
+
+        budgets = await UsageBudget.find(query).to_list()
+
+        return [
+            {
+                "id": str(b.id),
+                "name": f"{b.scope_type.capitalize()} Budget ({b.scope_id})",
+                "amount": b.budget_usd,
+                "period": b.period_type,
+                "current_usage": b.current_usage_usd,
+                "is_active": b.is_active,
+                "created_at": b.created_at.isoformat(),
+                "updated_at": b.updated_at.isoformat()
+            }
+            for b in budgets
+        ]
+    except Exception as e:
+        logger.error(f"Failed to list budgets: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list budgets: {str(e)}"
+        )
+
+
 @router.post("/budgets", response_model=dict)
 async def create_budget(request: CreateBudgetRequest):
     """

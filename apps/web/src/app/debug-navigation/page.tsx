@@ -18,7 +18,7 @@ export default function NavigationTestPage() {
       { path: "/auth/signup", name: "Signup" },
     ],
     protected: [
-      { path: "/acp-aap", name: "AI Governance Dashboard" },
+      { path: "/dashboard", name: "AI Governance Dashboard" },
       { path: "/workflows", name: "Workflows" },
       { path: "/workflows/new", name: "New Workflow" },
       { path: "/analytics", name: "Analytics" },
@@ -142,7 +142,7 @@ export default function NavigationTestPage() {
                 <li>Enter valid credentials</li>
                 <li>Verify OTP is sent</li>
                 <li>Complete OTP verification</li>
-                <li>Verify redirect to /acp-aap</li>
+                <li>Verify redirect to /dashboard</li>
               </ul>
             </div>
 
@@ -159,7 +159,7 @@ export default function NavigationTestPage() {
               <h3 className="font-semibold mb-2">5. Test Auth Page Redirect</h3>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-4">
                 <li>While logged in, try visiting /auth/login</li>
-                <li>Verify redirect to /acp-aap</li>
+                <li>Verify redirect to /dashboard</li>
                 <li>Same for /auth/signup</li>
               </ul>
             </div>
