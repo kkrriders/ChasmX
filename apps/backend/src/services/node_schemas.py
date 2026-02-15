@@ -1,7 +1,4 @@
-"""
-Node Schema Definitions
-Defines validation schemas for all node types
-"""
+
 
 from typing import Dict, List, Any, Union, Optional
 from enum import Enum
@@ -48,57 +45,40 @@ class NodeSchema:
         return self.required_fields + self.optional_fields
 
 
+# Define base schemas
+_HTTP_SCHEMA = NodeSchema(
+    node_type="http",
+    required_fields=["url", "method"],
+    optional_fields=["headers", "body", "timeout", "retry_count", "auth"],
+    field_types={
+        "url": FieldType.URL,
+        "method": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+        "headers": FieldType.OBJECT,
+        "body": [FieldType.STRING, FieldType.OBJECT],
+        "timeout": FieldType.INTEGER,
+        "retry_count": FieldType.INTEGER,
+        "auth": FieldType.OBJECT
+    },
+    field_descriptions={
+        "url": "The URL to send the HTTP request to",
+        "method": "HTTP method to use",
+        "headers": "HTTP headers as key-value pairs",
+        "body": "Request body (string or object)",
+        "timeout": "Request timeout in seconds",
+        "retry_count": "Number of retries on failure"
+    },
+    output_schema={
+        "status": FieldType.INTEGER,
+        "body": [FieldType.STRING, FieldType.OBJECT],
+        "headers": FieldType.OBJECT
+    }
+)
+
 # Node Schema Registry
 NODE_SCHEMAS: Dict[str, NodeSchema] = {
     # HTTP Request Node
-    "http": NodeSchema(
-        node_type="http",
-        required_fields=["url", "method"],
-        optional_fields=["headers", "body", "timeout", "retry_count", "auth"],
-        field_types={
-            "url": FieldType.URL,
-            "method": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-            "headers": FieldType.OBJECT,
-            "body": [FieldType.STRING, FieldType.OBJECT],
-            "timeout": FieldType.INTEGER,
-            "retry_count": FieldType.INTEGER,
-            "auth": FieldType.OBJECT
-        },
-        field_descriptions={
-            "url": "The URL to send the HTTP request to",
-            "method": "HTTP method to use",
-            "headers": "HTTP headers as key-value pairs",
-            "body": "Request body (string or object)",
-            "timeout": "Request timeout in seconds",
-            "retry_count": "Number of retries on failure"
-        },
-        output_schema={
-            "status": FieldType.INTEGER,
-            "body": [FieldType.STRING, FieldType.OBJECT],
-            "headers": FieldType.OBJECT
-        }
-    ),
-
-    # HTTP Request Node (alternative naming)
-    "httpRequestNode": NodeSchema(
-        node_type="httpRequestNode",
-        required_fields=["url", "method"],
-        optional_fields=["headers", "body", "timeout", "retry_count", "auth"],
-        field_types={
-            "url": FieldType.URL,
-            "method": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-            "headers": FieldType.OBJECT,
-            "body": [FieldType.STRING, FieldType.OBJECT],
-            "timeout": FieldType.INTEGER,
-            "retry_count": FieldType.INTEGER,
-            "auth": FieldType.OBJECT
-        },
-        output_schema={
-            "status": FieldType.INTEGER,
-            "body": [FieldType.STRING, FieldType.OBJECT],
-            "headers": FieldType.OBJECT
-        }
-    ),
+    "http": _HTTP_SCHEMA,
+    "httpRequestNode": _HTTP_SCHEMA,  # Alias
 
     # Email Node
     "email": NodeSchema(
@@ -120,22 +100,6 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
             "body": "Email body content",
             "cc": "CC recipients",
             "bcc": "BCC recipients"
-        }
-    ),
-
-    # Email Send Node (alternative naming)
-    "emailSendNode": NodeSchema(
-        node_type="emailSendNode",
-        required_fields=["to", "subject"],
-        optional_fields=["body", "cc", "bcc", "attachments", "from"],
-        field_types={
-            "to": [FieldType.EMAIL, FieldType.ARRAY],
-            "subject": FieldType.STRING,
-            "body": FieldType.STRING,
-            "cc": [FieldType.EMAIL, FieldType.ARRAY],
-            "bcc": [FieldType.EMAIL, FieldType.ARRAY],
-            "from": FieldType.EMAIL,
-            "attachments": FieldType.ARRAY
         }
     ),
 
@@ -174,18 +138,6 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
         output_schema={"result": [FieldType.OBJECT, FieldType.ARRAY]}
     ),
 
-    # Transformer Node (alternative naming)
-    "transformer": NodeSchema(
-        node_type="transformer",
-        required_fields=["expression"],
-        optional_fields=["input_schema", "output_schema"],
-        field_types={
-            "expression": FieldType.EXPRESSION,
-            "input_schema": FieldType.OBJECT,
-            "output_schema": FieldType.OBJECT
-        }
-    ),
-
     # Condition/Conditional Node
     "condition": NodeSchema(
         node_type="condition",
@@ -203,17 +155,6 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
         output_schema={"result": FieldType.BOOLEAN}
     ),
 
-    "conditionalNode": NodeSchema(
-        node_type="conditionalNode",
-        required_fields=["condition"],
-        optional_fields=["true_label", "false_label"],
-        field_types={
-            "condition": FieldType.EXPRESSION,
-            "true_label": FieldType.STRING,
-            "false_label": FieldType.STRING
-        }
-    ),
-
     # Loop Node
     "loop": NodeSchema(
         node_type="loop",
@@ -229,18 +170,6 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
             "items": "Array to iterate over or expression that returns an array",
             "max_iterations": "Maximum number of iterations (safety limit)",
             "break_condition": "Expression to break the loop early"
-        }
-    ),
-
-    "loopNode": NodeSchema(
-        node_type="loopNode",
-        required_fields=["items"],
-        optional_fields=["max_iterations", "break_condition", "item_name"],
-        field_types={
-            "items": [FieldType.ARRAY, FieldType.EXPRESSION],
-            "max_iterations": FieldType.INTEGER,
-            "break_condition": FieldType.EXPRESSION,
-            "item_name": FieldType.STRING
         }
     ),
 
@@ -307,19 +236,6 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
         }
     ),
 
-    "ai-processor": NodeSchema(
-        node_type="ai-processor",
-        required_fields=["prompt"],
-        optional_fields=["model", "temperature", "max_tokens", "system_prompt"],
-        field_types={
-            "prompt": FieldType.STRING,
-            "model": FieldType.STRING,
-            "temperature": FieldType.NUMBER,
-            "max_tokens": FieldType.INTEGER,
-            "system_prompt": FieldType.STRING
-        }
-    ),
-
     # Code Executor Node
     "code": NodeSchema(
         node_type="code",
@@ -335,18 +251,6 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
             "code": "Code to execute",
             "language": "Programming language",
             "timeout": "Execution timeout in seconds"
-        }
-    ),
-
-    "codeExecutorNode": NodeSchema(
-        node_type="codeExecutorNode",
-        required_fields=["code"],
-        optional_fields=["language", "timeout", "allowed_imports"],
-        field_types={
-            "code": FieldType.CODE,
-            "language": ["python", "javascript", "typescript"],
-            "timeout": FieldType.INTEGER,
-            "allowed_imports": FieldType.ARRAY
         }
     ),
 
@@ -514,6 +418,14 @@ NODE_SCHEMAS: Dict[str, NodeSchema] = {
         optional_fields=["message", "error_code"]
     ),
 }
+
+# Add aliases for alternative node type names
+NODE_SCHEMAS["emailSendNode"] = NODE_SCHEMAS["email"]
+NODE_SCHEMAS["transformer"] = NODE_SCHEMAS["transform"]
+NODE_SCHEMAS["conditionalNode"] = NODE_SCHEMAS["condition"]
+NODE_SCHEMAS["loopNode"] = NODE_SCHEMAS["loop"]
+NODE_SCHEMAS["codeExecutorNode"] = NODE_SCHEMAS["code"]
+NODE_SCHEMAS["ai-processor"] = NODE_SCHEMAS["llm"]
 
 
 def get_node_schema(node_type: str) -> Optional[NodeSchema]:

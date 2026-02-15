@@ -93,6 +93,10 @@ class Settings(BaseSettings):
     LLM_DEFAULT_TEMPERATURE: float = 0.7
     LLM_DEFAULT_MAX_TOKENS: int = 2048
 
+    # Collaboration/Presence Configuration
+    PRESENCE_STALE_MINUTES: int = 10  # Time before presence is considered stale
+    PRESENCE_CLEANUP_INTERVAL_MINUTES: int = 5  # How often to run cleanup
+
     model_config = SettingsConfigDict(
         env_file=(str(ENV_LOCAL_FILE), str(ENV_FILE)),
         env_file_encoding="utf-8",

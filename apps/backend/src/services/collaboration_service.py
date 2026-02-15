@@ -1,19 +1,13 @@
-"""
-Collaboration Service for real-time workflow editing.
 
-Handles:
-- Presence management (who's viewing/editing)
-- Version history and snapshots
-- Comments and discussions
-- Change tracking
-- Conflict detection
-"""
 
+import asyncio
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from bson import ObjectId
+from bson.errors import InvalidId
 from loguru import logger
 
+from ..core.config import settings
 from ..models.collaboration import (
     UserPresence,
     PresenceStatus,
@@ -66,13 +60,23 @@ class CollaborationService:
         Returns:
             UserPresence object
         """
-        # Try to find existing presence
+        now = datetime.utcnow()
+
+        # Clean up any stale presence records for this user in this workflow
+        # (except the current session) to prevent accumulation
+        stale_cutoff = now - timedelta(minutes=settings.PRESENCE_STALE_MINUTES)
+        await UserPresence.find(
+            UserPresence.workflow_id == workflow_id,
+            UserPresence.user_id == user_id,
+            UserPresence.session_id != session_id,
+            UserPresence.last_active < stale_cutoff,
+        ).delete()
+
+        # Try to find existing presence for this session
         presence = await UserPresence.find_one(
             UserPresence.workflow_id == workflow_id,
             UserPresence.session_id == session_id,
         )
-
-        now = datetime.utcnow()
 
         if presence:
             # Update existing
@@ -131,8 +135,8 @@ class CollaborationService:
         Returns:
             List of active user presence data
         """
-        # Find all recent presence (< 5 min old)
-        cutoff_time = datetime.utcnow() - timedelta(minutes=5)
+        # Find all recent presence
+        cutoff_time = datetime.utcnow() - timedelta(minutes=settings.PRESENCE_CLEANUP_INTERVAL_MINUTES)
 
         presences = await UserPresence.find(
             UserPresence.workflow_id == workflow_id,
@@ -155,16 +159,19 @@ class CollaborationService:
         ]
 
     @staticmethod
-    async def cleanup_stale_presence(max_age_minutes: int = 10) -> int:
+    async def cleanup_stale_presence(max_age_minutes: Optional[int] = None) -> int:
         """
         Remove stale presence records.
 
         Args:
-            max_age_minutes: Max age before considering stale
+            max_age_minutes: Max age before considering stale (defaults to config value)
 
         Returns:
             Number of records removed
         """
+        if max_age_minutes is None:
+            max_age_minutes = settings.PRESENCE_STALE_MINUTES
+
         cutoff_time = datetime.utcnow() - timedelta(minutes=max_age_minutes)
         result = await UserPresence.find(
             UserPresence.last_active < cutoff_time
@@ -190,7 +197,7 @@ class CollaborationService:
         is_checkpoint: bool = False,
     ) -> WorkflowVersion:
         """
-        Create a new workflow version.
+        Create a new workflow version with retry logic to handle concurrent updates.
 
         Args:
             workflow_id: Workflow ID
@@ -205,43 +212,66 @@ class CollaborationService:
         Returns:
             WorkflowVersion object
         """
-        # Get latest version number
-        latest = await WorkflowVersion.find(
-            WorkflowVersion.workflow_id == workflow_id
-        ).sort(-WorkflowVersion.version_number).first_or_none()
+        max_retries = 3
 
-        version_number = (latest.version_number + 1) if latest else 1
-        parent_version = latest.version_number if latest else None
+        for attempt in range(max_retries):
+            try:
+                # Get latest version number
+                latest = await WorkflowVersion.find(
+                    WorkflowVersion.workflow_id == workflow_id
+                ).sort(-WorkflowVersion.version_number).first_or_none()
 
-        # TODO: Calculate diff from parent
-        change_summary = None
-        changes = None
-        if latest:
-            change_summary = "Workflow updated"
-            # Could add diff calculation here
+                version_number = (latest.version_number + 1) if latest else 1
+                parent_version = latest.version_number if latest else None
 
-        version = WorkflowVersion(
-            workflow_id=workflow_id,
-            version_number=version_number,
-            version_type=version_type,
-            created_by=created_by,
-            created_by_name=created_by_name,
-            workflow_data=workflow_data,
-            parent_version=parent_version,
-            change_summary=change_summary,
-            changes=changes,
-            tags=tags or [],
-            description=description,
-            is_checkpoint=is_checkpoint,
-        )
+                # TODO: Calculate diff from parent
+                change_summary = None
+                changes = None
+                if latest:
+                    change_summary = "Workflow updated"
+                    # Could add diff calculation here
 
-        await version.insert()
-        logger.info(
-            f"Created version {version_number} for workflow {workflow_id} "
-            f"by {created_by_name} (type: {version_type})"
-        )
+                version = WorkflowVersion(
+                    workflow_id=workflow_id,
+                    version_number=version_number,
+                    version_type=version_type,
+                    created_by=created_by,
+                    created_by_name=created_by_name,
+                    workflow_data=workflow_data,
+                    parent_version=parent_version,
+                    change_summary=change_summary,
+                    changes=changes,
+                    tags=tags or [],
+                    description=description,
+                    is_checkpoint=is_checkpoint,
+                )
 
-        return version
+                await version.insert()
+                logger.info(
+                    f"Created version {version_number} for workflow {workflow_id} "
+                    f"by {created_by_name} (type: {version_type})"
+                )
+
+                return version
+
+            except Exception as e:
+                # Check if it's a duplicate key error (concurrent version creation)
+                if "duplicate" in str(e).lower() or "unique" in str(e).lower():
+                    if attempt < max_retries - 1:
+                        # Exponential backoff
+                        wait_time = 0.1 * (2 ** attempt)
+                        logger.warning(
+                            f"Version conflict for workflow {workflow_id}, "
+                            f"retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})"
+                        )
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        logger.error(f"Failed to create version after {max_retries} retries")
+                        raise ValueError("Failed to create version due to concurrent updates")
+                else:
+                    # Re-raise non-duplicate errors immediately
+                    raise
 
     @staticmethod
     async def get_version_history(
@@ -260,12 +290,15 @@ class CollaborationService:
         Returns:
             List of version metadata (without full workflow_data)
         """
-        query = WorkflowVersion.find(WorkflowVersion.workflow_id == workflow_id)
+        # Build query conditions upfront for better performance
+        conditions = [WorkflowVersion.workflow_id == workflow_id]
 
         if checkpoints_only:
-            query = query.find(WorkflowVersion.is_checkpoint == True)
+            conditions.append(WorkflowVersion.is_checkpoint == True)
 
-        versions = await query.sort(-WorkflowVersion.version_number).limit(limit).to_list()
+        versions = await WorkflowVersion.find(*conditions).sort(
+            -WorkflowVersion.version_number
+        ).limit(limit).to_list()
 
         return [
             {
@@ -373,6 +406,16 @@ class CollaborationService:
         Returns:
             WorkflowComment object
         """
+        # Validate and sanitize content
+        if not content or len(content.strip()) == 0:
+            raise ValueError("Comment content cannot be empty")
+
+        if len(content) > 5000:
+            raise ValueError("Comment exceeds maximum length of 5000 characters")
+
+        # Trim whitespace
+        content = content.strip()
+
         comment = Comment(
             author_id=author_id,
             author_name=author_name,
@@ -414,6 +457,22 @@ class CollaborationService:
         Returns:
             Updated WorkflowComment object
         """
+        # Validate thread_id format
+        try:
+            ObjectId(thread_id)
+        except (InvalidId, TypeError):
+            raise ValueError(f"Invalid thread_id format: {thread_id}")
+
+        # Validate and sanitize content
+        if not content or len(content.strip()) == 0:
+            raise ValueError("Comment content cannot be empty")
+
+        if len(content) > 5000:
+            raise ValueError("Comment exceeds maximum length of 5000 characters")
+
+        # Trim whitespace
+        content = content.strip()
+
         thread = await WorkflowComment.find_one(WorkflowComment.thread_id == thread_id)
         if not thread:
             raise ValueError(f"Thread {thread_id} not found")
@@ -448,6 +507,12 @@ class CollaborationService:
         Returns:
             Updated WorkflowComment object
         """
+        # Validate thread_id format
+        try:
+            ObjectId(thread_id)
+        except (InvalidId, TypeError):
+            raise ValueError(f"Invalid thread_id format: {thread_id}")
+
         thread = await WorkflowComment.find_one(WorkflowComment.thread_id == thread_id)
         if not thread:
             raise ValueError(f"Thread {thread_id} not found")
@@ -478,15 +543,29 @@ class CollaborationService:
         Returns:
             List of comment threads
         """
-        query = WorkflowComment.find(WorkflowComment.workflow_id == workflow_id)
+        # Validate inputs
+        if node_id and not isinstance(node_id, str):
+            raise ValueError("node_id must be a string")
+
+        # Validate status is from enum
+        if status and not isinstance(status, CommentStatus):
+            try:
+                status = CommentStatus(status)
+            except ValueError:
+                raise ValueError(f"Invalid status: {status}")
+
+        # Build query conditions upfront for better performance
+        conditions = [WorkflowComment.workflow_id == workflow_id]
 
         if node_id:
-            query = query.find(WorkflowComment.node_id == node_id)
+            conditions.append(WorkflowComment.node_id == node_id)
 
         if status:
-            query = query.find(WorkflowComment.status == status)
+            conditions.append(WorkflowComment.status == status)
 
-        threads = await query.sort(-WorkflowComment.last_activity).to_list()
+        threads = await WorkflowComment.find(*conditions).sort(
+            -WorkflowComment.last_activity
+        ).to_list()
 
         return [
             {

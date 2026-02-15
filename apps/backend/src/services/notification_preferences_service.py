@@ -1,7 +1,4 @@
-"""Notification preferences service.
 
-This module provides services for managing user notification preferences.
-"""
 
 from datetime import datetime
 from typing import Optional

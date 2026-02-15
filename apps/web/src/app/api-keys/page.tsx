@@ -59,6 +59,14 @@ export default function APIKeysPage() {
     setActionLoading(id)
     try {
       const newKey = await rotateAPIKey(id)
+      if (!newKey) {
+        toast({
+          title: "Error",
+          description: "Failed to rotate API key",
+          variant: "destructive"
+        })
+        return
+      }
       toast({
         title: "API key rotated",
         description: `New key: ${newKey.key_prefix}... (copy it now, it won't be shown again)`

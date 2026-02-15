@@ -39,10 +39,9 @@ class APIClient {
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`
 
     try {
-      // Helpful debug log to inspect which URL is being requested
-      // (useful when diagnosing `Failed to fetch` errors)
-      // eslint-disable-next-line no-console
-      console.debug('[api] request', { method: restOptions.method ?? 'GET', url })
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[api] request', { method: restOptions.method ?? 'GET', url })
+      }
 
       const response = await fetch(url, {
         ...restOptions,
@@ -54,8 +53,30 @@ class APIClient {
         if (response.status === 401 && typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('auth:unauthorized'))
         }
-        const errorText = await response.text()
-        throw new Error(errorText || `HTTP error! status: ${response.status}`)
+
+        let errorMessage = `HTTP error! status: ${response.status}`
+        let errorDetails: any = null
+
+        try {
+          const contentType = response.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            errorDetails = await response.json()
+            errorMessage = errorDetails.detail || errorDetails.message || errorMessage
+          } else {
+            const textError = await response.text()
+            errorMessage = textError || errorMessage
+          }
+        } catch (parseError) {
+          // If parsing fails, use default message
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[api] Failed to parse error response:', parseError)
+          }
+        }
+
+        const error: any = new Error(errorMessage)
+        error.statusCode = response.status
+        error.details = errorDetails
+        throw error
       }
 
       // Handle empty responses
@@ -71,21 +92,22 @@ class APIClient {
         // Don't log expected auth errors
         if (!error.message.includes('401') && !error.message.includes('Invalid or expired token')) {
           const isConnectionError = error.message.includes('fetch failed') || error.message.includes('Network request failed') || error.message.includes('ECONNREFUSED');
-          
-          if (isConnectionError) {
-            // eslint-disable-next-line no-console
-            console.error(`[api] connection failed to ${url}. Is the backend running? (${error.message})`)
-          } else {
-            // eslint-disable-next-line no-console
-            console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+
+          if (process.env.NODE_ENV === 'development') {
+            if (isConnectionError) {
+              console.error(`[api] connection failed to ${url}. Is the backend running? (${error.message})`)
+            } else {
+              console.error('[api] request failed', { url, method: restOptions.method ?? 'GET', message: error.message })
+            }
           }
         }
-        throw new Error(`Failed to fetch ${url}: ${error.message}`)
+        throw error
       }
 
       // Fallback
-      // eslint-disable-next-line no-console
-      console.error('[api] unknown request error', { url, method: restOptions.method ?? 'GET' })
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[api] unknown request error', { url, method: restOptions.method ?? 'GET' })
+      }
       throw new Error('An unknown error occurred')
     }
   }

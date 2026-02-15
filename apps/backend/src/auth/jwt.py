@@ -54,9 +54,12 @@ def create_access_token(data: Dict, expires_delta: Optional[timedelta] = None) -
     try:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
+    except JWTError as e:
+        logger.error(f"JWT encoding failed: {type(e).__name__}")
+        raise RuntimeError("Failed to create authentication token")
     except Exception as e:
-        logger.error(f"Failed to create access token: {str(e)}")
-        raise
+        logger.error(f"Unexpected error creating token: {type(e).__name__}")
+        raise RuntimeError("Authentication service error")
 
 
 def verify_token(token: str) -> Optional[Dict]:

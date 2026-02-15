@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useEffect, useState } from "react"
+import { memo, useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 
 import { MainLayout } from "@/components/layout/main-layout"
@@ -26,13 +26,19 @@ import {
   ChevronRight
 } from "lucide-react"
 
-const SettingsPage = memo(function SettingsPage() {
+type TabType = 'profile' | 'notifications' | 'security' | 'appearance' | 'privacy'
+
+function isValidTab(tab: string): tab is TabType {
+  return ['profile', 'notifications', 'security', 'appearance', 'privacy'].includes(tab)
+}
+
+const SettingsContent = memo(function SettingsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
-  
+
   // Tab state management
-  const [activeTab, setActiveTab] = useState<'profile'|'notifications'|'security'|'appearance'|'privacy'>('profile')
+  const [activeTab, setActiveTab] = useState<TabType>('profile')
   
   const sidebarNavItems = [
     {
@@ -91,9 +97,11 @@ const SettingsPage = memo(function SettingsPage() {
   // Load initial data
   useEffect(() => {
     const tabParam = searchParams.get('tab')
-    if (tabParam && sidebarNavItems.some(item => item.href === tabParam)) {
-      setActiveTab(tabParam as any)
+    if (tabParam && isValidTab(tabParam)) {
+      setActiveTab(tabParam)
     }
+
+    let cancelled = false
 
     const loadData = async () => {
       try {
@@ -101,27 +109,37 @@ const SettingsPage = memo(function SettingsPage() {
           apiClient.get<UserProfile>(API_ENDPOINTS.USER.PROFILE),
           apiClient.get<NotificationPreferences>(API_ENDPOINTS.USER.NOTIFICATIONS)
         ])
-        setProfile(profileRes.data)
-        setNotifications(notificationsRes.data)
+        if (!cancelled) {
+          setProfile(profileRes.data)
+          setNotifications(notificationsRes.data)
+        }
       } catch (error: any) {
-        toast({
-          title: "Error loading settings",
-          description: "Failed to load your account settings. Please try again.",
-          variant: "destructive",
-        })
+        if (!cancelled) {
+          toast({
+            title: "Error loading settings",
+            description: "Failed to load your account settings. Please try again.",
+            variant: "destructive",
+          })
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
     loadData()
-  }, [])
+
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams, toast])
 
   const handleTabChange = (tab: string) => {
-    setActiveTab(tab as any)
-    // Update URL without refresh
-    const url = new URL(window.location.href)
-    url.searchParams.set('tab', tab)
-    window.history.pushState({}, '', url)
+    if (isValidTab(tab)) {
+      setActiveTab(tab)
+      // Use Next.js router for proper client-side navigation
+      router.push(`/settings?tab=${tab}`, { scroll: false })
+    }
   }
 
   const handleSaveProfile = async (data: any) => {
@@ -136,7 +154,7 @@ const SettingsPage = memo(function SettingsPage() {
     } catch (error: any) {
       toast({
         title: "Error updating profile",
-        description: error.response?.data?.detail || "Failed to update profile",
+        description: error.message || "Failed to update profile",
         variant: "destructive",
       })
     } finally {
@@ -156,7 +174,7 @@ const SettingsPage = memo(function SettingsPage() {
     } catch (error: any) {
       toast({
         title: "Error updating preferences",
-        description: error.response?.data?.detail || "Failed to update preferences",
+        description: error.message || "Failed to update preferences",
         variant: "destructive",
       })
     } finally {
@@ -255,6 +273,16 @@ const SettingsPage = memo(function SettingsPage() {
   )
 })
 
-SettingsPage.displayName = 'SettingsPage'
+SettingsContent.displayName = 'SettingsContent'
 
-export default SettingsPage
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
+  )
+}

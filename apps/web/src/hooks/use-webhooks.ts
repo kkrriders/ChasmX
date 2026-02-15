@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { apiClient } from "@/lib/api"
 import { API_ENDPOINTS } from "@/lib/config"
 
@@ -32,80 +32,99 @@ export function useWebhooks() {
   const [webhooks, setWebhooks] = useState<Webhook[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [operationError, setOperationError] = useState<string | null>(null)
 
-  const loadWebhooks = async () => {
+  const loadWebhooks = useCallback(async () => {
     try {
       setLoading(true)
       const response = await apiClient.get<Webhook[]>(API_ENDPOINTS.WEBHOOKS.LIST)
       setWebhooks(response.data)
       setError(null)
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to load webhooks")
+      setError(err.message || "Failed to load webhooks")
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const getWebhook = async (id: string): Promise<Webhook> => {
+  const getWebhook = async (id: string): Promise<Webhook | null> => {
     try {
+      setOperationError(null)
       const response = await apiClient.get<Webhook>(API_ENDPOINTS.WEBHOOKS.GET(id))
       return response.data
     } catch (err: any) {
-      throw new Error(err.response?.data?.detail || "Failed to get webhook")
+      const errorMsg = err.message || "Failed to get webhook"
+      setOperationError(errorMsg)
+      return null
     }
   }
 
-  const createWebhook = async (data: Partial<Webhook>): Promise<Webhook> => {
+  const createWebhook = async (data: Partial<Webhook>): Promise<Webhook | null> => {
     try {
+      setOperationError(null)
       const response = await apiClient.post<Webhook>(API_ENDPOINTS.WEBHOOKS.CREATE, data)
       await loadWebhooks()
       return response.data
     } catch (err: any) {
-      throw new Error(err.response?.data?.detail || "Failed to create webhook")
+      const errorMsg = err.message || "Failed to create webhook"
+      setOperationError(errorMsg)
+      return null
     }
   }
 
-  const updateWebhook = async (id: string, data: Partial<Webhook>): Promise<Webhook> => {
+  const updateWebhook = async (id: string, data: Partial<Webhook>): Promise<Webhook | null> => {
     try {
+      setOperationError(null)
       const response = await apiClient.put<Webhook>(API_ENDPOINTS.WEBHOOKS.UPDATE(id), data)
       await loadWebhooks()
       return response.data
     } catch (err: any) {
-      throw new Error(err.response?.data?.detail || "Failed to update webhook")
+      const errorMsg = err.message || "Failed to update webhook"
+      setOperationError(errorMsg)
+      return null
     }
   }
 
-  const deleteWebhook = async (id: string): Promise<void> => {
+  const deleteWebhook = async (id: string): Promise<boolean> => {
     try {
+      setOperationError(null)
       await apiClient.delete<void>(API_ENDPOINTS.WEBHOOKS.DELETE(id))
       await loadWebhooks()
+      return true
     } catch (err: any) {
-      throw new Error(err.response?.data?.detail || "Failed to delete webhook")
+      const errorMsg = err.message || "Failed to delete webhook"
+      setOperationError(errorMsg)
+      return false
     }
   }
 
-  const getWebhookLogs = async (id: string): Promise<WebhookLog[]> => {
+  const getWebhookLogs = async (id: string): Promise<WebhookLog[] | null> => {
     try {
+      setOperationError(null)
       const response = await apiClient.get<WebhookLog[]>(API_ENDPOINTS.WEBHOOKS.LOGS(id))
       return response.data
     } catch (err: any) {
-      throw new Error(err.response?.data?.detail || "Failed to get webhook logs")
+      const errorMsg = err.message || "Failed to get webhook logs"
+      setOperationError(errorMsg)
+      return null
     }
   }
 
   useEffect(() => {
     loadWebhooks()
-  }, [])
+  }, [loadWebhooks])
 
   return {
     webhooks,
     loading,
     error,
+    operationError,
     loadWebhooks,
     getWebhook,
     createWebhook,
     updateWebhook,
     deleteWebhook,
     getWebhookLogs,
+    refresh: loadWebhooks,
   }
 }
