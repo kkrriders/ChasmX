@@ -80,7 +80,7 @@ export function HomeHeader() {
 
           </div>
 
-          <span className="font-bold text-lg tracking-tight">Chasm<span className="text-brand-primary">X</span></span>
+          <span className="font-bold text-lg tracking-tight text-white">Chasm<span className="text-brand-primary">X</span></span>
 
         </Link>
 
@@ -90,13 +90,13 @@ export function HomeHeader() {
 
         <div className="hidden md:flex items-center gap-8">
 
-          <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Features</Link>
+          <Link href="#features" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Features</Link>
 
-          <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
+          <Link href="#pricing" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Pricing</Link>
 
-          <Link href="/docs" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
+          <Link href="/docs" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Docs</Link>
 
-          <Link href="/blog" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Blog</Link>
+          <Link href="/blog" className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Blog</Link>
 
         </div>
 
@@ -126,7 +126,7 @@ export function HomeHeader() {
 
               <Link href="/auth/login" className="hidden sm:block">
 
-                <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground hover:text-foreground">Log in</Button>
+                <Button variant="ghost" size="sm" className="rounded-full text-zinc-300 hover:text-white hover:bg-white/10">Log in</Button>
 
               </Link>
 
