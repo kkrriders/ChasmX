@@ -62,9 +62,9 @@ export function HomeHeader() {
 
           scrolled
 
-            ? "bg-zinc-950 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/5"
+            ? "bg-zinc-950 backdrop-blur-xl border border-white/20 shadow-lg shadow-black/5"
 
-            : "bg-transparent border border-transparent"
+            : "bg-zinc-900/50 backdrop-blur-md border border-white/10"
 
         )}
 
