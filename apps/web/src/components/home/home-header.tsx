@@ -60,9 +60,9 @@ export function HomeHeader() {
 
           "flex items-center justify-between px-6 py-3 rounded-full transition-all duration-300 w-full max-w-5xl mx-4",
 
-          scrolled 
+          scrolled
 
-            ? "bg-background/70 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/5" 
+            ? "bg-zinc-950 backdrop-blur-xl border border-border/50 shadow-lg shadow-black/5"
 
             : "bg-transparent border border-transparent"
 

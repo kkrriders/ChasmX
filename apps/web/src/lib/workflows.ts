@@ -44,7 +44,13 @@ function normalizeWorkflowRun(run: WorkflowRun): WorkflowRun {
 
 export async function fetchWorkflows(): Promise<WorkflowSummary[]> {
   const response = await api.get<WorkflowSummary[]>(API_ENDPOINTS.WORKFLOWS.LIST, true)
-  return (response.data ?? []).map(normalizeWorkflowSummary)
+  const data = response.data
+  // Ensure data is an array before processing
+  if (!Array.isArray(data)) {
+    console.warn('fetchWorkflows: Expected array but received:', typeof data)
+    return []
+  }
+  return data.map(normalizeWorkflowSummary)
 }
 
 export async function fetchWorkflow(workflowId: string): Promise<Workflow> {
@@ -54,7 +60,13 @@ export async function fetchWorkflow(workflowId: string): Promise<Workflow> {
 
 export async function fetchWorkflowExecutions(workflowId: string): Promise<WorkflowRun[]> {
   const response = await api.get<WorkflowRun[]>(API_ENDPOINTS.WORKFLOWS.EXECUTIONS(workflowId), true)
-  return (response.data ?? []).map(normalizeWorkflowRun)
+  const data = response.data
+  // Ensure data is an array before processing
+  if (!Array.isArray(data)) {
+    console.warn('fetchWorkflowExecutions: Expected array but received:', typeof data)
+    return []
+  }
+  return data.map(normalizeWorkflowRun)
 }
 
 export async function fetchWorkflowExecution(executionId: string): Promise<WorkflowRun> {

@@ -41,11 +41,14 @@ export function useWorkflows(): UseWorkflowsResult {
     setIsLoading(true)
     try {
       const data = await fetchWorkflows()
-      setWorkflows(data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()))
+      // Ensure data is an array before setting it
+      const workflowsData = Array.isArray(data) ? data : []
+      setWorkflows(workflowsData.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()))
       setError(null)
     } catch (err) {
       console.error('Failed to load workflows', err)
       setError(err instanceof Error ? err.message : 'Failed to load workflows')
+      setWorkflows([]) // Ensure workflows remains an array on error
     } finally {
       setIsLoading(false)
     }
@@ -92,8 +95,10 @@ export function useWorkflowDetails(workflowId?: string | null): UseWorkflowDetai
       ])
 
       setWorkflow(workflowResponse)
+      // Ensure executionsResponse is an array before setting it
+      const executions = Array.isArray(executionsResponse) ? executionsResponse : []
       setExecutions(
-        executionsResponse.sort(
+        executions.sort(
           (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
         ),
       )
@@ -101,6 +106,7 @@ export function useWorkflowDetails(workflowId?: string | null): UseWorkflowDetai
     } catch (err) {
       console.error('Failed to load workflow details', err)
       setError(err instanceof Error ? err.message : 'Failed to load workflow details')
+      setExecutions([]) // Ensure executions remains an array on error
     } finally {
       setIsLoading(false)
     }

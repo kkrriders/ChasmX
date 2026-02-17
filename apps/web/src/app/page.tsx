@@ -23,7 +23,7 @@ export default function HomePage() {
         <HeroSection />
 
         {/* Social Proof Bar */}
-        <div className="border-y border-white/5 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-30">
+        <div className="border-y border-white/5 bg-zinc-950 backdrop-blur-md">
           <div className="container py-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { label: "Active Workflows", value: "10,000+", icon: Zap },

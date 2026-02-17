@@ -20,11 +20,13 @@ export function useTeams(): UseTeamsResult {
     setIsLoading(true)
     try {
       const response = await api.get<TeamSummary[]>('/teams')
-      setTeams(response.data)
+      // Ensure response.data is an array before setting it
+      setTeams(Array.isArray(response.data) ? response.data : [])
       setError(null)
     } catch (err) {
       console.error('Failed to load teams', err)
       setError(err instanceof Error ? err.message : 'Failed to load teams')
+      setTeams([]) // Ensure teams remains an array on error
     } finally {
       setIsLoading(false)
     }
@@ -58,7 +60,8 @@ export function useInvitations(): UseInvitationsResult {
     setIsLoading(true)
     try {
       const response = await api.get<TeamInvitation[]>('/teams/invitations/me')
-      setInvitations(response.data)
+      // Ensure response.data is an array before setting it
+      setInvitations(Array.isArray(response.data) ? response.data : [])
       setError(null)
     } catch (err) {
       console.warn('Failed to load invitations, falling back to mock data', err)
